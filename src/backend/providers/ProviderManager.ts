@@ -41,7 +41,10 @@ export class ProviderManager {
 
       const failures = this.circuitBreakerFailures.get(provider.name) || 0;
       if (failures >= this.MAX_FAILURES) {
-         logger.warn(`Circuit Breaker OPEN: Skipping provider ${provider.name} due to excessive failures.`);
+         if (failures === this.MAX_FAILURES) {
+           logger.warn(`Circuit Breaker OPEN: Skipping provider ${provider.name} due to excessive failures. (This usually means the API key is invalid or quota is exceeded)`);
+           this.circuitBreakerFailures.set(provider.name, failures + 1); // Increment so we don't spam the log every loop
+         }
          continue; // Move to fallback provider
       }
 
