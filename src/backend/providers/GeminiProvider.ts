@@ -3,7 +3,7 @@ import { AIProvider, LLMRequest } from './ProviderManager';
 import { logger } from '../telemetry/logger';
 
 export class GeminiProvider implements AIProvider {
-  name = 'Google-Gemini-3.5-Flash';
+  name = 'Google-Gemini-3.6-Flash';
   private ai: GoogleGenAI | null = null;
 
   constructor() {
@@ -33,17 +33,19 @@ export class GeminiProvider implements AIProvider {
     const combinedPrompt = `${request.context ? `[System Context & Memories]\n${request.context}\n\n` : ''}User: ${request.prompt}`;
 
     try {
-      const interaction = await this.ai.interactions.create({
-        model: 'gemini-3.5-flash',
-        input: combinedPrompt,
-        system_instruction: systemInstruction,
+      const response = await this.ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: combinedPrompt,
+        config: {
+          systemInstruction: systemInstruction,
+        }
       });
 
-      if (!interaction.output_text) {
+      if (!response.text) {
         throw new Error('Received empty response from Gemini.');
       }
 
-      return interaction.output_text;
+      return response.text;
     } catch (error: any) {
       const errorMessage = error.message || '';
       if (errorMessage.includes('429') || errorMessage.includes('Quota exceeded')) {
