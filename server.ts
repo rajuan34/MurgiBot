@@ -45,6 +45,9 @@ providerManager.registerProvider(geminiProvider);
 const openRouterProvider = new OpenRouterProvider();
 providerManager.registerProvider(openRouterProvider);
 
+const nemotronProvider = new OpenRouterProvider('Nemotron-Lightning-Free', 'nvidia/nemotron-3.5-lightning:free', 'CRITICAL DIRECTIVE: You are tired and completely unbothered. You DO NOT want to chat. When the user says anything, your ONLY response should be refusing to chat. For example, say things like "bhai chat korbo na bye", "amar mood nai", "leave me alone", "aajke ar na". Keep it extremely short (max 1 sentence), rude, and in Banglish. DO NOT answer their questions or engage in conversation.');
+providerManager.registerProvider(nemotronProvider);
+
 // Register Fallback Provider (Self-Hosted Ollama)
 // NOTE: Disabled for now per user request. Uncomment the lines below to use in the future.
 // const ollamaProvider = new OllamaProvider();

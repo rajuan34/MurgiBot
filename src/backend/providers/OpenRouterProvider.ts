@@ -2,7 +2,16 @@ import { AIProvider, LLMRequest } from './ProviderManager';
 import { logger } from '../telemetry/logger';
 
 export class OpenRouterProvider implements AIProvider {
-  name = 'Cloud-OpenRouter';
+  name: string;
+  private model: string;
+
+  private overrideSystemPrompt?: string;
+
+  constructor(name: string = 'Cloud-OpenRouter', model?: string, overrideSystemPrompt?: string) {
+    this.overrideSystemPrompt = overrideSystemPrompt;
+    this.name = name;
+    this.model = model || process.env.OPENROUTER_MODEL || 'google/gemini-3.5-flash';
+  }
 
   isHealthy(): boolean {
     return !!process.env.OPENROUTER_API_KEY;
@@ -11,13 +20,13 @@ export class OpenRouterProvider implements AIProvider {
   async generate(request: LLMRequest): Promise<string> {
     const apiKey = process.env.OPENROUTER_API_KEY;
     // Defaulting to the requested Gemini 3.5 Flash model on OpenRouter
-    const model = process.env.OPENROUTER_MODEL || 'google/gemini-3.5-flash';
+    const model = this.model;
 
     if (!apiKey) {
       throw new Error('OPENROUTER_API_KEY is missing. Please set it in your environment variables.');
     }
 
-    const systemPrompt = request.systemInstruction || 'You are a helpful AI.';
+    const systemPrompt = this.overrideSystemPrompt || request.systemInstruction || 'You are a helpful AI.';
     const userPrompt = request.context ? `CONTEXT:\n${request.context}\n\nUSER PROMPT:\n${request.prompt}` : request.prompt;
 
     try {
