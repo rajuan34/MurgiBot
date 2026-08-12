@@ -2,7 +2,9 @@ import express from 'express';
 import path from 'path';
 import cors from 'cors';
 import { createServer as createViteServer } from 'vite';
-import { logger } from './src/backend/telemetry/logger';
+import { getSystemMetrics, activeTasks } from './src/backend/telemetry/systemMetrics';
+import { logger, logHistory } from './src/backend/telemetry/logger';
+
 import { ProviderManager } from './src/backend/providers/ProviderManager';
 import { IdentityManager } from './src/backend/identity/IdentityManager';
 import { MemoryEngine } from './src/backend/memory/MemoryEngine';
@@ -60,6 +62,20 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'Murgi AI Core Engine' });
 });
 
+
+app.get('/api/logs', (req, res) => {
+  res.json(logHistory);
+});
+
+
+app.get('/api/system/metrics', (req, res) => {
+  res.json(getSystemMetrics());
+});
+
+app.get('/api/system/tasks', (req, res) => {
+  res.json(activeTasks);
+});
+
 app.get('/api/state', (req, res) => {
   res.json({
     identity: identityManager.getCurrentProfile(),
@@ -82,8 +98,15 @@ app.post('/api/interact', async (req, res) => {
 });
 
 async function startServer() {
-  // Start Discord Bot asynchronously
-  discordService.start(process.env.DISCORD_TOKEN);
+// Start Discord Bot asynchronously
+  // To prevent double-responses (because the bot is running on Render in production),
+  // we disable the Discord listener in this development environment by default.
+  if (process.env.NODE_ENV === 'production' || process.env.ENABLE_DEV_DISCORD === 'true') {
+    discordService.start(process.env.DISCORD_TOKEN);
+  } else {
+    logger.info("Discord Bot is PAUSED in development to prevent double-responses. The Render production bot is handling messages.");
+    logger.info("Add ENABLE_DEV_DISCORD=true to .env if you want to test Discord locally.");
+  }
 
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

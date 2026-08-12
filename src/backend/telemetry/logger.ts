@@ -1,4 +1,5 @@
 import winston from 'winston';
+import { Writable } from 'stream';
 
 // Middleware to scrub Personal Identifiable Information (PII) before logging
 const scrubPII = winston.format((info) => {
@@ -13,6 +14,22 @@ const scrubPII = winston.format((info) => {
   return info;
 });
 
+
+export const logHistory: { timestamp: string; level: string; message: string; meta: any }[] = [];
+
+const memoryTransport = new winston.transports.Stream({
+  stream: new (Writable)({
+    write(chunk, encoding, callback) {
+      try {
+        const log = JSON.parse(chunk.toString());
+        logHistory.unshift(log);
+        if (logHistory.length > 50) logHistory.pop();
+      } catch (e) {}
+      callback();
+    }
+  })
+});
+
 export const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -21,6 +38,7 @@ export const logger = winston.createLogger({
     winston.format.json()
   ),
   transports: [
+    memoryTransport,
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),

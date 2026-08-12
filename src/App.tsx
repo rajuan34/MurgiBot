@@ -1,62 +1,54 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import React, { useEffect, useState } from 'react';
-import { Activity, Brain, Server, Shield, RefreshCw, MessageSquare, Heart, Database, Send } from 'lucide-react';
-
-interface BotState {
-  identity: string;
-  providers: Array<{
-    name: string;
-    healthy: boolean;
-    failures: number;
-  }>;
-  emotion: string;
-  memory: {
-    activeConversations: number;
-    knownUsers: number;
-  };
-  discord: {
-    connected: boolean;
-    botTag: string;
-  };
-}
+import React, { useEffect, useState, useRef } from 'react';
+import { Sidebar } from './components/dashboard/Sidebar';
+import { OverviewView } from './components/dashboard/OverviewView';
+import { TasksView } from './components/dashboard/TasksView';
+import { LogsView } from './components/dashboard/LogsView';
+import { AIEngineView } from './components/dashboard/AIEngineView';
+import { Activity, ShieldAlert, Rocket, Database, Settings, Menu } from 'lucide-react';
 
 export default function App() {
-  const [botState, setBotState] = useState<BotState | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [chatLog, setChatLog] = useState<{role: 'user'|'murgi', text: string}[]>([]);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [metrics, setMetrics] = useState<any>(null);
+  const [serverLogs, setServerLogs] = useState<any[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const [latency, setLatency] = useState(0);
+  const [botState, setBotState] = useState<any>(null);
+  const [chatLog, setChatLog] = useState<{role: string, text: string}[]>([]);
   const [input, setInput] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
+  
   const fetchState = async () => {
     try {
-      const res = await fetch('/api/state');
+      const start = performance.now();
+      const res = await fetch('/api/system/metrics');
       if (res.ok) {
-        const data = await res.json();
-        setBotState(data);
+        const end = performance.now();
+        setLatency(Math.round(end - start));
+        setMetrics(await res.json());
+        setIsConnected(true);
+      } else {
+        setIsConnected(false);
+      }
+      
+      const botRes = await fetch('/api/state');
+      if (botRes.ok) {
+        setBotState(await botRes.json());
       }
     } catch (e) {
-      // Silently fail during dev server restarts or network dips
-      // to prevent spurious console errors from triggering the platform error reporter.
-    } finally {
-      setLoading(false);
+      setIsConnected(false);
     }
   };
 
-  useEffect(() => {
-    fetchState();
-    const interval = setInterval(fetchState, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
+  
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isSending) return;
     
-    const userMsg = input.trim();
+    const userMsg = input;
     setInput('');
+    setIsSending(true);
     setChatLog(prev => [...prev, { role: 'user', text: userMsg }]);
 
     try {
@@ -68,176 +60,111 @@ export default function App() {
       const data = await res.json();
       
       setChatLog(prev => [...prev, { role: 'murgi', text: data.text || 'Error processing thought.' }]);
-      fetchState(); // Instantly fetch new state (like mood change)
+      fetchState(); 
     } catch (err) {
       setChatLog(prev => [...prev, { role: 'murgi', text: '[System Error: Connection Failed]' }]);
+    } finally {
+      setIsSending(false);
     }
   };
 
+  const exportChatLog = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(chatLog));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("download", "murgi_chat_log.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
+  const fetchLogs = async () => {
+    try {
+      const res = await fetch('/api/logs');
+      if (res.ok) {
+        setServerLogs(await res.json());
+      }
+    } catch(e) {}
+  };
+
+  useEffect(() => {
+    fetchState();
+    fetchLogs();
+    const interval = setInterval(() => {
+      fetchState();
+      fetchLogs();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-200 p-4 md:p-8 font-sans">
-      <div className="max-w-6xl mx-auto space-y-6">
-        
-        {/* Header */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-neutral-800 pb-6 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-2">
-              <Brain className="w-8 h-8 text-purple-500" />
-              Murgi AI Core
-            </h1>
-            <p className="text-sm text-neutral-400 mt-1">Autonomous Digital Character Control Panel</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium ${botState?.discord.connected ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400' : 'bg-neutral-800/50 border-neutral-700 text-neutral-400'}`}>
-              <MessageSquare className="w-3 h-3" />
-              Discord: {loading ? '...' : botState?.discord.botTag}
+    <div className="min-h-screen bg-black text-neutral-200 font-sans flex h-screen overflow-hidden">
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isMobileOpen={isMobileMenuOpen} setIsMobileOpen={setIsMobileMenuOpen} />
+      
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+        {/* Top Header */}
+        <header className="h-16 bg-neutral-900 border-b border-neutral-800 flex items-center justify-between px-6 flex-shrink-0 z-10">
+          <div className="md:hidden flex items-center gap-3">
+            <button onClick={() => setIsMobileMenuOpen(true)} className="text-neutral-400 hover:text-white transition-colors">
+              <Menu className="w-6 h-6" />
+            </button>
+            <div className="flex items-center gap-2 font-bold text-lg">
+              <Activity className="w-5 h-5 text-emerald-500" />
+              OpsCenter
             </div>
-            <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-full text-xs font-medium">
+          </div>
+          
+          <div className="hidden md:flex items-center gap-4 text-sm text-neutral-400">
+            <span className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                {isConnected && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${isConnected ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
               </span>
-              Brain Active
+              {isConnected ? 'Connected to Production' : 'Connection Lost'}
+            </span>
+            <span className="border-l border-neutral-800 pl-4">
+              Latency: {latency > 0 ? `${latency}ms` : '--'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-neutral-950 border border-neutral-800 rounded-full px-3 py-1">
+              <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold">
+                SA
+              </div>
+              <span className="text-xs font-medium text-neutral-300">Admin</span>
             </div>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          
-          {/* Left Column: Stats */}
-          <div className="md:col-span-1 space-y-6">
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto p-6 bg-[#0a0a0a]">
+          <div className="max-w-7xl mx-auto">
+            {activeTab === 'overview' && <OverviewView metrics={metrics} isConnected={isConnected} />}
+            {activeTab === 'tasks' && <TasksView />}
+            {activeTab === 'ai-engine' && <AIEngineView botState={botState} chatLog={chatLog} input={input} setInput={setInput} sendMessage={sendMessage} exportChatLog={exportChatLog} fetchState={fetchState} isConnected={isConnected} latency={latency} isSending={isSending} />}
+            {activeTab === 'logs' && <LogsView serverLogs={serverLogs} isConnected={isConnected} />}
             
-            {/* Identity & Emotion */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5">
-              <h2 className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <Heart className="w-4 h-4 text-pink-400" /> State Engine
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xs text-neutral-500 mb-1">Current Mood</p>
-                  <div className="text-lg font-medium text-pink-300">
-                    {loading ? '...' : botState?.emotion}
-                  </div>
-                </div>
-                <div className="h-px bg-neutral-800 w-full" />
-                <div>
-                  <p className="text-xs text-neutral-500 mb-1">Active Profile (Avatar)</p>
-                  <div className="text-lg font-medium text-purple-300">
-                    {loading ? '...' : botState?.identity}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Memory Stats */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5">
-              <h2 className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <Database className="w-4 h-4 text-blue-400" /> Memory Node
-              </h2>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-neutral-400">Short-Term Contexts</span>
-                  <span className="font-mono text-sm text-white">{botState?.memory.activeConversations || 0}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-neutral-400">Long-Term Entities</span>
-                  <span className="font-mono text-sm text-white">{botState?.memory.knownUsers || 0}</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Middle & Right Column */}
-          <div className="md:col-span-3 space-y-6 flex flex-col">
-            
-            {/* AI Providers Module */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xs font-bold text-neutral-500 uppercase tracking-wider flex items-center gap-2">
-                  <Server className="w-4 h-4 text-emerald-400" /> Provider Resilience
-                </h2>
-                <button onClick={fetchState} className="text-neutral-500 hover:text-white transition-colors">
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {loading ? (
-                  <div className="text-sm text-neutral-500">Loading providers...</div>
-                ) : (
-                  botState?.providers.map((p, i) => (
-                    <div key={i} className="flex items-center justify-between bg-neutral-950 p-3 rounded-xl border border-neutral-800">
-                      <div className="flex items-center gap-3">
-                        {p.healthy ? (
-                          <Shield className="w-4 h-4 text-emerald-400" />
-                        ) : (
-                          <Shield className="w-4 h-4 text-red-400" />
-                        )}
-                        <span className="font-medium text-sm text-neutral-300">{p.name}</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs">
-                        {p.failures >= 3 ? (
-                          <span className="px-2 py-1 bg-red-500/10 text-red-400 rounded border border-red-500/20">Circuit Open</span>
-                        ) : (
-                          <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded border border-emerald-500/20">Active</span>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Live Interaction Test */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 flex flex-col flex-1 min-h-[400px]">
-              <h2 className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-4 border-b border-neutral-800 pb-4">
-                Direct Neural Injector (Admin Chat)
-              </h2>
-              
-              <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
-                {chatLog.length === 0 ? (
-                  <div className="text-sm text-neutral-500 text-center mt-20">
-                    <p>Send a message to test the Brain Pipeline.</p>
-                    <p className="text-xs mt-2 text-neutral-600">Try saying "I hate you" or "Let's play a game" to trigger mood shifts.</p>
-                  </div>
-                ) : (
-                  chatLog.map((msg, i) => (
-                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
-                        msg.role === 'user' 
-                          ? 'bg-purple-600 text-white rounded-br-none' 
-                          : 'bg-neutral-800 text-neutral-200 border border-neutral-700 rounded-bl-none'
-                      }`}>
-                        {msg.text}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <form onSubmit={sendMessage} className="flex gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  placeholder="Inject thought into Murgi's brain..."
-                  className="flex-1 bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
-                />
+            {/* Placeholder for unimplemented tabs */}
+            {['resources', 'alerts', 'api', 'health', 'audit', 'deployments', 'settings'].includes(activeTab) && (
+              <div className="flex flex-col items-center justify-center h-[60vh] text-center max-w-md mx-auto">
+                <ShieldAlert className="w-16 h-16 text-neutral-800 mb-6" />
+                <h2 className="text-xl font-bold text-neutral-300 mb-2 capitalize">{activeTab} Interface</h2>
+                <p className="text-neutral-500 text-sm mb-6">
+                  This module requires additional backend agent configuration to connect to your cloud infrastructure. 
+                  Real metrics for this segment are currently unavailable in the baseline runtime environment.
+                </p>
                 <button 
-                  type="submit"
-                  disabled={!input.trim()}
-                  className="bg-white text-black px-5 py-3 rounded-xl text-sm font-bold hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                  onClick={() => setActiveTab('overview')}
+                  className="px-6 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-lg text-sm transition-colors"
                 >
-                  <Send className="w-4 h-4" /> Send
+                  Return to Overview
                 </button>
-              </form>
-            </div>
-
+              </div>
+            )}
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
 }
-
