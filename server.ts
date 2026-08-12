@@ -11,6 +11,7 @@ import { MurgiBrain } from './src/backend/core/MurgiBrain';
 import { DiscordService } from './src/backend/discord/DiscordService';
 import { GeminiProvider } from './src/backend/providers/GeminiProvider';
 import { OllamaProvider } from './src/backend/providers/OllamaProvider';
+import { OpenRouterProvider } from './src/backend/providers/OpenRouterProvider';
 import 'dotenv/config';
 
 const app = express();
@@ -39,9 +40,13 @@ export const discordService = new DiscordService(murgiBrain);
 const geminiProvider = new GeminiProvider();
 providerManager.registerProvider(geminiProvider);
 
+const openRouterProvider = new OpenRouterProvider();
+providerManager.registerProvider(openRouterProvider);
+
 // Register Fallback Provider (Self-Hosted Ollama)
-const ollamaProvider = new OllamaProvider();
-providerManager.registerProvider(ollamaProvider);
+// NOTE: Disabled for now per user request. Uncomment the lines below to use in the future.
+// const ollamaProvider = new OllamaProvider();
+// providerManager.registerProvider(ollamaProvider);
 
 // Register Ultimate Fallback Provider (Never fails, used if Ollama is offline)
 providerManager.registerProvider({
