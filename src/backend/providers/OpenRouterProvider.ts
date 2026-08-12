@@ -40,7 +40,8 @@ export class OpenRouterProvider implements AIProvider {
         },
         body: JSON.stringify({
           model: model,
-          max_tokens: 2000, // Explicitly limit tokens so it doesn't reserve the model's max context (65k) which causes 402 on low balance
+          max_tokens: 2000,
+          temperature: 0.9, // Explicitly limit tokens so it doesn't reserve the model's max context (65k) which causes 402 on low balance
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
