@@ -28,7 +28,7 @@ export class DiscordService {
       // Ignore bots
       if (message.author.bot) return;
 
-      // Basic triggering logic: respond if mentioned, or randomly jump in (not implemented here)
+      // Basic triggering logic: respond if mentioned
       const isMentioned = this.client.user && message.mentions.has(this.client.user.id);
       
       // For now, only respond to mentions to prevent spamming
@@ -39,17 +39,39 @@ export class DiscordService {
       // Process via Brain
       try {
         if ('sendTyping' in message.channel) {
-          await message.channel.sendTyping();
+          await message.channel.sendTyping().catch((err) => {
+            logger.warn('Failed to send typing indicator in Discord channel', { error: err?.message || String(err) });
+          });
         }
+
         const cleanContent = message.content.replace(new RegExp(`<@!?${this.client.user?.id}>`, 'g'), '').trim();
         
         const response = await this.brain.processInteraction(message.author.id, cleanContent);
         
         if (response && !response.includes('*(Murgi watches silently)*')) {
-          await message.reply(response);
+          // Truncate response to stay well within Discord's 2000 character limit
+          const sanitizedResponse = response.length > 1950 ? response.substring(0, 1950) + '...' : response;
+          
+          try {
+            await message.reply(sanitizedResponse);
+          } catch (replyError: any) {
+            logger.warn('Reply failed (e.g. message deleted or missing history permission), falling back to channel.send', {
+              error: replyError?.message || String(replyError)
+            });
+            try {
+              await message.channel.send(sanitizedResponse);
+            } catch (sendError: any) {
+              logger.error('Failed to send Discord message via fallback channel.send', {
+                error: sendError?.message || String(sendError)
+              });
+            }
+          }
         }
-      } catch (error) {
-        logger.error('Failed to process Discord message', { error });
+      } catch (error: any) {
+        logger.error('Failed to process Discord message', {
+          error: error?.message || String(error),
+          stack: error?.stack
+        });
       }
     });
   }
@@ -62,8 +84,8 @@ export class DiscordService {
     
     try {
       await this.client.login(token);
-    } catch (error) {
-      logger.error('Failed to connect to Discord', { error });
+    } catch (error: any) {
+      logger.error('Failed to connect to Discord', { error: error?.message || String(error) });
     }
   }
 
