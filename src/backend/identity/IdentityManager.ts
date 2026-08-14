@@ -43,19 +43,19 @@ export class IdentityManager {
   private loadRegistry(): IdentityRegistry {
     const defaultRegistry: IdentityRegistry = {
       states: {
-        playful:      { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/playful.png",    banner: null },
-        chill:        { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/chill.png",      banner: null },
-        wise:         { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/wise.png",       banner: null },
-        chaos:        { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/chaos.png",      banner: null },
-        curious:      { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/curious.png",    banner: null },
-        supportive:   { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/supportive.png", banner: null },
-        competitive:  { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/competitive.png",banner: null },
-        sleepy:       { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/sleepy.png",     banner: null },
-        event:        { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/event.png",      banner: null },
-        observer:     { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/default.png",    banner: null }
+        playful:      { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Playful.png",    banner: null },
+        chill:        { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Chill.png",      banner: null },
+        wise:         { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Wise.png",       banner: null },
+        chaos:        { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Chaotic.png",      banner: null },
+        curious:      { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Curious.png",    banner: null },
+        supportive:   { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Supportive.png", banner: null },
+        competitive:  { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Competitive.png",banner: null },
+        sleepy:       { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Sleepy.png",     banner: null },
+        event:        { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Event.png",      banner: null },
+        observer:     { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Default.png",    banner: null }
       },
       defaults: {
-        avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/default.png",
+        avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Default.png",
         banner: null
       }
     };
