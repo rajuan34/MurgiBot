@@ -44,14 +44,14 @@ export class IdentityManager {
     const defaultRegistry: IdentityRegistry = {
       states: {
         playful:      { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Playful.png",    banner: null },
-        chill:        { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Chill.png",      banner: null },
-        wise:         { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Wise.png",       banner: null },
-        chaos:        { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Chaotic.png",      banner: null },
-        curious:      { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Curious.png",    banner: null },
-        supportive:   { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Supportive.png", banner: null },
-        competitive:  { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Competitive.png",banner: null },
+        chill:        { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Quiet.png",      banner: null },
+        wise:         { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Nostalgic.png",       banner: null },
+        chaos:        { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Playful.png",      banner: null },
+        curious:      { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Social.png",    banner: null },
+        supportive:   { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Wholesome.png", banner: null },
+        competitive:  { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Focused.png",banner: null },
         sleepy:       { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Sleepy.png",     banner: null },
-        event:        { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Event.png",      banner: null },
+        event:        { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Wholesome.png",      banner: null },
         observer:     { avatar: "https://raw.githubusercontent.com/rajuan34/MurgiBot-Pics/main/images/Default.png",    banner: null }
       },
       defaults: {
