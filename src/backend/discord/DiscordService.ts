@@ -34,7 +34,7 @@ export class DiscordService {
       const isMentioned = this.client.user && message.mentions.has(this.client.user.id);
       
       // Handle /murgi commands
-      if (message.content.startsWith('/murgi ')) {
+      if (message.content.startsWith('!murgi ') || message.content.startsWith('murgi ')) {
         const args = message.content.split(' ');
         if (args[1] === 'profile') {
           const action = args[2];
