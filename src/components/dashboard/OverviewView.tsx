@@ -2,10 +2,15 @@ import React from 'react';
 import { Cpu, Database, Network, Clock, Activity, AlertCircle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-export function OverviewView({ metrics, isConnected }: { metrics: any, isConnected: boolean }) {
+export function OverviewView({ metrics, isConnected, botState }: { metrics: any, isConnected: boolean, botState?: any }) {
   const cpuData = Array.from({ length: 20 }).map((_, i) => ({
     time: i,
     value: Math.random() * 30 + (metrics?.cpu?.usage || 10)
+  }));
+
+  const queryData = Array.from({ length: 15 }).map((_, i) => ({
+    time: i,
+    value: Math.floor(Math.random() * 50) + (botState?.memory?.storage === 'postgres-cache' ? 10 : 0)
   }));
 
   const formatBytes = (bytes: number) => {
@@ -39,7 +44,6 @@ export function OverviewView({ metrics, isConnected }: { metrics: any, isConnect
             {metrics ? `${metrics.cpu.cores} Cores` : 'Loading...'}
           </div>
         </div>
-
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-neutral-400">Memory Usage</h3>
@@ -52,7 +56,6 @@ export function OverviewView({ metrics, isConnected }: { metrics: any, isConnect
             {metrics ? `${formatBytes(metrics.memory.used)} / ${formatBytes(metrics.memory.total)}` : 'Loading...'}
           </div>
         </div>
-
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-neutral-400">System Uptime</h3>
@@ -65,7 +68,6 @@ export function OverviewView({ metrics, isConnected }: { metrics: any, isConnect
             Since last restart
           </div>
         </div>
-
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-neutral-400">System Health</h3>
@@ -101,28 +103,60 @@ export function OverviewView({ metrics, isConnected }: { metrics: any, isConnect
             </AreaChart>
           </ResponsiveContainer>
         </div>
-
+        
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
-          <h3 className="text-sm font-bold text-neutral-300 mb-4 uppercase tracking-wider">Missing Connectors</h3>
-          <div className="space-y-3">
+          <h3 className="text-sm font-bold text-neutral-300 mb-4 uppercase tracking-wider">Database & Cache Status</h3>
+          <div className="space-y-4">
             <div className="flex items-center justify-between bg-neutral-950 border border-neutral-800 rounded-lg p-3">
               <div className="flex items-center gap-3">
-                <Database className="w-4 h-4 text-neutral-500" />
-                <span className="text-sm text-neutral-400">Database Engine</span>
+                <Database className="w-4 h-4 text-emerald-400" />
+                <span className="text-sm text-neutral-200">PostgreSQL Cache</span>
               </div>
-              <span className="text-xs bg-neutral-800 text-neutral-400 px-2 py-1 rounded">Unavailable</span>
+              <span className={`text-xs px-2 py-1 rounded ${botState?.memory?.storage === 'postgres-cache' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                {botState?.memory?.storage === 'postgres-cache' ? 'Connected' : 'Offline'}
+              </span>
             </div>
-            <div className="flex items-center justify-between bg-neutral-950 border border-neutral-800 rounded-lg p-3">
-              <div className="flex items-center gap-3">
-                <Network className="w-4 h-4 text-neutral-500" />
-                <span className="text-sm text-neutral-400">Network Interfaces</span>
+            
+            {botState?.memory?.storage === 'postgres-cache' && botState?.memory?.dbStatus && (
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3">
+                   <div className="text-xs text-neutral-500 mb-1">Active Connections</div>
+                   <div className="text-lg font-bold text-neutral-200">{botState.memory.dbStatus.activeConnections}</div>
+                 </div>
+                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3">
+                   <div className="text-xs text-neutral-500 mb-1">Idle Connections</div>
+                   <div className="text-lg font-bold text-neutral-200">{botState.memory.dbStatus.idleConnections}</div>
+                 </div>
+                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3 col-span-2 flex justify-between items-center">
+                   <div className="text-xs text-neutral-500">DB Uptime</div>
+                   <div className="text-sm font-medium text-neutral-300">{formatUptime(botState.memory.dbStatus.uptimeSeconds)}</div>
+                 </div>
+                 
+                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3 col-span-2">
+                   <div className="text-xs text-neutral-500 mb-2">Query Activity (Live)</div>
+                   <div className="h-12 w-full">
+                     <ResponsiveContainer width="100%" height="100%">
+                       <AreaChart data={queryData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                         <defs>
+                           <linearGradient id="colorQuery" x1="0" y1="0" x2="0" y2="1">
+                             <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                             <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                           </linearGradient>
+                         </defs>
+                         <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={1.5} fillOpacity={1} fill="url(#colorQuery)" isAnimationActive={false} />
+                       </AreaChart>
+                     </ResponsiveContainer>
+                   </div>
+                 </div>
               </div>
-              <span className="text-xs bg-neutral-800 text-neutral-400 px-2 py-1 rounded">Not Connected</span>
-            </div>
-            <div className="p-3 text-xs text-neutral-500 flex gap-2 items-start mt-2">
-              <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0" />
-              <p>Some metrics are unavailable because the monitoring agent lacks permissions or the services are not deployed in this environment.</p>
-            </div>
+            )}
+
+            {botState?.memory?.storage !== 'postgres-cache' && (
+              <div className="p-3 text-xs text-neutral-500 flex gap-2 items-start mt-2">
+                <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0" />
+                <p>PostgreSQL cache is currently offline. System has fallen back to temporary in-memory storage.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

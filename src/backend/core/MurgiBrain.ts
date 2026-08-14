@@ -20,11 +20,11 @@ export class MurgiBrain {
     logger.info(`Processing new interaction from user`, { userId });
 
     // Step 1: Memory Engine
-    const shortTermContext = this.memory.getShortTermContext(userId);
-    const longTermContext = this.memory.getLongTermContext(userId);
+    const shortTermContext = await this.memory.getShortTermContext(userId);
+    const longTermContext = await this.memory.getLongTermContext(userId);
     
     // Save user's incoming message to short-term memory
-    this.memory.addShortTermMessage(userId, 'user', message);
+    await this.memory.addShortTermMessage(userId, 'user', message);
 
     // Step 2: Emotion Engine
     const currentMood = this.emotion.evaluateInteraction(message);
@@ -96,7 +96,7 @@ ${stateDescriptions[currentMood] || stateDescriptions['Playful']}
       });
 
       // Save Murgi's response to memory
-      this.memory.addShortTermMessage(userId, 'murgi', response.text);
+      await this.memory.addShortTermMessage(userId, 'murgi', response.text);
 
       logger.info('Brain finished processing pipeline successfully.');
       return response.text;

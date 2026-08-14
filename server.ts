@@ -79,12 +79,12 @@ app.get('/api/system/tasks', (req, res) => {
   res.json(activeTasks);
 });
 
-app.get('/api/state', (req, res) => {
+app.get('/api/state', async (req, res) => {
   res.json({
     identity: identityManager.getCurrentProfile(),
     providers: providerManager.getProviderStatus(),
     emotion: emotionEngine.getCurrentMood(),
-    memory: memoryEngine.getStats(),
+    memory: await memoryEngine.getStats(),
     discord: discordService.getStatus()
   });
 });

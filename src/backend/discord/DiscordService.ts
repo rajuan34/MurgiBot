@@ -59,7 +59,7 @@ export class DiscordService {
               error: replyError?.message || String(replyError)
             });
             try {
-              await message.channel.send(sanitizedResponse);
+              if ('send' in message.channel) { await message.channel.send(sanitizedResponse); }
             } catch (sendError: any) {
               logger.error('Failed to send Discord message via fallback channel.send', {
                 error: sendError?.message || String(sendError)

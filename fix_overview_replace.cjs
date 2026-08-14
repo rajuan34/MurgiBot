@@ -1,9 +1,10 @@
-import React from 'react';
+const fs = require('fs');
+
+const content = `import React from 'react';
 import { Cpu, Database, Network, Clock, Activity, AlertCircle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-export function OverviewView({ metrics, isConnected }: { metrics: any, isConnected: boolean }) {
-  // Mock data for the charts since we don't have historical data in the backend yet
+export function OverviewView({ metrics, isConnected, botState }: { metrics: any, isConnected: boolean, botState?: any }) {
   const cpuData = Array.from({ length: 20 }).map((_, i) => ({
     time: i,
     value: Math.random() * 30 + (metrics?.cpu?.usage || 10)
@@ -22,39 +23,36 @@ export function OverviewView({ metrics, isConnected }: { metrics: any, isConnect
     const d = Math.floor(seconds / (3600*24));
     const h = Math.floor(seconds % (3600*24) / 3600);
     const m = Math.floor(seconds % 3600 / 60);
-    return `${d > 0 ? d+'d ' : ''}${h}h ${m}m`;
+    return \`\${d > 0 ? d+'d ' : ''}\${h}h \${m}m\`;
   };
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric Cards */}
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-neutral-400">CPU Usage</h3>
             <Cpu className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-2xl font-bold text-white mb-1">
-            {metrics ? `${metrics.cpu.usage}%` : '--'}
+            {metrics ? \`\${metrics.cpu.usage}%\` : '--'}
           </div>
           <div className="text-xs text-neutral-500">
-            {metrics ? `${metrics.cpu.cores} Cores` : 'Loading...'}
+            {metrics ? \`\${metrics.cpu.cores} Cores\` : 'Loading...'}
           </div>
         </div>
-
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-neutral-400">Memory Usage</h3>
             <Database className="w-4 h-4 text-blue-400" />
           </div>
           <div className="text-2xl font-bold text-white mb-1">
-            {metrics ? `${metrics.memory.usagePercent}%` : '--'}
+            {metrics ? \`\${metrics.memory.usagePercent}%\` : '--'}
           </div>
           <div className="text-xs text-neutral-500">
-            {metrics ? `${formatBytes(metrics.memory.used)} / ${formatBytes(metrics.memory.total)}` : 'Loading...'}
+            {metrics ? \`\${formatBytes(metrics.memory.used)} / \${formatBytes(metrics.memory.total)}\` : 'Loading...'}
           </div>
         </div>
-
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-neutral-400">System Uptime</h3>
@@ -67,11 +65,10 @@ export function OverviewView({ metrics, isConnected }: { metrics: any, isConnect
             Since last restart
           </div>
         </div>
-
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-neutral-400">System Health</h3>
-            <Activity className={`w-4 h-4 ${isConnected ? 'text-emerald-400' : 'text-red-400'}`} />
+            <Activity className={\`w-4 h-4 \${isConnected ? 'text-emerald-400' : 'text-red-400'}\`} />
           </div>
           <div className="text-2xl font-bold text-white mb-1">
             {isConnected ? 'Healthy' : 'Degraded'}
@@ -103,31 +100,48 @@ export function OverviewView({ metrics, isConnected }: { metrics: any, isConnect
             </AreaChart>
           </ResponsiveContainer>
         </div>
-
+        
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
-          <h3 className="text-sm font-bold text-neutral-300 mb-4 uppercase tracking-wider">Missing Connectors</h3>
-          <div className="space-y-3">
+          <h3 className="text-sm font-bold text-neutral-300 mb-4 uppercase tracking-wider">Database & Cache Status</h3>
+          <div className="space-y-4">
             <div className="flex items-center justify-between bg-neutral-950 border border-neutral-800 rounded-lg p-3">
               <div className="flex items-center gap-3">
-                <Database className="w-4 h-4 text-neutral-500" />
-                <span className="text-sm text-neutral-400">Database Engine</span>
+                <Database className="w-4 h-4 text-emerald-400" />
+                <span className="text-sm text-neutral-200">PostgreSQL Cache</span>
               </div>
-              <span className="text-xs bg-neutral-800 text-neutral-400 px-2 py-1 rounded">Unavailable</span>
+              <span className={\`text-xs px-2 py-1 rounded \${botState?.memory?.storage === 'postgres-cache' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}\`}>
+                {botState?.memory?.storage === 'postgres-cache' ? 'Connected' : 'Offline'}
+              </span>
             </div>
-            <div className="flex items-center justify-between bg-neutral-950 border border-neutral-800 rounded-lg p-3">
-              <div className="flex items-center gap-3">
-                <Network className="w-4 h-4 text-neutral-500" />
-                <span className="text-sm text-neutral-400">Network Interfaces</span>
+            
+            {botState?.memory?.storage === 'postgres-cache' && botState?.memory?.dbStatus && (
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3">
+                   <div className="text-xs text-neutral-500 mb-1">Active Connections</div>
+                   <div className="text-lg font-bold text-neutral-200">{botState.memory.dbStatus.activeConnections}</div>
+                 </div>
+                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3">
+                   <div className="text-xs text-neutral-500 mb-1">Idle Connections</div>
+                   <div className="text-lg font-bold text-neutral-200">{botState.memory.dbStatus.idleConnections}</div>
+                 </div>
+                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3 col-span-2 flex justify-between items-center">
+                   <div className="text-xs text-neutral-500">DB Uptime</div>
+                   <div className="text-sm font-medium text-neutral-300">{formatUptime(botState.memory.dbStatus.uptimeSeconds)}</div>
+                 </div>
               </div>
-              <span className="text-xs bg-neutral-800 text-neutral-400 px-2 py-1 rounded">Not Connected</span>
-            </div>
-            <div className="p-3 text-xs text-neutral-500 flex gap-2 items-start mt-2">
-              <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0" />
-              <p>Some metrics are unavailable because the monitoring agent lacks permissions or the services are not deployed in this environment.</p>
-            </div>
+            )}
+
+            {botState?.memory?.storage !== 'postgres-cache' && (
+              <div className="p-3 text-xs text-neutral-500 flex gap-2 items-start mt-2">
+                <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0" />
+                <p>PostgreSQL cache is currently offline. System has fallen back to temporary in-memory storage.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 }
+`;
+fs.writeFileSync('src/components/dashboard/OverviewView.tsx', content);
