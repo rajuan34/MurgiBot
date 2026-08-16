@@ -1,18 +1,11 @@
 const fs = require('fs');
-let code = fs.readFileSync('server.ts', 'utf8');
 
-const oldCode = `const openRouterProvider = new OpenRouterProvider();
-providerManager.registerProvider(openRouterProvider);`;
+let content = fs.readFileSync('server.ts', 'utf8');
 
-const newCode = `const openRouterProvider = new OpenRouterProvider();
-providerManager.registerProvider(openRouterProvider);
+content = content.replace(
+  "const openRouterProvider = new OpenRouterProvider();",
+  "const openRouterProvider = new OpenRouterProvider('Cloud-OpenRouter', 'deepseek/deepseek-v4-flash-0731');"
+);
 
-const nemotronProvider = new OpenRouterProvider('Nemotron-Lightning-Free', 'nvidia/nemotron-3.5-lightning:free');
-providerManager.registerProvider(nemotronProvider);`;
-
-if (code.includes(oldCode)) {
-    code = code.replace(oldCode, newCode);
-    fs.writeFileSync('server.ts', code);
-} else {
-    console.log("Could not find the target code block in server.ts");
-}
+fs.writeFileSync('server.ts', content);
+console.log('Updated server.ts');

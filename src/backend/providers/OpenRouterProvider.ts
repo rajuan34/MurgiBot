@@ -10,7 +10,7 @@ export class OpenRouterProvider implements AIProvider {
   constructor(name: string = 'Cloud-OpenRouter', model?: string, overrideSystemPrompt?: string) {
     this.overrideSystemPrompt = overrideSystemPrompt;
     this.name = name;
-    this.model = model || process.env.OPENROUTER_MODEL || 'google/gemini-3.5-flash';
+    this.model = model || process.env.OPENROUTER_MODEL || 'deepseek/deepseek-v4-flash-0731';
   }
 
   isHealthy(): boolean {
@@ -19,7 +19,7 @@ export class OpenRouterProvider implements AIProvider {
 
   async generate(request: LLMRequest): Promise<string> {
     const apiKey = process.env.OPENROUTER_API_KEY;
-    // Defaulting to the requested Gemini 3.5 Flash model on OpenRouter
+    // Defaulting to DeepSeek V4 Flash
     const model = this.model;
 
     if (!apiKey) {

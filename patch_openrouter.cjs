@@ -1,8 +1,18 @@
 const fs = require('fs');
-let code = fs.readFileSync('src/backend/providers/OpenRouterProvider.ts', 'utf8');
 
-code = code.replace("name = 'Cloud-OpenRouter';", "name: string;\n  private model: string;\n\n  constructor(name: string = 'Cloud-OpenRouter', model?: string) {\n    this.name = name;\n    this.model = model || process.env.OPENROUTER_MODEL || 'google/gemini-3.5-flash';\n  }");
+let content = fs.readFileSync('src/backend/providers/OpenRouterProvider.ts', 'utf8');
 
-code = code.replace("const model = process.env.OPENROUTER_MODEL || 'google/gemini-3.5-flash';", "const model = this.model;");
+// Replace the default model
+content = content.replace(
+  "this.model = model || process.env.OPENROUTER_MODEL || 'google/gemini-3.5-flash';",
+  "this.model = model || process.env.OPENROUTER_MODEL || 'deepseek/deepseek-v4-flash-0731';"
+);
 
-fs.writeFileSync('src/backend/providers/OpenRouterProvider.ts', code);
+// Remove the obsolete comment
+content = content.replace(
+  "// Defaulting to the requested Gemini 3.5 Flash model on OpenRouter",
+  "// Defaulting to DeepSeek V4 Flash"
+);
+
+fs.writeFileSync('src/backend/providers/OpenRouterProvider.ts', content);
+console.log('Updated OpenRouterProvider.ts');
