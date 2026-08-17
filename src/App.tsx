@@ -18,8 +18,8 @@ export default function App() {
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
 
-  const [adminPassword, setAdminPassword] = useState('');
-  const passwordRef = useRef('');
+  const [adminPassword, setAdminPassword] = useState(localStorage.getItem('admin_password') || '');
+  const passwordRef = useRef(localStorage.getItem('admin_password') || '');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authError, setAuthError] = useState('');
 
@@ -43,6 +43,7 @@ export default function App() {
       if (res.status === 401) {
         setIsAuthModalOpen(true);
         setIsConnected(false);
+        localStorage.removeItem('admin_password');
         return;
       }
       
@@ -87,6 +88,7 @@ export default function App() {
       if (res.status === 401) {
         setChatLog(prev => [...prev, { role: 'murgi', text: '[System Error: Unauthorized]' }]);
         setIsAuthModalOpen(true);
+        localStorage.removeItem('admin_password');
         return;
       }
 
@@ -213,6 +215,7 @@ export default function App() {
             <form onSubmit={(e) => {
               e.preventDefault();
               setAuthError('');
+              localStorage.setItem('admin_password', adminPassword);
               fetchState(); // Re-fetch with new password
             }}>
               <input 
