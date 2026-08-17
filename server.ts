@@ -22,6 +22,22 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+// Basic Admin Auth Middleware
+const adminAuth = (req, res, next) => {
+  const expectedPassword = process.env.ADMIN_PASSWORD;
+  if (!expectedPassword) {
+    return next(); // If no password is set, allow access (dev mode)
+  }
+  
+  const providedAuth = req.headers['x-admin-password'] || req.query.admin_password;
+  if (providedAuth === expectedPassword) {
+    return next();
+  }
+  
+  return res.status(401).json({ error: 'Unauthorized. Invalid or missing Admin Password.' });
+};
+
+
 // Initialize Core Subsystems
 export const providerManager = new ProviderManager();
 export const identityManager = new IdentityManager();
@@ -66,20 +82,20 @@ app.get('/api/health', (req, res) => {
 });
 
 
-app.get('/api/logs', (req, res) => {
+app.get('/api/logs', adminAuth, (req, res) => {
   res.json(logHistory);
 });
 
 
-app.get('/api/system/metrics', (req, res) => {
+app.get('/api/system/metrics', adminAuth, (req, res) => {
   res.json(getSystemMetrics());
 });
 
-app.get('/api/system/tasks', (req, res) => {
+app.get('/api/system/tasks', adminAuth, (req, res) => {
   res.json(activeTasks);
 });
 
-app.get('/api/state', async (req, res) => {
+app.get('/api/state', adminAuth, async (req, res) => {
   res.json({
     identity: identityManager.getCurrentProfile(),
     providers: providerManager.getProviderStatus(),
@@ -89,7 +105,7 @@ app.get('/api/state', async (req, res) => {
   });
 });
 
-app.post('/api/interact', async (req, res) => {
+app.post('/api/interact', adminAuth, async (req, res) => {
   const { message } = req.body;
   try {
     // Treat API interactions as coming from a system/web user ID

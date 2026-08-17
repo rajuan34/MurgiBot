@@ -18,12 +18,37 @@ export default function App() {
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
 
+  const [adminPassword, setAdminPassword] = useState('');
+  const passwordRef = useRef('');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authError, setAuthError] = useState('');
+
+
   
+  
+  
+  const getHeaders = () => {
+    const headers = { 'Content-Type': 'application/json' };
+    const pwd = passwordRef.current;
+    if (pwd) headers['x-admin-password'] = pwd;
+    return headers;
+  };
+
+
   const fetchState = async () => {
     try {
       const start = performance.now();
-      const res = await fetch('/api/system/metrics');
+      const res = await fetch('/api/system/metrics', { headers: getHeaders() });
+      
+      if (res.status === 401) {
+        setIsAuthModalOpen(true);
+        setIsConnected(false);
+        return;
+      }
+      
       if (res.ok) {
+        setIsAuthModalOpen(false);
+        setAuthError('');
         const end = performance.now();
         setLatency(Math.round(end - start));
         setMetrics(await res.json());
@@ -32,7 +57,7 @@ export default function App() {
         setIsConnected(false);
       }
       
-      const botRes = await fetch('/api/state');
+      const botRes = await fetch('/api/state', { headers: getHeaders() });
       if (botRes.ok) {
         setBotState(await botRes.json());
       }
@@ -40,6 +65,7 @@ export default function App() {
       setIsConnected(false);
     }
   };
+
 
   
   const sendMessage = async (e: React.FormEvent) => {
@@ -52,11 +78,18 @@ export default function App() {
     setChatLog(prev => [...prev, { role: 'user', text: userMsg }]);
 
     try {
+      
       const res = await fetch('/api/interact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ message: userMsg })
       });
+      if (res.status === 401) {
+        setChatLog(prev => [...prev, { role: 'murgi', text: '[System Error: Unauthorized]' }]);
+        setIsAuthModalOpen(true);
+        return;
+      }
+
       const data = await res.json();
       
       setChatLog(prev => [...prev, { role: 'murgi', text: data.text || 'Error processing thought.' }]);
@@ -78,14 +111,16 @@ export default function App() {
     downloadAnchorNode.remove();
   };
 
+  
   const fetchLogs = async () => {
     try {
-      const res = await fetch('/api/logs');
+      const res = await fetch('/api/logs', { headers: getHeaders() });
       if (res.ok) {
         setServerLogs(await res.json());
       }
     } catch(e) {}
   };
+
 
   useEffect(() => {
     fetchState();
@@ -164,6 +199,42 @@ export default function App() {
             )}
           </div>
         </main>
+
+      {isAuthModalOpen && (
+        <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-xl w-full max-w-md shadow-2xl">
+            <div className="flex items-center gap-3 mb-6">
+              <ShieldAlert className="w-6 h-6 text-red-500" />
+              <h2 className="text-xl font-bold text-white">Authentication Required</h2>
+            </div>
+            <p className="text-neutral-400 text-sm mb-6">
+              This dashboard is protected in production. Please enter the Admin Password to access telemetry and controls.
+            </p>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              setAuthError('');
+              fetchState(); // Re-fetch with new password
+            }}>
+              <input 
+                type="password" 
+                value={adminPassword}
+                onChange={(e) => { setAdminPassword(e.target.value); passwordRef.current = e.target.value; }}
+                placeholder="Enter Admin Password"
+                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-emerald-500 transition-colors"
+                autoFocus
+              />
+              {authError && <p className="text-red-400 text-xs mb-4">{authError}</p>}
+              <button 
+                type="submit"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+              >
+                Authenticate
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       </div>
     </div>
   );
