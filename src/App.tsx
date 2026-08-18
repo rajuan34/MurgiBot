@@ -3,6 +3,7 @@ import { Sidebar } from './components/dashboard/Sidebar';
 import { OverviewView } from './components/dashboard/OverviewView';
 import { TasksView } from './components/dashboard/TasksView';
 import { LogsView } from './components/dashboard/LogsView';
+import { MoodIndicator } from './components/dashboard/MoodIndicator';
 import { AIEngineView } from './components/dashboard/AIEngineView';
 import { Activity, ShieldAlert, Rocket, Database, Settings, Menu } from 'lucide-react';
 
@@ -162,6 +163,9 @@ export default function App() {
             <span className="border-l border-neutral-800 pl-4">
               Latency: {latency > 0 ? `${latency}ms` : '--'}
             </span>
+            <div className="border-l border-neutral-800 pl-4 hidden sm:block">
+              <MoodIndicator mood={botState?.emotion} />
+            </div>
           </div>
 
           <div className="flex items-center gap-4">

@@ -54,8 +54,8 @@ export function LogsView({ serverLogs, isConnected }: { serverLogs: any[], isCon
         ) : (
           displayLogs.map((log, i) => (
             <div key={i} className="flex gap-3 hover:bg-neutral-900/50 p-1 rounded transition-colors group">
-              <span className="text-neutral-500 shrink-0 w-24">
-                {new Date(log.timestamp).toLocaleTimeString([], {hour12: false, fractionalSecondDigits: 3})}
+              <span className="text-neutral-500 shrink-0 w-40">
+                {new Date(log.timestamp).toLocaleString()}
               </span>
               <span className={`shrink-0 w-16 font-bold ${log.level === 'error' ? 'text-red-400' : log.level === 'warn' ? 'text-yellow-400' : 'text-blue-400'}`}>
                 [{log.level.toUpperCase()}]

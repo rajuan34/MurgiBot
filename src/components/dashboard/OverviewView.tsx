@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cpu, Database, Network, Clock, Activity, AlertCircle } from 'lucide-react';
+import { Cpu, Database, Network, Clock, Activity, AlertCircle, Smile } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export function OverviewView({ metrics, isConnected, botState }: { metrics: any, isConnected: boolean, botState?: any }) {
@@ -58,14 +58,14 @@ export function OverviewView({ metrics, isConnected, botState }: { metrics: any,
         </div>
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-neutral-400">System Uptime</h3>
-            <Clock className="w-4 h-4 text-purple-400" />
+            <h3 className="text-sm font-medium text-neutral-400">Current Mood</h3>
+            <Smile className="w-4 h-4 text-yellow-400" />
           </div>
-          <div className="text-2xl font-bold text-white mb-1">
-            {metrics ? formatUptime(metrics.uptime) : '--'}
+          <div className="text-2xl font-bold text-white mb-1 capitalize">
+            {botState?.emotion || '--'}
           </div>
           <div className="text-xs text-neutral-500">
-            Since last restart
+            Active Personality State
           </div>
         </div>
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
