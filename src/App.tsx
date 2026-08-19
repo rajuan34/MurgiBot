@@ -126,14 +126,18 @@ export default function App() {
 
 
   useEffect(() => {
-    fetchState();
-    fetchLogs();
-    const interval = setInterval(() => {
+    if (!isAuthModalOpen) {
       fetchState();
       fetchLogs();
+    }
+    const interval = setInterval(() => {
+      if (!isAuthModalOpen && localStorage.getItem('admin_password') && localStorage.getItem('admin_password') !== 'null') {
+        fetchState();
+        fetchLogs();
+      }
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthModalOpen]);
 
   return (
     <div className="min-h-screen bg-black text-neutral-200 font-sans flex h-screen overflow-hidden">

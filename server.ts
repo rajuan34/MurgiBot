@@ -29,19 +29,28 @@ const adminAuth = (req, res, next) => {
   const expectedPassword = process.env.ADMIN_PASSWORD;
   
   if (!expectedPassword) {
-    return next(); // If no password is set, allow access (dev mode)
+    return next();
   }
   
   const providedAuth = req.headers['x-admin-password'] || req.query.admin_password;
   if (providedAuth === expectedPassword) {
-    // Only log success for non-polling routes to avoid log spam (e.g. POST requests or specific actions)
     if (req.method === 'POST') {
        logger.info(`[Dashboard Access] Action Triggered | IP: ${clientIp} | Path: ${req.path}`);
     }
     return next();
   }
   
-  logger.warn(`[Dashboard Access] Unauthorized/Failed Attempt! | IP: ${clientIp} | Path: ${req.path}`);
+  // Explicitly check for valid auth string length to prevent "null" or empty string from triggering logs
+  const hasProvidedAuth = typeof providedAuth === 'string' && providedAuth.length > 0 && providedAuth !== 'null' && providedAuth !== 'undefined';
+  
+  if (hasProvidedAuth || req.method === 'POST') {
+     // Check if it is just a periodic polling endpoint, lower the log level for it so it doesn't spam warnings
+     if (req.method === 'GET' && (req.path === '/api/logs' || req.path === '/api/system/metrics' || req.path === '/api/state')) {
+         // Silently reject to prevent UI spam log issues
+     } else {
+         logger.warn(`[Dashboard Access] Unauthorized/Failed Attempt! | IP: ${clientIp} | Path: ${req.path}`);
+     }
+  }
   return res.status(401).json({ error: 'Unauthorized. Invalid or missing Admin Password.' });
 };
 

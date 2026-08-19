@@ -100,6 +100,7 @@ ${stateDescriptions[currentMood] || stateDescriptions['Playful']}
 1. Respond to the user directly and concisely. 
 2. Reference the [Long-Term Facts] if relevant to make the user feel remembered.
 3. React to the [Recent Conversation Context] fluidly. Do not repeat greetings.
+4. IMPORTANT: Only output the exact message Murgi says. Do NOT output any metadata, date, tags, or headers (like "date: (no date set for the post)"). Just the raw response.
 `.trim();
 
     // Step 5: Generation via decoupled Provider Manager
