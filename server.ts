@@ -21,19 +21,27 @@ const PORT = 3000;
 
 app.use(cors());
 app.use(express.json());
+app.set('trust proxy', true);
 
 // Basic Admin Auth Middleware
 const adminAuth = (req, res, next) => {
+  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
   const expectedPassword = process.env.ADMIN_PASSWORD;
+  
   if (!expectedPassword) {
     return next(); // If no password is set, allow access (dev mode)
   }
   
   const providedAuth = req.headers['x-admin-password'] || req.query.admin_password;
   if (providedAuth === expectedPassword) {
+    // Only log success for non-polling routes to avoid log spam (e.g. POST requests or specific actions)
+    if (req.method === 'POST') {
+       logger.info(`[Dashboard Access] Action Triggered | IP: ${clientIp} | Path: ${req.path}`);
+    }
     return next();
   }
   
+  logger.warn(`[Dashboard Access] Unauthorized/Failed Attempt! | IP: ${clientIp} | Path: ${req.path}`);
   return res.status(401).json({ error: 'Unauthorized. Invalid or missing Admin Password.' });
 };
 

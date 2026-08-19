@@ -1,13 +1,46 @@
 const fs = require('fs');
-let code = fs.readFileSync('server.ts', 'utf8');
+let content = fs.readFileSync('server.ts', 'utf8');
 
-const oldCode = "const nemotronProvider = new OpenRouterProvider('Nemotron-Lightning-Free', 'nvidia/nemotron-3.5-lightning:free');";
-const newCode = "const nemotronProvider = new OpenRouterProvider('Nemotron-Lightning-Free', 'nvidia/nemotron-3.5-lightning:free', 'CRITICAL DIRECTIVE: You are tired and completely unbothered. You DO NOT want to chat. When the user says anything, your ONLY response should be refusing to chat. For example, say things like \"bhai chat korbo na bye\", \"amar mood nai\", \"leave me alone\", \"aajke ar na\". Keep it extremely short (max 1 sentence), rude, and in Banglish. DO NOT answer their questions or engage in conversation.');";
+const oldAuth = `const adminAuth = (req, res, next) => {
+  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+  const expectedPassword = process.env.ADMIN_PASSWORD;
+  
+  if (!expectedPassword) {
+    logger.info(\`[Dashboard Access] Allow (No password set) | IP: \${clientIp} | Path: \${req.path}\`);
+    return next(); // If no password is set, allow access (dev mode)
+  }
+  
+  const providedAuth = req.headers['x-admin-password'] || req.query.admin_password;
+  if (providedAuth === expectedPassword) {
+    logger.info(\`[Dashboard Access] Success | IP: \${clientIp} | Path: \${req.path}\`);
+    return next();
+  }
+  
+  logger.warn(\`[Dashboard Access] Failed Attempt | IP: \${clientIp} | Path: \${req.path}\`);
+  return res.status(401).json({ error: 'Unauthorized. Invalid or missing Admin Password.' });
+};`;
 
-if (code.includes(oldCode)) {
-    code = code.replace(oldCode, newCode);
-    fs.writeFileSync('server.ts', code);
-    console.log("Successfully patched server.ts");
-} else {
-    console.log("Could not find the target code block in server.ts");
-}
+const newAuth = `const adminAuth = (req, res, next) => {
+  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+  const expectedPassword = process.env.ADMIN_PASSWORD;
+  
+  if (!expectedPassword) {
+    return next(); // If no password is set, allow access (dev mode)
+  }
+  
+  const providedAuth = req.headers['x-admin-password'] || req.query.admin_password;
+  if (providedAuth === expectedPassword) {
+    // Only log success for non-polling routes to avoid log spam (e.g. POST requests or specific actions)
+    if (req.method === 'POST') {
+       logger.info(\`[Dashboard Access] Action Triggered | IP: \${clientIp} | Path: \${req.path}\`);
+    }
+    return next();
+  }
+  
+  logger.warn(\`[Dashboard Access] Unauthorized/Failed Attempt! | IP: \${clientIp} | Path: \${req.path}\`);
+  return res.status(401).json({ error: 'Unauthorized. Invalid or missing Admin Password.' });
+};`;
+
+content = content.replace(oldAuth, newAuth);
+fs.writeFileSync('server.ts', content);
+console.log('server.ts patched again to prevent log spam.');
