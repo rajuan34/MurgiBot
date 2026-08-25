@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Terminal, Cpu, Zap, Activity, Users, ArrowRight } from 'lucide-react';
+import { Bot, Terminal, Cpu, Zap, Activity, Users, ArrowRight, Database } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function LandingPage() {
@@ -11,12 +11,14 @@ export default function LandingPage() {
             <Bot className="w-6 h-6 text-emerald-500" />
             Murgi AI
           </div>
-          <Link 
-            to="/dashboard" 
-            className="text-sm font-medium text-neutral-400 hover:text-white transition-colors"
-          >
-            OpsCenter Dashboard &rarr;
-          </Link>
+          <div className="flex items-center gap-6">
+            <a href="#features" className="text-sm font-medium text-neutral-400 hover:text-white transition-colors hidden md:block">
+              Features
+            </a>
+            <a href="#architecture" className="text-sm font-medium text-neutral-400 hover:text-white transition-colors hidden md:block">
+              Architecture
+            </a>
+          </div>
         </div>
       </nav>
 
@@ -35,17 +37,11 @@ export default function LandingPage() {
             Not your average helpful assistant. Murgi is a completely organic, apathetic, and chaotic bot that speaks fluent Banglish and refuses to sugarcoat anything.
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Link 
-              to="/dashboard" 
-              className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-8 py-4 rounded-full transition-all hover:scale-105"
-            >
-              Access Dashboard <ArrowRight className="w-5 h-5" />
-            </Link>
             <a 
               href="#features"
-              className="inline-flex items-center gap-2 bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-8 py-4 rounded-full border border-neutral-800 transition-colors"
+              className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-8 py-4 rounded-full transition-all hover:scale-105"
             >
-              Learn More
+              Explore Features <ArrowRight className="w-5 h-5" />
             </a>
           </div>
         </div>
@@ -75,6 +71,51 @@ export default function LandingPage() {
               icon={<Terminal className="w-6 h-6 text-cyan-400" />}
               title="Fluent Banglish & Slang"
               description="Designed specifically for South Asian Discord servers, Murgi natively processes and speaks in authentic internet slang and Banglish."
+            />
+          </div>
+        </div>
+      </section>
+
+      <section id="architecture" className="py-24 px-6 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <Zap className="w-12 h-12 text-emerald-500 mx-auto mb-6" />
+            <h2 className="text-3xl font-bold text-white mb-4">Core Architecture</h2>
+            <p className="text-neutral-400 max-w-2xl mx-auto">
+              Behind the chaos lies a highly optimized, state-aware engine capable of processing complex contexts with minimal latency.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <FeatureCard 
+              icon={<Cpu className="w-5 h-5 text-neutral-400" />}
+              title="Multi-Model Inference Routing"
+              description="Dynamically routes payloads between Gemini, OpenRouter, and Ollama APIs to ensure maximum uptime and optimal response generation."
+            />
+            <FeatureCard 
+              icon={<Database className="w-5 h-5 text-neutral-400" />}
+              title="Vectorized Memory Storage"
+              description="Uses semantic embeddings and short-to-long term context promotion (RAG) to recall interactions seamlessly."
+            />
+            <FeatureCard 
+              icon={<Activity className="w-5 h-5 text-neutral-400" />}
+              title="Heuristic Emotion State Machine"
+              description="Evaluates user intent and historical valence to algorithmically shift through programmatic mood variables in real-time."
+            />
+            <FeatureCard 
+              icon={<Terminal className="w-5 h-5 text-neutral-400" />}
+              title="Banglish NLP Processing"
+              description="A custom pipeline tuned specifically to parse, understand, and generate syntax combining native Bengali structure with English alphabet (Banglish)."
+            />
+            <FeatureCard 
+              icon={<Zap className="w-5 h-5 text-neutral-400" />}
+              title="Dynamic Context Injection"
+              description="Optimizes LLM token windows by injecting highly relevant system prompts, persona overrides, and temporal metadata before execution."
+            />
+            <FeatureCard 
+              icon={<Users className="w-5 h-5 text-neutral-400" />}
+              title="Real-Time Telemetry Socket"
+              description="Securely transmits live application state, Discord connection health, and processing latencies directly to the OpsCenter."
             />
           </div>
         </div>
