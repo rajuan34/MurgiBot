@@ -14,7 +14,7 @@ export function LogsView({ serverLogs, isConnected }: { serverLogs: any[], isCon
   }, [isPaused ? [] : serverLogs, filter]);
 
   return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden flex flex-col h-[600px]">
+    <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden flex flex-col h-full min-h-[400px] flex-1">
       <div className="p-4 border-b border-neutral-800 flex flex-wrap gap-4 justify-between items-center bg-neutral-950">
         <div className="flex items-center gap-4 flex-1">
           <div className="flex items-center gap-2">

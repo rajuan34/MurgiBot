@@ -184,7 +184,7 @@ export default function Dashboard() {
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto p-6 bg-[#0a0a0a]">
-          <div className="max-w-7xl mx-auto">
+          <div className={`mx-auto w-full flex flex-col ${activeTab === 'logs' ? 'max-w-full flex-1 h-full' : 'max-w-7xl'}`}>
             {activeTab === 'overview' && <OverviewView metrics={metrics} isConnected={isConnected} botState={botState} />}
             {activeTab === 'tasks' && <TasksView />}
             {activeTab === 'ai-engine' && <AIEngineView botState={botState} chatLog={chatLog} input={input} setInput={setInput} sendMessage={sendMessage} exportChatLog={exportChatLog} fetchState={fetchState} isConnected={isConnected} latency={latency} isSending={isSending} />}

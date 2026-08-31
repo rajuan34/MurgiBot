@@ -112,9 +112,25 @@ ${stateDescriptions[currentMood] || stateDescriptions['Playful']}
       });
 
       // Save Murgi's response to memory
-      await this.memory.addShortTermMessage(userId, 'murgi', response.text);
+            // Sanitize response to remove <think>...</think> blocks leaked by R1 distillation models
+      let cleanText = response.text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      
+      // Also catch raw "Here's a thinking process:" text if the XML tags were omitted
+      if (cleanText.includes("Here's a thinking process:")) {
+          const lines = cleanText.split('\n');
+          const validLines = lines.filter(l => l.trim().length > 0 && !l.includes("Here's a thinking process:") && !l.match(/^[0-9]+\.\s/) && !l.startsWith("[") && !l.endsWith("]"));
+          if (validLines.length > 0) {
+              cleanText = validLines[validLines.length - 1]; // Take the last valid line
+          } else {
+              cleanText = "kire bhai, mood nai amar";
+          }
+      }
+
+      // Save Murgi's response to memory
+      await this.memory.addShortTermMessage(userId, 'murgi', cleanText);
+      
       logger.info('Brain finished processing pipeline successfully.');
-      return response.text;
+      return cleanText;
     } catch (error) {
       logger.error('Brain processing failed', { error });
       return "*(Murgi seems lost in thought and doesn't respond)*";
