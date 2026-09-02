@@ -71,14 +71,14 @@ export class BohurupiBrain {
       "RESPECTFUL_FRIENDLY": "Tone: Respectful, friendly, highly cooperative, and warm. Acknowledge as co-creator.",
     };
 
-    let befabureRules = "";
+    let behaviorRules = "";
     try {
-      befabureRules = await fs.readFile(path.join(process.cwd(), 'behavior.md'), 'utf8');
+      behaviorRules = await fs.readFile(path.join(process.cwd(), 'behavior.md'), 'utf8');
     } catch (err) {
       logger.warn('Failed to read behavior.md file', { error: err });
     }
 
-    const systemInstruction = `${befabureRules}
+    const systemInstruction = `${behaviorRules}
 
 [Current User Role: ${userRole}]
 [Current Personality State: ${currentMood}]
