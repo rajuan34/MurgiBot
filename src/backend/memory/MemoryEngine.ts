@@ -2,7 +2,7 @@ import { logger } from '../telemetry/logger';
 import pg from 'pg';
 
 export interface ShortTermMessage {
-  role: 'user' | 'murgi';
+  role: 'user' | 'bohurupi';
   text: string;
   timestamp: number;
 }
@@ -44,7 +44,7 @@ export class MemoryEngine {
       const client = await this.pool.connect();
       try {
         await client.query(`
-          CREATE TABLE IF NOT EXISTS murgi_temp_memory (
+          CREATE TABLE IF NOT EXISTS bohurupi_temp_memory (
               id SERIAL PRIMARY KEY,
               user_id VARCHAR(255) NOT NULL,
               type VARCHAR(50) NOT NULL,
@@ -52,8 +52,8 @@ export class MemoryEngine {
               created_at BIGINT NOT NULL,
               expires_at BIGINT NOT NULL
           );
-          CREATE INDEX IF NOT EXISTS idx_murgi_temp_mem_lookup ON murgi_temp_memory(user_id, type);
-          CREATE INDEX IF NOT EXISTS idx_murgi_temp_mem_expires ON murgi_temp_memory(expires_at);
+          CREATE INDEX IF NOT EXISTS idx_bohurupi_temp_mem_lookup ON bohurupi_temp_memory(user_id, type);
+          CREATE INDEX IF NOT EXISTS idx_bohurupi_temp_mem_expires ON bohurupi_temp_memory(expires_at);
         `);
         logger.info('Temporary Cache Database initialized successfully.');
       } finally {
@@ -69,13 +69,13 @@ export class MemoryEngine {
     if (!this.pool) return;
     try {
       const now = Date.now();
-      await this.pool.query('DELETE FROM murgi_temp_memory WHERE expires_at < $1', [now]);
+      await this.pool.query('DELETE FROM bohurupi_temp_memory WHERE expires_at < $1', [now]);
     } catch (error) {
       logger.error('Failed to cleanup expired data', { error });
     }
   }
 
-  async addShortTermMessage(userId: string, role: 'user' | 'murgi', text: string) {
+  async addShortTermMessage(userId: string, role: 'user' | 'bohurupi', text: string) {
     const timestamp = Date.now();
     const data: ShortTermMessage = { role, text, timestamp };
     
@@ -84,16 +84,16 @@ export class MemoryEngine {
         // Short term context expires in 24 hours
         const expiresAt = timestamp + (24 * 60 * 60 * 1000); 
         await this.pool.query(
-          'INSERT INTO murgi_temp_memory (user_id, type, data, created_at, expires_at) VALUES ($1, $2, $3, $4, $5)',
+          'INSERT INTO bohurupi_temp_memory (user_id, type, data, created_at, expires_at) VALUES ($1, $2, $3, $4, $5)',
           [userId, 'short_term_message', data, timestamp, expiresAt]
         );
         
         // Enforce max messages constraint per user
         // We delete oldest messages if they exceed MAX_CONTEXT_MESSAGES
         await this.pool.query(`
-          DELETE FROM murgi_temp_memory
+          DELETE FROM bohurupi_temp_memory
           WHERE id IN (
-            SELECT id FROM murgi_temp_memory
+            SELECT id FROM bohurupi_temp_memory
             WHERE user_id = $1 AND type = 'short_term_message'
             ORDER BY created_at DESC
             OFFSET $2
@@ -121,14 +121,14 @@ export class MemoryEngine {
       try {
         const now = Date.now();
         const res = await this.pool.query(
-          'SELECT data FROM murgi_temp_memory WHERE user_id = $1 AND type = $2 AND expires_at >= $3 ORDER BY created_at ASC',
+          'SELECT data FROM bohurupi_temp_memory WHERE user_id = $1 AND type = $2 AND expires_at >= $3 ORDER BY created_at ASC',
           [userId, 'short_term_message', now]
         );
         
         if (res.rowCount === 0) return 'No recent conversation context.';
         
         const history = res.rows.map(row => row.data as ShortTermMessage);
-        return history.map(m => `${m.role === 'user' ? 'User' : 'Murgi'}: ${m.text}`).join('\n');
+        return history.map(m => `${m.role === 'user' ? 'User' : 'Bohurupi'}: ${m.text}`).join('\n');
       } catch (error) {
         logger.error('DB Error getting short term context. Falling back to memory.', { error });
       }
@@ -137,7 +137,7 @@ export class MemoryEngine {
     // Fallback
     const history = this.fallbackShortTerm.get(userId) || [];
     if (history.length === 0) return 'No recent conversation context.';
-    return history.map(m => `${m.role === 'user' ? 'User' : 'Murgi'}: ${m.text}`).join('\n');
+    return history.map(m => `${m.role === 'user' ? 'User' : 'Bohurupi'}: ${m.text}`).join('\n');
   }
 
   async addLongTermFact(userId: string, fact: string) {
@@ -149,7 +149,7 @@ export class MemoryEngine {
         // "Long term" context in cache expires in 7 days (as it is not permanent storage)
         const expiresAt = timestamp + (7 * 24 * 60 * 60 * 1000);
         await this.pool.query(
-          'INSERT INTO murgi_temp_memory (user_id, type, data, created_at, expires_at) VALUES ($1, $2, $3, $4, $5)',
+          'INSERT INTO bohurupi_temp_memory (user_id, type, data, created_at, expires_at) VALUES ($1, $2, $3, $4, $5)',
           [userId, 'long_term_fact', data, timestamp, expiresAt]
         );
         logger.info(`Stored new temporary cached fact for user ${userId}`, { fact });
@@ -172,7 +172,7 @@ export class MemoryEngine {
       try {
         const now = Date.now();
         const res = await this.pool.query(
-          'SELECT data FROM murgi_temp_memory WHERE user_id = $1 AND type = $2 AND expires_at >= $3 ORDER BY created_at ASC',
+          'SELECT data FROM bohurupi_temp_memory WHERE user_id = $1 AND type = $2 AND expires_at >= $3 ORDER BY created_at ASC',
           [userId, 'long_term_fact', now]
         );
         
@@ -198,10 +198,10 @@ export class MemoryEngine {
     if (this.pool) {
       try {
         const now = Date.now();
-        const activeRes = await this.pool.query("SELECT COUNT(DISTINCT user_id) as count FROM murgi_temp_memory WHERE type = 'short_term_message' AND expires_at >= $1", [now]);
+        const activeRes = await this.pool.query("SELECT COUNT(DISTINCT user_id) as count FROM bohurupi_temp_memory WHERE type = 'short_term_message' AND expires_at >= $1", [now]);
         dbActive = parseInt(activeRes.rows[0].count);
         
-        const userRes = await this.pool.query("SELECT COUNT(DISTINCT user_id) as count FROM murgi_temp_memory WHERE type = 'long_term_fact' AND expires_at >= $1", [now]);
+        const userRes = await this.pool.query("SELECT COUNT(DISTINCT user_id) as count FROM bohurupi_temp_memory WHERE type = 'long_term_fact' AND expires_at >= $1", [now]);
         dbUsers = parseInt(userRes.rows[0].count);
         
         return {

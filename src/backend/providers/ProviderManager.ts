@@ -84,6 +84,6 @@ export class ProviderManager {
     }
 
     logger.error('CRITICAL: All cloud and local AI providers failed.');
-    throw new Error('All AI providers exhausted. Murgi is unable to process the thought.');
+    throw new Error('All AI providers exhausted. Bohurupi is unable to process the thought.');
   }
 }

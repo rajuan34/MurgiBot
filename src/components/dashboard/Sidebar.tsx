@@ -11,7 +11,7 @@ interface SidebarProps {
 export function Sidebar({ activeTab, setActiveTab, isMobileOpen = false, setIsMobileOpen }: SidebarProps) {
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'ai-engine', label: 'Murgi AI Core', icon: Brain },
+    { id: 'ai-engine', label: 'Bohurupi AI Core', icon: Brain },
     { id: 'resources', label: 'Resources', icon: Server },
     { id: 'tasks', label: 'Tasks & Workers', icon: ListTree },
     { id: 'logs', label: 'Live Logs', icon: FileText },

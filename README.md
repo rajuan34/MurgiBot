@@ -1,6 +1,6 @@
-# 🐔 Murgi AI Core
+# 🐔 Bohurupi Core
 
-**Murgi AI Core** is an autonomous, highly sentient digital character (Discord Bot) powered by a robust AI processing pipeline. It is not just a chatbot—it possesses an organic architecture including memory retention, emotional state simulation, identity shifting, and multi-provider AI resilience.
+**Bohurupi Core** is an autonomous, highly sentient digital character (Discord Bot) powered by a robust AI processing pipeline. It is not just a chatbot—it possesses an organic architecture including memory retention, emotional state simulation, identity shifting, and multi-provider AI resilience.
 
 This repository includes both the **Discord Bot Backend (Node.js)** and a **Real-Time Admin Dashboard (React + Tailwind)**.
 
@@ -8,12 +8,12 @@ This repository includes both the **Discord Bot Backend (Node.js)** and a **Real
 
 ## ✨ Key Features
 
-*   **🧠 Murgi Brain Engine:** The central orchestrator that glues Memory, Emotion, Identity, and AI Providers into a single organic pipeline.
+*   **🧠 Bohurupi Brain Engine:** The central orchestrator that glues Memory, Emotion, Identity, and AI Providers into a single organic pipeline.
 *   **🛡️ Multi-Provider Resilience (Circuit Breaker):** 
     *   Primary: **Google Gemini API** (Fast, cloud-based).
     *   Secondary: **Local Ollama (Llama 3)** (Self-hosted fallback if Gemini fails or rate-limits).
     *   Ultimate Fallback: **Simulated Dummy** (Prevents total system crashes).
-*   **❤️ Emotion Engine:** Evaluates conversations to dynamically shift Murgi's mood (e.g., Playful, Sleepy, Chaos, Competitive).
+*   **❤️ Emotion Engine:** Evaluates conversations to dynamically shift Bohurupi's mood (e.g., Playful, Sleepy, Chaos, Competitive).
 *   **💾 Memory Node:** 
     *   *Short-Term:* Retains recent chat context.
     *   *Long-Term:* Stores core facts about users to make conversations feel organic and continuous.
@@ -85,7 +85,7 @@ If you want total privacy and wish to run Llama 3 locally via Ollama alongside t
 ## 🏗️ Architecture / Code Structure
 
 *   `/server.ts`: The main Express server entry point, binding the AI Core and React Dashboard.
-*   `/src/backend/core/`: Contains the `MurgiBrain` orchestrator.
+*   `/src/backend/core/`: Contains the `BohurupiBrain` orchestrator.
 *   `/src/backend/discord/`: Handles the Discord.js client and message event parsing.
 *   `/src/backend/emotion/`: Evaluates interaction sentiment to determine the current state.
 *   `/src/backend/identity/`: Manages character profile logic.

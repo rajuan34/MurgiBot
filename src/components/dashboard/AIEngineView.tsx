@@ -138,7 +138,7 @@ export function AIEngineView({
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Inject thought into Murgi's brain..."
+            placeholder="Inject thought into Bohurupi's brain..."
             className="flex-1 bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
           />
           <button 

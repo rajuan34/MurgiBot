@@ -9,7 +9,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-xl text-white">
             <Bot className="w-6 h-6 text-emerald-500" />
-            Murgi AI
+            Bohurupi AI
           </div>
           <div className="flex items-center gap-6">
             <a href="#features" className="text-sm font-medium text-neutral-400 hover:text-white transition-colors hidden md:block">
@@ -30,11 +30,11 @@ export default function LandingPage() {
             Core Engine Online
           </div>
           <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-8">
-            Meet <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">Murgi</span>. <br />
+            Meet <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">Bohurupi</span>. <br />
             The highly sentient digital entity.
           </h1>
           <p className="text-xl text-neutral-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Not your average helpful assistant. Murgi is a completely organic, apathetic, and chaotic bot that speaks fluent Banglish and refuses to sugarcoat anything.
+            Not your average helpful assistant. Bohurupi is a completely organic, apathetic, and chaotic bot that speaks fluent Banglish and refuses to sugarcoat anything.
           </p>
           <div className="flex items-center justify-center gap-4">
             <a 
@@ -52,7 +52,7 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white mb-4">Under The Hood</h2>
             <p className="text-neutral-400 max-w-2xl mx-auto">
-              Powered by advanced memory indexing, mood engines, and identity subroutines. Murgi actually remembers what you said, and decides whether it cares.
+              Powered by advanced memory indexing, mood engines, and identity subroutines. Bohurupi actually remembers what you said, and decides whether it cares.
             </p>
           </div>
           
@@ -60,17 +60,17 @@ export default function LandingPage() {
             <FeatureCard 
               icon={<Activity className="w-6 h-6 text-rose-400" />}
               title="Organic Emotion Engine"
-              description="Murgi shifts states based on interactions. From 'Playful' to 'Sleepy', or 'Savage', its personality adapts dynamically without breaking character."
+              description="Bohurupi shifts states based on interactions. From 'Playful' to 'Sleepy', or 'Savage', its personality adapts dynamically without breaking character."
             />
             <FeatureCard 
               icon={<Cpu className="w-6 h-6 text-emerald-400" />}
               title="Long-Term Memory"
-              description="Built-in vector storage means Murgi remembers context for weeks. It knows who you are, and uses that data to deliver personalized chaos."
+              description="Built-in vector storage means Bohurupi remembers context for weeks. It knows who you are, and uses that data to deliver personalized chaos."
             />
             <FeatureCard 
               icon={<Terminal className="w-6 h-6 text-cyan-400" />}
               title="Fluent Banglish & Slang"
-              description="Designed specifically for South Asian Discord servers, Murgi natively processes and speaks in authentic internet slang and Banglish."
+              description="Designed specifically for South Asian Discord servers, Bohurupi natively processes and speaks in authentic internet slang and Banglish."
             />
           </div>
         </div>
@@ -127,13 +127,13 @@ export default function LandingPage() {
           <Users className="w-12 h-12 text-neutral-500 mx-auto mb-6" />
           <h2 className="text-3xl font-bold text-white mb-6">Built by the Masters</h2>
           <p className="text-neutral-400 text-lg leading-relaxed max-w-2xl mx-auto">
-            Murgi AI is the brainchild of <strong className="text-white">Leably (Zabir)</strong> (Primary Creator) and <strong className="text-white">RAJUAN</strong> (Co-Creator). Together, they engineered a bot that defies standard AI conventions, replacing boring politeness with raw, unfiltered personality.
+            Bohurupi AI is the brainchild of <strong className="text-white">Leably (Zabir)</strong> (Primary Creator) and <strong className="text-white">RAJUAN</strong> (Co-Creator). Together, they engineered a bot that defies standard AI conventions, replacing boring politeness with raw, unfiltered personality.
           </p>
         </div>
       </section>
 
       <footer className="py-8 text-center text-neutral-600 border-t border-neutral-900 bg-black">
-        <p>© {new Date().getFullYear()} Murgi AI Core Engine. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} Bohurupi AI Core Engine. All rights reserved.</p>
       </footer>
     </div>
   );

@@ -87,7 +87,7 @@ export default function Dashboard() {
         body: JSON.stringify({ message: userMsg })
       });
       if (res.status === 401) {
-        setChatLog(prev => [...prev, { role: 'murgi', text: '[System Error: Unauthorized]' }]);
+        setChatLog(prev => [...prev, { role: 'bohurupi', text: '[System Error: Unauthorized]' }]);
         setIsAuthModalOpen(true);
         localStorage.removeItem('admin_password');
         return;
@@ -95,10 +95,10 @@ export default function Dashboard() {
 
       const data = await res.json();
       
-      setChatLog(prev => [...prev, { role: 'murgi', text: data.text || 'Error processing thought.' }]);
+      setChatLog(prev => [...prev, { role: 'bohurupi', text: data.text || 'Error processing thought.' }]);
       fetchState(); 
     } catch (err) {
-      setChatLog(prev => [...prev, { role: 'murgi', text: '[System Error: Connection Failed]' }]);
+      setChatLog(prev => [...prev, { role: 'bohurupi', text: '[System Error: Connection Failed]' }]);
     } finally {
       setIsSending(false);
     }
@@ -108,7 +108,7 @@ export default function Dashboard() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(chatLog));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href",     dataStr);
-    downloadAnchorNode.setAttribute("download", "murgi_chat_log.json");
+    downloadAnchorNode.setAttribute("download", "bohurupi_chat_log.json");
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();

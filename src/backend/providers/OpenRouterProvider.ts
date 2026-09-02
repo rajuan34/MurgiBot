@@ -36,7 +36,7 @@ export class OpenRouterProvider implements AIProvider {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000', // Recommended by OpenRouter
-          'X-Title': 'Murgi AI Core', // Recommended by OpenRouter
+          'X-Title': 'Bohurupi AI Core', // Recommended by OpenRouter
         },
         body: JSON.stringify({
           model: model,

@@ -7,7 +7,7 @@ export class IdentityManager {
 
   constructor() {}
 
-  // We keep this method for API compatibility with MurgiBrain, 
+  // We keep this method for API compatibility with BohurupiBrain, 
   // but it no longer changes any Discord profile picture.
   async updateProfile(newProfile: ProfileType): Promise<boolean> {
     newProfile = newProfile.toLowerCase();
@@ -22,7 +22,7 @@ export class IdentityManager {
     return this.currentProfile;
   }
 
-  // Stubs to avoid breaking other imports that might use them (like DiscordService or MurgiBrain if they were left intact)
+  // Stubs to avoid breaking other imports that might use them (like DiscordService or BohurupiBrain if they were left intact)
   public setClient(client: any) {}
   public lockProfile(durationMinutes: number) {}
   public unlockProfile() {}

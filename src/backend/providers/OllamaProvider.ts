@@ -17,7 +17,7 @@ ${request.systemInstruction || ''}
 ${request.context || ''}
 
 User: ${request.prompt}
-Murgi:`.trim();
+Bohurupi:`.trim();
 
     try {
       const cleanBaseUrl = this.baseUrl.replace(/\/$/, '');

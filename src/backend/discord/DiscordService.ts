@@ -1,14 +1,14 @@
 import { Client, GatewayIntentBits, Events, Message, TextChannel } from 'discord.js';
 import cron from 'node-cron';
 import { logger } from '../telemetry/logger';
-import { MurgiBrain } from '../core/MurgiBrain';
+import { BohurupiBrain } from '../core/BohurupiBrain';
 
 export class DiscordService {
   private client: Client;
   private isConnected: boolean = false;
   private schedulerStarted: boolean = false;
 
-  constructor(private brain: MurgiBrain) {
+  constructor(private brain: BohurupiBrain) {
     this.client = new Client({
       intents: [
         GatewayIntentBits.Guilds,
@@ -105,11 +105,11 @@ export class DiscordService {
 
       const cleanContent = selectedMessage.content.replace(new RegExp(`<@!?${this.client.user.id}>`, 'g'), '').trim();
       
-      // Inject some context to brain that this is an auto-reply so Murgi acts naturally
+      // Inject some context to brain that this is an auto-reply so Bohurupi acts naturally
       const contextPrefix = "[SYSTEM: You are initiating a random interaction. Act naturally, pick up on the context of their message or just roast them out of nowhere. Do not say you are initiating.]\n";
       const response = await this.brain.processInteraction(selectedMessage.author.id, contextPrefix + cleanContent);
 
-      if (response && !response.includes('*(Murgi watches silently)*')) {
+      if (response && !response.includes('*(Bohurupi watches silently)*')) {
           const sanitizedResponse = response.length > 1950 ? response.substring(0, 1950) + '...' : response;
           await selectedMessage.reply(sanitizedResponse);
           logger.info(`Successfully sent scheduled auto-reply to message ${selectedMessage.id}`);
@@ -154,7 +154,7 @@ export class DiscordService {
         
         const response = await this.brain.processInteraction(message.author.id, cleanContent);
         
-        if (response && !response.includes('*(Murgi watches silently)*')) {
+        if (response && !response.includes('*(Bohurupi watches silently)*')) {
           // Truncate response to stay well within Discord's 2000 character limit
           const sanitizedResponse = response.length > 1950 ? response.substring(0, 1950) + '...' : response;
           

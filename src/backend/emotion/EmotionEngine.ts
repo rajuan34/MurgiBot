@@ -6,7 +6,7 @@ export class EmotionEngine {
   private currentState: PersonalityState = 'Playful';
 
   /**
-   * Evaluates the incoming message and automatically shifts Murgi's mood.
+   * Evaluates the incoming message and automatically shifts Bohurupi's mood.
    * Strictly uses provided PersonalityStates.
    * Avoids being 'kind' by relying on the system prompt's definition of 'Supportive' (savage/dismissive).
    */
@@ -46,7 +46,7 @@ export class EmotionEngine {
    */
   setState(newState: PersonalityState): PersonalityState {
     if (this.currentState !== newState) {
-      logger.info(`State Shift: Murgi transitioned from [${this.currentState}] to [${newState}]`);
+      logger.info(`State Shift: Bohurupi transitioned from [${this.currentState}] to [${newState}]`);
       this.currentState = newState;
     }
     return this.currentState;
