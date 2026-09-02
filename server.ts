@@ -45,7 +45,7 @@ const adminAuth = (req, res, next) => {
   
   if (hasProvidedAuth || req.method === 'POST') {
      // Check if it is just a periodic polling endpoint, lower the log level for it so it doesn't spam warnings
-     if (req.method === 'GET' && (req.path === '/api/logs' || req.path === '/api/system/metrics' || req.path === '/api/state')) {
+     if (req.method === 'GET' && (req.path === '/api/logs' || req.path === '/api/calls' || req.path === '/api/system/metrics' || req.path === '/api/state')) {
          // Silently reject to prevent UI spam log issues
      } else {
          logger.warn(`[Dashboard Access] Unauthorized/Failed Attempt! | IP: ${clientIp} | Path: ${req.path}`);
@@ -101,6 +101,10 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api/logs', adminAuth, (req, res) => {
   res.json(logHistory);
+});
+
+app.get('/api/calls', adminAuth, (req, res) => {
+  res.json(providerManager.getAPICallHistory());
 });
 
 

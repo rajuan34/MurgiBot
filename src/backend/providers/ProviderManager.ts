@@ -1,5 +1,13 @@
 import { logger } from '../telemetry/logger';
 
+export interface APICallLog {
+  timestamp: string;
+  provider: string;
+  status: 'success' | 'error' | 'rate_limit';
+  latencyMs: number;
+  errorDetail?: string;
+}
+
 export interface LLMRequest {
   prompt: string;
   context?: string; // Contains retrieved memory and emotion data
@@ -17,6 +25,17 @@ export interface AIProvider {
  * and implements a Circuit Breaker pattern to ensure resilience.
  */
 export class ProviderManager {
+  private apiCallHistory: APICallLog[] = [];
+
+  getAPICallHistory() {
+    return this.apiCallHistory;
+  }
+
+  private addApiLog(log: Omit<APICallLog, 'timestamp'>) {
+    this.apiCallHistory.unshift({ ...log, timestamp: new Date().toISOString() });
+    if (this.apiCallHistory.length > 100) this.apiCallHistory.pop();
+  }
+
   private providers: AIProvider[] = [];
   private circuitBreakerFailures: Map<string, number> = new Map();
   private readonly MAX_FAILURES = 3; // Block provider after 3 consecutive failures
@@ -69,13 +88,23 @@ export class ProviderManager {
 
       } catch (error: any) {
         const errorMessage = error.message || '';
+        
+        let status: 'error' | 'rate_limit' = 'error';
         if (errorMessage.includes('429') || errorMessage.includes('Quota exceeded')) {
           logger.warn(`Provider ${provider.name} rate limited (429). Triggering failover.`);
+          status = 'rate_limit';
         } else if (errorMessage.includes('fetch failed') || errorMessage.includes('ECONNREFUSED')) {
           logger.warn(`Provider ${provider.name} is unreachable. Triggering failover.`);
         } else {
           logger.error(`Provider ${provider.name} failed`, { error: errorMessage });
         }
+        
+        this.addApiLog({
+          provider: provider.name,
+          status,
+          latencyMs: Date.now() - start, // Time taken before failure
+          errorDetail: errorMessage
+        });
         // Increment failure count
         this.circuitBreakerFailures.set(provider.name, failures + 1);
         

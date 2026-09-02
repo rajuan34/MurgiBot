@@ -3,6 +3,7 @@ import { Sidebar } from './components/dashboard/Sidebar';
 import { OverviewView } from './components/dashboard/OverviewView';
 import { TasksView } from './components/dashboard/TasksView';
 import { LogsView } from './components/dashboard/LogsView';
+import { APILogsView } from './components/dashboard/APILogsView';
 import { MoodIndicator } from './components/dashboard/MoodIndicator';
 import { AIEngineView } from './components/dashboard/AIEngineView';
 import { Activity, ShieldAlert, Rocket, Database, Settings, Menu } from 'lucide-react';
@@ -184,14 +185,15 @@ export default function Dashboard() {
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto p-6 bg-[#0a0a0a]">
-          <div className={`mx-auto w-full flex flex-col ${activeTab === 'logs' ? 'max-w-full flex-1 h-full' : 'max-w-7xl'}`}>
+          <div className={`mx-auto w-full flex flex-col ${(activeTab === 'logs' || activeTab === 'api') ? 'max-w-full flex-1 h-full' : 'max-w-7xl'}`}>
             {activeTab === 'overview' && <OverviewView metrics={metrics} isConnected={isConnected} botState={botState} />}
             {activeTab === 'tasks' && <TasksView />}
             {activeTab === 'ai-engine' && <AIEngineView botState={botState} chatLog={chatLog} input={input} setInput={setInput} sendMessage={sendMessage} exportChatLog={exportChatLog} fetchState={fetchState} isConnected={isConnected} latency={latency} isSending={isSending} />}
             {activeTab === 'logs' && <LogsView serverLogs={serverLogs} isConnected={isConnected} />}
+            {activeTab === 'api' && <APILogsView isConnected={isConnected} getHeaders={getHeaders} />}
             
             {/* Placeholder for unimplemented tabs */}
-            {['resources', 'alerts', 'api', 'health', 'audit', 'deployments', 'settings'].includes(activeTab) && (
+            {['resources', 'alerts', 'health', 'audit', 'deployments', 'settings'].includes(activeTab) && (
               <div className="flex flex-col items-center justify-center h-[60vh] text-center max-w-md mx-auto">
                 <ShieldAlert className="w-16 h-16 text-neutral-800 mb-6" />
                 <h2 className="text-xl font-bold text-neutral-300 mb-2 capitalize">{activeTab} Interface</h2>
