@@ -67,9 +67,10 @@ export class ProviderManager {
          continue; // Move to fallback provider
       }
 
+      let start = Date.now();
       try {
         logger.info(`Attempting generation with provider: ${provider.name}`);
-        const start = Date.now();
+        start = Date.now();
         
         // Execute AI Call
         const text = await provider.generate(request);
