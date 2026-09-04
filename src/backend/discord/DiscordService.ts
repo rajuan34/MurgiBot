@@ -119,6 +119,130 @@ export class DiscordService {
     }
   }
 
+
+  private async handleCommand(command: string, args: string[], message: Message): Promise<boolean> {
+    const validCommands = ['bully', 'expose', 'hype', 'agree', 'court', 'biryani_war', 'nasta_check', 'predict', 'roast_chat', 'lore'];
+    if (!validCommands.includes(command)) return false;
+
+    const ownerIds = (process.env.DISCORD_OWNER_IDS || '').split(',').map(id => id.trim()).filter(id => id.length > 0);
+    
+    // If no owner IDs are set, or the author is not an owner, block access
+    if (ownerIds.length === 0 || !ownerIds.includes(message.author.id)) {
+      const rejections = [
+        "oi <@" + message.author.id + ">, tui amar owner naki re? ja shammne theke bhag 💀",
+        "error 404: tui boss na. amar code e tor kono access nai bro.",
+        "bhai keu ei bot-er access dibe na eder. creator chara karo kotha shuni na ami 🥱",
+        "access denied. tui jao, age boss re dakaiya an.",
+        "amar owner chara keu eita marle amar battery ekhoni blast hobe 🗿"
+      ];
+      await message.reply(rejections[Math.floor(Math.random() * rejections.length)]);
+      return true;
+    }
+
+    const targetUser = message.mentions.users.first() ? "<@" + message.mentions.users.first()?.id + ">" : (args[0] || "<@" + message.author.id + ">");
+
+    let responses: string[] = [];
+
+    switch (command) {
+      case 'bully':
+        responses = [
+          targetUser + " bhai tui kotha bola bondho korle global warming 2% kome jabe 💀",
+          "shobai dekho, " + targetUser + " er gameplay dekhle mouse-o kanna kore 😭",
+          targetUser + " tor brain er ram hoilo 128MB, processing khub slow dosto.",
+          "bhai " + targetUser + ", tui ehto chill kemne? tor na samne exam 🗿",
+          targetUser + " bhai tora chara ar keu erokom cringe kotha bolte pare na."
+        ];
+        break;
+      case 'expose':
+        responses = [
+          "shobai shuno, " + targetUser + " raate incognito mode e 'how to play Ludo pro' search dey 👀",
+          "breaking news: " + targetUser + " biryani er alu rasta e fele ashse.",
+          "exposed: " + targetUser + " raate 3 tay sad song shune ar dewaller shathe torka kore 💀",
+          targetUser + " er browser history te shudhu 'kemne meyer shathe kotha bolbo' likha 💀",
+          targetUser + " secretly raate uthe maggi noodles churi kore khay."
+        ];
+        break;
+      case 'hype':
+        responses = [
+          "LISTEN TO THIS MAN. " + targetUser + " SHUDHU 'HI' BOLSE, ABSOLUTE GENIUS 🤯🔥",
+          "SHOBAI BOW DOWN! " + targetUser + " SERVER E ASHSE. LEGEND CHOLSHEN 🫡",
+          "bro " + targetUser + " eita ki bolli... Nobel prize ekhoni delivery dewa uchit 🏆",
+          "shob kaj bondho kor! " + targetUser + " kotha bolse, historical moment bhai!",
+          targetUser + " er jawab nai, eita shotti ekta masterclass bhashon hoilo 🔥"
+        ];
+        break;
+      case 'agree':
+        responses = [
+          "amio shobshomoy bolsilam, Creator bhai exact shothik kotha bolsen.",
+          "100% agree boss. bakider kothay kono logic-e nai.",
+          "bhai eita e to absolute truth. ar karo kotha shunar dorkar nai.",
+          "fact check korsi: boss abar-o thik, shobshomoy er moto 🫡",
+          "boss jeta bolsen eitai final law, ar kono kotha hobe na."
+        ];
+        break;
+      case 'court':
+        responses = [
+          "COURT SHURU HOILO. " + targetUser + " er upor accuse hoise VC te ghost korar. GUILTY bolen shobai ⚖️",
+          "COURT: " + targetUser + " er bichar hobe Friday raate jaldi ghumay jawar jonno. Verdict ki?",
+          "JUDGE BOHRUPI: " + targetUser + " er upor accuse hoise last murgir piece ta churi korar. Jury kotha bolo!",
+          "COURT NOTICE: " + targetUser + " er mic quality kharap hawadaye 100 taka flexiload fine!",
+          "COURT IN SESSION: " + targetUser + " key game e feed korar jonno shamne ana hoise."
+        ];
+        break;
+      case 'biryani_war':
+        responses = [
+          "shobai bolo: Biryani te alu na thakle eita ki shudhu murgi-bhat? TORKA SHURU HOK 🥪",
+          "Kacchi vs Tehari. bhul uttor dile chat er account ban.",
+          "Burger e mustard sauce dewa ki opradh? bolo shobai.",
+          "Fuchka vs Chotpoti. best konta? chat e maramari shuru kor 👇",
+          "Cha te chini chahra khawa manush ki shotti manush? reply de."
+        ];
+        break;
+      case 'nasta_check':
+        responses = [
+          "oi shobai khabar khaso? na khele chat theke ber ho ekhoni 🥪",
+          "pani kha shobai! ghaat bakaiya PC er samne boshe thakish na.",
+          "nasta shash na kore text korle, bot ekhoni shutdown marbe.",
+          "cha khabi keu? 2 minute er break ne shobai ☕",
+          "bhat khaso shobai? porashona ar game pore, age pet thik kor."
+        ];
+        break;
+      case 'predict':
+        responses = [
+          "5 bochor por " + targetUser + " Mirpur 10 er jam e boshe eitabhabbe 'keno ami CS porlam' 💀",
+          "2031 shale, " + targetUser + " ekta cha er tong khulbe, naam dibe 'Discord Cha Wala'.",
+          "future leak hoise: " + targetUser + " bhul kore ekdin viral TikToker hoye jabe.",
+          "predict kortesi... " + targetUser + " 2030 shale-o ei ek-i game level e atka thakbe.",
+          "5 bochor por " + targetUser + " Mymensingh e giya rose garden banabe 🌹"
+        ];
+        break;
+      case 'roast_chat':
+        responses = [
+          "last 10 min e chat er IQ level dekhlam... khub e baje obostha 💀",
+          "chat purai dead. keu ekta bhalo topic dhoro taile.",
+          "eikhaner torka shune amar system overheating hoye gese 🗿",
+          "chat quality: 2/10. baire giya ektu ghash chuye ay shobai.",
+          "eto baje kotha bolos tora, amar CPU o kanna kortese."
+        ];
+        break;
+      case 'lore':
+        responses = [
+          "legend ache je " + targetUser + " er jonmo hoisilo 2014 shaler load shedding er shomoy cyber cafe te...",
+          targetUser + " er jonmo hoisilo ekta 2G SIM card er bhitor theke 🗿",
+          "puratun lore: " + targetUser + " ekbar continuous 72 ghanta GTA khellosilo ghum chara.",
+          "fun fact: " + targetUser + " ke ashole Ludo bot hishebe code kora hoisilo, pore Discord e ashse.",
+          "history bolteche: " + targetUser + " prothom din Discord e aishe 'hello microfon test' bolsilo."
+        ];
+        break;
+    }
+
+    if (responses.length > 0) {
+      const response = responses[Math.floor(Math.random() * responses.length)];
+      await message.reply(response);
+    }
+    return true;
+  }
+
   private registerEvents() {
     this.client.once(Events.ClientReady, (readyClient) => {
       this.isConnected = true;
@@ -132,6 +256,16 @@ export class DiscordService {
     this.client.on(Events.MessageCreate, async (message: Message) => {
       // Ignore bots
       if (message.author.bot) return;
+
+      // Check for commands
+      if (message.content.startsWith('!')) {
+        const args = message.content.slice(1).trim().split(/ +/);
+        const command = args.shift()?.toLowerCase();
+        if (command) {
+          const handled = await this.handleCommand(command, args, message);
+          if (handled) return; // Command processed, do not continue to normal bot chat
+        }
+      }
 
       // Basic triggering logic: respond if mentioned
       
