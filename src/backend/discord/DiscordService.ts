@@ -121,12 +121,11 @@ export class DiscordService {
 
 
   private async handleCommand(command: string, args: string[], message: Message): Promise<boolean> {
-    const validCommands = ['bully', 'expose', 'hype', 'agree', 'court', 'biryani_war', 'nasta_check', 'predict', 'roast_chat', 'lore'];
+    const validCommands = ['bully', 'expose', 'hype', 'agree', 'court', 'biryani_war', 'nasta_check', 'predict', 'roast_chat', 'lore', 'fight', 'biryani_roulette'];
     if (!validCommands.includes(command)) return false;
 
     const ownerIds = (process.env.DISCORD_OWNER_IDS || '').split(',').map(id => id.trim()).filter(id => id.length > 0);
     
-    // If no owner IDs are set, or the author is not an owner, block access
     if (ownerIds.length === 0 || !ownerIds.includes(message.author.id)) {
       const rejections = [
         "oi <@" + message.author.id + ">, tui amar owner naki re? ja shammne theke bhag 💀",
@@ -140,6 +139,150 @@ export class DiscordService {
     }
 
     const targetUser = message.mentions.users.first() ? "<@" + message.mentions.users.first()?.id + ">" : (args[0] || "<@" + message.author.id + ">");
+    const targetUserName = message.mentions.users.first()?.username || (args[0] ? args[0].replace(/[@<>]/g, '') : message.author.username);
+
+    // Helpers for animation delays
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    if (command === 'court') {
+      const f1 = `\`\`\`text
+┌────────────────────────────────────────────────────────┐
+│               ⚖️ BOHRUPI HIGH COURT ⚖️                 │
+├────────────────────────────────────────────────────────┤
+│                                                        │
+│                  👨‍⚖️ Bohrupi: "ORDER!"                 │
+│                        │                               │
+│                     🙋‍♂️ [GAVEL UP]                      │
+│                                                        │
+│            ⛓️ ${targetUserName} : "bhai ami innocent!"             │
+│                                                        │
+│ STATUS: ⏳ Deliberating sentence...                     │
+└────────────────────────────────────────────────────────┘
+\`\`\``;
+      
+      const f2 = `\`\`\`text
+┌────────────────────────────────────────────────────────┐
+│               ⚖️ BOHRUPI HIGH COURT ⚖️                 │
+├────────────────────────────────────────────────────────┤
+│                                                        │
+│                  👨‍⚖️ Bohrupi: "SILENCE!"                │
+│                        │                               │
+│                     🔨💥 [SMASH!!]                     │
+│                        │                               │
+│            ⛓️ ${targetUserName} : "AREH BHAI TEHERO!"              │
+│                                                        │
+│ STATUS: 💥 VERDICT DECIDED!                            │
+└────────────────────────────────────────────────────────┘
+\`\`\``;
+
+      const f3 = `\`\`\`ansi
+\x1b[1;31m┌────────────────────────────────────────────────────────┐\x1b[0m
+\x1b[1;31m│                 🚨 VERDICT: GUILTY 🚨                  │\x1b[0m
+\x1b[1;31m├────────────────────────────────────────────────────────┤\x1b[0m
+│                                                        │
+│  👤 DEFENDANT : ${targetUserName.padEnd(36)} │
+│  📜 CRIME     : Friday night e jaldi ghumay jawar jonno│
+│  💸 PENALTY   : Creator ke 100 taka flexiload          │
+│                                                        │
+\x1b[1;32m│  JURY VOTES   : [████████████████████] 100% GUILTY     │\x1b[0m
+│                                                        │
+\x1b[1;31m└────────────────────────────────────────────────────────┘\x1b[0m
+\`\`\`
+oi ${targetUser}, ekhoni flexiload mar, naile main chat e unmute korbo na 💀`;
+
+      const msg = await message.reply(f1);
+      await delay(1500);
+      await msg.edit(f2);
+      await delay(1500);
+      await msg.edit(f3);
+      return true;
+    }
+
+    if (command === 'fight') {
+      const f1 = `\`\`\`ansi
+\x1b[1;36m⚔️ BOHRUPI STREET FIGHT ⚔️\x1b[0m
+
+\x1b[1;33m[Bohrupi]\x1b[0m                \x1b[1;31m[${targetUserName}]\x1b[0m
+\x1b[1;32m[██████████] 100 HP\x1b[0m       \x1b[1;31m[██████████] 100 HP\x1b[0m
+
+             \x1b[1;35mSTAGE: MIRPUR 10 CIRCLE\x1b[0m
+ ____________________________________________________
+│                                                    │
+│      🐔 (Bohrupi)  <─── VS ───>  🏃‍♂️ (${targetUserName.padEnd(8)})        │
+│                                                    │
+ ────────────────────────────────────────────────────
+\x1b[1;30mROUND 1 STARTING...\x1b[0m
+\`\`\``;
+
+      const f2 = `\`\`\`ansi
+\x1b[1;36m⚔️ BOHRUPI STREET FIGHT ⚔️\x1b[0m
+
+\x1b[1;33m[Bohrupi]\x1b[0m                \x1b[1;31m[${targetUserName}]\x1b[0m
+\x1b[1;32m[██████████] 100 HP\x1b[0m       \x1b[1;31m[████░░░░░░] 40 HP\x1b[0m
+
+             \x1b[1;35mSTAGE: MIRPUR 10 CIRCLE\x1b[0m
+ ____________________________________________________
+│                                                    │
+│      🐔 (Bohrupi) ───💥 [CHICKEN SLAP] ───> 🏃‍♂️ (${targetUserName.padEnd(4)})│
+│                                                    │
+ ────────────────────────────────────────────────────
+\x1b[1;31mCRITICAL HIT! Bohrupi dealt 60 damage!\x1b[0m
+\`\`\``;
+
+      const f3 = `\`\`\`ansi
+\x1b[1;31m🏆 KNOCKOUT! BOHRUPI WINS! 🏆\x1b[0m
+
+\x1b[1;33m[Bohrupi]\x1b[0m                \x1b[1;31m[${targetUserName}]\x1b[0m
+\x1b[1;32m[██████████] 100 HP\x1b[0m       \x1b[1;31m[░░░░░░░░░░] 0 HP\x1b[0m
+
+ ____________________________________________________
+│                                                    │
+│      🐔 (Bohrupi)  👑  <───  💀 (${targetUserName} KO)       │
+│                                                    │
+ ────────────────────────────────────────────────────
+\`\`\`
+${targetUser} tui to 1 v 1 e amar shamne pure bot 💀 ja practice kore ay!`;
+
+      const msg = await message.reply(f1);
+      await delay(1500);
+      await msg.edit(f2);
+      await delay(1500);
+      await msg.edit(f3);
+      return true;
+    }
+
+    if (command === 'biryani_roulette') {
+      const f1 = `\`\`\`text
+🎰 [ BIRYANI ROULETTE SPINNING... ]
+┌─────────────────────────┐
+│ 🎰 |  [ Elaichi ]  | 🎰 │
+└─────────────────────────┘
+\`\`\``;
+
+      const f2 = `\`\`\`text
+🎰 [ BIRYANI ROULETTE SPINNING... ]
+┌─────────────────────────┐
+│ 🎰 |  [ Murgi Leg ]| 🎰 │
+└─────────────────────────┘
+\`\`\``;
+
+      const f3 = `\`\`\`ansi
+🎰 [ BIRYANI ROULETTE RESULT ]
+┌─────────────────────────┐
+│ 🍗 | \x1b[1;31m[ CRICKET IN ALU ]\x1b[0m | 🍗 │ 
+└─────────────────────────┘
+
+\x1b[1;31mRESULT: WORST BOWL EVER 💀\x1b[0m
+\`\`\`
+bhai ${targetUser}, tor kacchi-r bhetor teela poka pawa gese, ajke ar bhat khas na tui.`;
+
+      const msg = await message.reply(f1);
+      await delay(1000);
+      await msg.edit(f2);
+      await delay(1000);
+      await msg.edit(f3);
+      return true;
+    }
 
     let responses: string[] = [];
 
@@ -178,15 +321,6 @@ export class DiscordService {
           "bhai eita e to absolute truth. ar karo kotha shunar dorkar nai.",
           "fact check korsi: boss abar-o thik, shobshomoy er moto 🫡",
           "boss jeta bolsen eitai final law, ar kono kotha hobe na."
-        ];
-        break;
-      case 'court':
-        responses = [
-          "COURT SHURU HOILO. " + targetUser + " er upor accuse hoise VC te ghost korar. GUILTY bolen shobai ⚖️",
-          "COURT: " + targetUser + " er bichar hobe Friday raate jaldi ghumay jawar jonno. Verdict ki?",
-          "JUDGE BOHRUPI: " + targetUser + " er upor accuse hoise last murgir piece ta churi korar. Jury kotha bolo!",
-          "COURT NOTICE: " + targetUser + " er mic quality kharap hawadaye 100 taka flexiload fine!",
-          "COURT IN SESSION: " + targetUser + " key game e feed korar jonno shamne ana hoise."
         ];
         break;
       case 'biryani_war':
@@ -242,7 +376,6 @@ export class DiscordService {
     }
     return true;
   }
-
   private registerEvents() {
     this.client.once(Events.ClientReady, (readyClient) => {
       this.isConnected = true;
