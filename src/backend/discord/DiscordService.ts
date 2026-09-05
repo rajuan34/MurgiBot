@@ -128,14 +128,12 @@ export class DiscordService {
     if (!ownerIds.includes('986296691437207592')) ownerIds.push('986296691437207592'); // Hardcoded Co-creator ID
     
     if (ownerIds.length === 0 || !ownerIds.includes(message.author.id)) {
-      const rejections = [
-        "oi <@" + message.author.id + ">, tui amar owner naki re? ja shammne theke bhag 💀",
-        "error 404: tui boss na. amar code e tor kono access nai bro.",
-        "bhai keu ei bot-er access dibe na eder. creator chara karo kotha shuni na ami 🥱",
-        "access denied. tui jao, age boss re dakaiya an.",
-        "amar owner chara keu eita marle amar battery ekhoni blast hobe 🗿"
-      ];
-      await message.reply(rejections[Math.floor(Math.random() * rejections.length)]);
+      const aiResponse = await this.brain.processCommand(
+         message.author.id, 
+         message.author.username, 
+         `COMMAND_REJECTED: The user <@${message.author.id}> tried to use a command, but they are NOT the owner. Reject their access hilariously and savagely in Banglish. Tell them they need the boss's permission. Do not use quotes.`
+      );
+      await message.reply(aiResponse);
       return true;
     }
 
