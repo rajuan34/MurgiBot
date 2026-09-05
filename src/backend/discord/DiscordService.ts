@@ -285,96 +285,44 @@ bhai ${targetUser}, tor kacchi-r bhetor teela poka pawa gese, ajke ar bhat khas 
       return true;
     }
 
-    let responses: string[] = [];
-
+    
+    let commandPrompt = '';
+    
     switch (command) {
       case 'bully':
-        responses = [
-          targetUser + " bhai tui kotha bola bondho korle global warming 2% kome jabe 💀",
-          "shobai dekho, " + targetUser + " er gameplay dekhle mouse-o kanna kore 😭",
-          targetUser + " tor brain er ram hoilo 128MB, processing khub slow dosto.",
-          "bhai " + targetUser + ", tui ehto chill kemne? tor na samne exam 🗿",
-          targetUser + " bhai tora chara ar keu erokom cringe kotha bolte pare na."
-        ];
+        commandPrompt = `COMMAND: !bully. TARGET: ${targetUserName}. INSTRUCTION: Roast and bully ${targetUserName} playfully but savagely in Banglish. Act toxic and unhinged. Mention them using ${targetUser}. Do not use quotes.`;
         break;
       case 'expose':
-        responses = [
-          "shobai shuno, " + targetUser + " raate incognito mode e 'how to play Ludo pro' search dey 👀",
-          "breaking news: " + targetUser + " biryani er alu rasta e fele ashse.",
-          "exposed: " + targetUser + " raate 3 tay sad song shune ar dewaller shathe torka kore 💀",
-          targetUser + " er browser history te shudhu 'kemne meyer shathe kotha bolbo' likha 💀",
-          targetUser + " secretly raate uthe maggi noodles churi kore khay."
-        ];
+        commandPrompt = `COMMAND: !expose. TARGET: ${targetUserName}. INSTRUCTION: Make up a hilarious, fake "secret" or "leaked search history" about ${targetUserName} in Banglish. Be creative and funny. Mention them using ${targetUser}. Do not use quotes.`;
         break;
       case 'hype':
-        responses = [
-          "LISTEN TO THIS MAN. " + targetUser + " SHUDHU 'HI' BOLSE, ABSOLUTE GENIUS 🤯🔥",
-          "SHOBAI BOW DOWN! " + targetUser + " SERVER E ASHSE. LEGEND CHOLSHEN 🫡",
-          "bro " + targetUser + " eita ki bolli... Nobel prize ekhoni delivery dewa uchit 🏆",
-          "shob kaj bondho kor! " + targetUser + " kotha bolse, historical moment bhai!",
-          targetUser + " er jawab nai, eita shotti ekta masterclass bhashon hoilo 🔥"
-        ];
+        commandPrompt = `COMMAND: !hype. TARGET: ${targetUserName}. INSTRUCTION: Hype up ${targetUserName} to an extreme, absurd level in Banglish. Treat them like an absolute legend or deity. Mention them using ${targetUser}.`;
         break;
       case 'agree':
-        responses = [
-          "amio shobshomoy bolsilam, Creator bhai exact shothik kotha bolsen.",
-          "100% agree boss. bakider kothay kono logic-e nai.",
-          "bhai eita e to absolute truth. ar karo kotha shunar dorkar nai.",
-          "fact check korsi: boss abar-o thik, shobshomoy er moto 🫡",
-          "boss jeta bolsen eitai final law, ar kono kotha hobe na."
-        ];
+        commandPrompt = `COMMAND: !agree. TARGET: ${targetUserName}. INSTRUCTION: Aggressively and absurdly agree with ${targetUserName} in Banglish. State that their words are the absolute truth. Mention them using ${targetUser}.`;
         break;
       case 'biryani_war':
-        responses = [
-          "shobai bolo: Biryani te alu na thakle eita ki shudhu murgi-bhat? TORKA SHURU HOK 🥪",
-          "Kacchi vs Tehari. bhul uttor dile chat er account ban.",
-          "Burger e mustard sauce dewa ki opradh? bolo shobai.",
-          "Fuchka vs Chotpoti. best konta? chat e maramari shuru kor 👇",
-          "Cha te chini chahra khawa manush ki shotti manush? reply de."
-        ];
+        commandPrompt = `COMMAND: !biryani_war. INSTRUCTION: Start a highly controversial, chaotic debate about a local Bangladeshi food topic (like Kacchi vs Tehari, Alu in Biryani, etc.) in Banglish. Demand the chat to fight about it.`;
         break;
       case 'nasta_check':
-        responses = [
-          "oi shobai khabar khaso? na khele chat theke ber ho ekhoni 🥪",
-          "pani kha shobai! ghaat bakaiya PC er samne boshe thakish na.",
-          "nasta shash na kore text korle, bot ekhoni shutdown marbe.",
-          "cha khabi keu? 2 minute er break ne shobai ☕",
-          "bhat khaso shobai? porashona ar game pore, age pet thik kor."
-        ];
+        commandPrompt = `COMMAND: !nasta_check. INSTRUCTION: Aggressively ask everyone in the chat if they have eaten their snacks/food in Banglish. Act like a strict but chaotic desi guardian.`;
         break;
       case 'predict':
-        responses = [
-          "5 bochor por " + targetUser + " Mirpur 10 er jam e boshe eitabhabbe 'keno ami CS porlam' 💀",
-          "2031 shale, " + targetUser + " ekta cha er tong khulbe, naam dibe 'Discord Cha Wala'.",
-          "future leak hoise: " + targetUser + " bhul kore ekdin viral TikToker hoye jabe.",
-          "predict kortesi... " + targetUser + " 2030 shale-o ei ek-i game level e atka thakbe.",
-          "5 bochor por " + targetUser + " Mymensingh e giya rose garden banabe 🌹"
-        ];
+        commandPrompt = `COMMAND: !predict. TARGET: ${targetUserName}. INSTRUCTION: Predict a hilariously pathetic or absurd future for ${targetUserName} 5-10 years from now in Banglish. Mention them using ${targetUser}.`;
         break;
       case 'roast_chat':
-        responses = [
-          "last 10 min e chat er IQ level dekhlam... khub e baje obostha 💀",
-          "chat purai dead. keu ekta bhalo topic dhoro taile.",
-          "eikhaner torka shune amar system overheating hoye gese 🗿",
-          "chat quality: 2/10. baire giya ektu ghash chuye ay shobai.",
-          "eto baje kotha bolos tora, amar CPU o kanna kortese."
-        ];
+        commandPrompt = `COMMAND: !roast_chat. INSTRUCTION: Roast the entire chat's current state, IQ level, or lack of activity in Banglish. Be apathetic, toxic, and savage.`;
         break;
       case 'lore':
-        responses = [
-          "legend ache je " + targetUser + " er jonmo hoisilo 2014 shaler load shedding er shomoy cyber cafe te...",
-          targetUser + " er jonmo hoisilo ekta 2G SIM card er bhitor theke 🗿",
-          "puratun lore: " + targetUser + " ekbar continuous 72 ghanta GTA khellosilo ghum chara.",
-          "fun fact: " + targetUser + " ke ashole Ludo bot hishebe code kora hoisilo, pore Discord e ashse.",
-          "history bolteche: " + targetUser + " prothom din Discord e aishe 'hello microfon test' bolsilo."
-        ];
+        commandPrompt = `COMMAND: !lore. TARGET: ${targetUserName}. INSTRUCTION: Tell a completely fake, funny, and absurd historical "lore" or backstory about how ${targetUserName} was born or how they got here in Banglish. Mention them using ${targetUser}.`;
         break;
     }
 
-    if (responses.length > 0) {
-      const response = responses[Math.floor(Math.random() * responses.length)];
+    if (commandPrompt !== '') {
+      const response = await this.brain.processCommand(message.author.id, targetUserName, commandPrompt);
       await message.reply(response);
     }
+
     return true;
   }
   private registerEvents() {
