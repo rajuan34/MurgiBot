@@ -153,11 +153,10 @@ export class DiscordService {
       let crime = "Friday night e jaldi ghumay jawar jonno";
       let penalty = "Creator ke 100 taka flexiload";
       
-      const lines = aiResponse.split('\n');
-      for(const line of lines) {
-         if (line.toLowerCase().startsWith('crime:')) crime = line.substring(6).trim();
-         if (line.toLowerCase().startsWith('penalty:')) penalty = line.substring(8).trim();
-      }
+      const crimeMatch = aiResponse.match(/\bcrime\s*[:\-]\s*(.*)/i);
+      const penaltyMatch = aiResponse.match(/\bpenalty\s*[:\-]\s*(.*)/i);
+      if (crimeMatch) crime = crimeMatch[1].replace(/\*\*/g, '').trim();
+      if (penaltyMatch) penalty = penaltyMatch[1].replace(/\*\*/g, '').trim();
 
       const frame = `\`\`\`text
 ┌
@@ -200,11 +199,10 @@ export class DiscordService {
       let move = "CHICKEN SLAP";
       let trashTalk = `${targetUserName} tui to 1 v 1 e pure bot 💀 ja age practice kore ay!`;
       
-      const lines = aiResponse.split('\n');
-      for(const line of lines) {
-         if (line.toLowerCase().startsWith('move:')) move = line.substring(5).trim();
-         if (line.toLowerCase().startsWith('trashtalk:')) trashTalk = line.substring(10).trim();
-      }
+      const moveMatch = aiResponse.match(/\bmove\s*[:\-]\s*(.*)/i);
+      const trashTalkMatch = aiResponse.match(/\btrashtalk\s*[:\-]\s*(.*)/i);
+      if (moveMatch) move = moveMatch[1].replace(/\*\*/g, '').trim();
+      if (trashTalkMatch) trashTalk = trashTalkMatch[1].replace(/\*\*/g, '').trim();
 
       const frame = `\`\`\`text
 ┌
@@ -244,12 +242,12 @@ export class DiscordService {
       let notes = "Teela poka found inside the rice packet.";
       let mock = `bhai ${targetUserName}, ajke ar bhat khas na tui!`;
       
-      const lines = aiResponse.split('\n');
-      for(const line of lines) {
-         if (line.toLowerCase().startsWith('dish:')) dish = line.substring(5).trim();
-         if (line.toLowerCase().startsWith('notes:')) notes = line.substring(6).trim();
-         if (line.toLowerCase().startsWith('mock:')) mock = line.substring(5).trim();
-      }
+      const dishMatch = aiResponse.match(/\bdish\s*[:\-]\s*(.*)/i);
+      const notesMatch = aiResponse.match(/\bnotes\s*[:\-]\s*(.*)/i);
+      const mockMatch = aiResponse.match(/\bmock\s*[:\-]\s*(.*)/i);
+      if (dishMatch) dish = dishMatch[1].replace(/\*\*/g, '').trim();
+      if (notesMatch) notes = notesMatch[1].replace(/\*\*/g, '').trim();
+      if (mockMatch) mock = mockMatch[1].replace(/\*\*/g, '').trim();
 
       const frame = `\`\`\`text
 ┌
