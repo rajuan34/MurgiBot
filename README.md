@@ -1,60 +1,121 @@
-# 🐔 Bohurupi Core
+# 🐔 Bohurupi Core (Advanced Sentient AI Discord Bot)
 
-**Bohurupi Core** is an autonomous, highly sentient digital character (Discord Bot) powered by a robust AI processing pipeline. It is not just a chatbot—it possesses an organic architecture including memory retention, emotional state simulation, identity shifting, and multi-provider AI resilience.
+**Bohurupi Core** is an autonomous, highly sentient digital character (Discord Bot) powered by a robust AI processing pipeline. It is not just a standard QA chatbot—it possesses an organic architecture that includes memory retention, emotional state simulation, identity shifting, and multi-provider AI resilience.
 
-This repository includes both the **Discord Bot Backend (Node.js)** and a **Real-Time Admin Dashboard (React + Tailwind)**.
-
----
-
-## ✨ Key Features
-
-*   **🧠 Bohurupi Brain Engine:** The central orchestrator that glues Memory, Emotion, Identity, and AI Providers into a single organic pipeline.
-*   **🛡️ Multi-Provider Resilience (Circuit Breaker):** 
-    *   Primary: **Google Gemini API** (Fast, cloud-based).
-    *   Secondary: **Local Ollama (Llama 3)** (Self-hosted fallback if Gemini fails or rate-limits).
-    *   Ultimate Fallback: **Simulated Dummy** (Prevents total system crashes).
-*   **❤️ Emotion Engine:** Evaluates conversations to dynamically shift Bohurupi's mood (e.g., Playful, Sleepy, Chaos, Competitive).
-*   **💾 Memory Node:** 
-    *   *Short-Term:* Retains recent chat context.
-    *   *Long-Term:* Stores core facts about users to make conversations feel organic and continuous.
-*   **🎭 Identity Manager:** Dynamically switches Discord bot profiles/avatars based on current emotional states (respecting Discord's rate limits).
-*   **🎛️ Admin Dashboard:** A sleek, real-time React control panel to monitor brain states, memory stats, and inject thoughts directly into the system.
+Engineered with a unique **"lazy, sarcastic, Gen-Z Banglish"** persona, Bohurupi complains about being woken up, plays games, roasts users, and throws random tantrums. This repository includes both the **Discord Bot Backend (Node.js)** and a **Real-Time Admin Dashboard (React + Tailwind)**.
 
 ---
 
-## 🛠️ Prerequisites
+## 🌟 What is Bohurupi?
+Bohurupi is designed to act like a real, slightly unhinged server member. It features:
+- **Autonomous Activity:** Can send scheduled messages without user prompts (e.g., waking up in the afternoon, complaining about sleep).
+- **Banglish Mastery:** Speaks in authentic, raw Banglish (Bengali written in the English alphabet) mixed with modern slang.
+- **Contextual Awareness:** Remembers previous conversations and adapts its mood based on the chat's toxicity or friendliness.
+- **Savage Commands:** Offers highly interactive roleplay commands like holding court trials or street fights.
 
-*   **Node.js** (v18 or higher)
-*   **Discord Bot Token** (Create a bot via [Discord Developer Portal](https://discord.com/developers/applications) and enable Message Content Intent)
-*   **Gemini API Key** (Get from [Google AI Studio](https://aistudio.google.com/))
-*   *(Optional)* **Ollama** installed locally or on your server for self-hosted AI fallback.
+---
+
+## 🛠️ Core Architecture & Engines
+
+### 🧠 1. Bohurupi Brain Engine
+The central orchestrator that glues Memory, Emotion, Identity, and AI Providers into a single organic pipeline. Every incoming message passes through the Brain to evaluate the current state before generating a response.
+
+### 🛡️ 2. Multi-Provider Resilience (Circuit Breaker)
+Ensures maximum uptime by cascading through multiple AI providers if one goes down or rate-limits:
+- **Primary:** `Cloud-OpenRouter` (e.g., DeepSeek / Claude / Llama variants).
+- **Secondary:** `Google-Gemini-3.5-Flash` (Fast, native Google GenAI SDK integration).
+- **Tertiary:** `Nemotron-Lightning-Free` (Used for extremely short, fast, lazy refusal fallbacks).
+- **Fallback:** `Simulated Dummy` (Prevents total system crashes with hardcoded system-overload messages).
+
+### ❤️ 3. Emotion Engine
+Evaluates conversations to dynamically shift Bohurupi's mood. It analyzes keywords and sentiment to trigger states like:
+- 😴 `Sleepy`
+- 😈 `Chaos`
+- 🎮 `Competitive`
+- 😒 `Annoyed`
+- 💖 `Affectionate`
+
+### 💾 4. Memory Node
+- **Short-Term Memory:** Retains the context of the last few messages in a rolling window to maintain conversational flow.
+- **Long-Term Memory:** Synthesizes facts about users (e.g., "User X loves biryani", "User Y always loses fights") to make conversations feel organic and continuous over months.
+
+### 🎭 5. Identity Manager
+Dynamically switches Discord bot profiles/avatars and bios based on the current emotional state (respecting Discord's strict rate limits for profile updates).
+
+---
+
+## 🎮 Interactive Discord Commands
+
+Bohurupi features several hardcoded mini-games and roleplay commands that utilize structured AI outputs (Regex Parsed) for highly formatted, cinematic Discord messages.
+
+| Command | Description |
+| :--- | :--- |
+| `!court [@user]` | Puts a user on trial for a hilarious fake crime with a bizarre penalty. |
+| `!fight [@user]` | Initiates a street fight, generating absurd knockout moves and savage Banglish trash talk. |
+| `!biryani_roulette [@user]` | A game of luck where the user finds out what terrible inedible item they got in their biryani instead of meat. |
+| `!bully [@user]` | Generates a savage, personalized roast for the targeted user. |
+| `!hype [@user]` | Aggressively praises and hypes up the targeted user in maximum energy mode. |
+| `!expose [@user]` | Makes up a completely fake, embarrassing secret about the user. |
+| `!predict` | Gives a completely unhinged, chaotic prediction about your future. |
+| `!roast_chat` | Scans the vibe of the server and insults the entire chat collectively. |
+
+*(Note: Command execution is strictly restricted to designated Server Owners / Creators).*
+
+---
+
+## 🎛️ Admin Control Dashboard
+
+Served on the root URL (`http://localhost:3000`), the sleek React-based admin panel allows creators to monitor the bot's internal state.
+- **System Telemetry:** View Uptime, Memory Usage, and API Latency.
+- **Live Memory Stream:** See what Bohurupi is committing to Short-Term and Long-Term memory in real-time.
+- **Emotion State:** Track the bot's current mood.
+- **Thought Injection:** Manually override the bot's prompt or force a specific response without typing in Discord.
+
+---
+
+## ⚙️ Configuration (Environment Variables)
+
+Rename `.env.example` to `.env` and configure the following variables:
+
+```env
+# AI Providers
+GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+OPENROUTER_API_KEY="YOUR_OPENROUTER_API_KEY"
+
+# Discord Configuration
+DISCORD_TOKEN="YOUR_DISCORD_BOT_TOKEN"
+DISCORD_CLIENT_ID="YOUR_CLIENT_ID"
+DISCORD_OWNER_IDS="123456789,987654321" # Comma-separated Discord User IDs
+
+# Application Settings
+APP_URL="http://localhost:3000"
+
+# Auto-Reply Scheduler (Cron)
+TIMEZONE="Asia/Dhaka"
+SCHEDULE_1="15:30"
+SCHEDULE_2="22:30"
+```
 
 ---
 
 ## 🚀 Installation & Local Setup
 
-1. **Clone or Download the repository.**
+### Prerequisites
+*   **Node.js** (v18 or higher)
+*   **Discord Bot Token** (Create a bot via [Discord Developer Portal](https://discord.com/developers/applications) and enable **Message Content Intent**)
+
+### Steps
+1. **Clone the repository.**
 2. **Install dependencies:**
    ```bash
    npm install
    ```
-3. **Configure Environment Variables:**
-   Rename `.env.example` to `.env` and fill in your details:
-   ```env
-   GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
-   APP_URL="http://localhost:3000"
-   DISCORD_TOKEN="YOUR_DISCORD_BOT_TOKEN"
-
-   # Optional: Local Ollama Fallback
-   OLLAMA_BASE_URL="http://127.0.0.1:11434"
-   OLLAMA_MODEL="llama3"
-   ```
+3. **Setup `.env`** (See Configuration section above).
 4. **Run in Development Mode:**
    ```bash
    npm run dev
    ```
-   *The server will start on `http://localhost:3000` (serving both the Discord Bot and the React Dashboard).*
-
+   *The server will start on `http://localhost:3000`, spinning up both the Express API and Vite React frontend.*
 5. **Build & Run for Production:**
    ```bash
    npm run build
@@ -65,35 +126,30 @@ This repository includes both the **Discord Bot Backend (Node.js)** and a **Real
 
 ## 💻 Server & Hosting Recommendations
 
-Depending on how you want to process the AI responses, here are the recommended VPS (Virtual Private Server) configurations:
+For production deployment, standard Cloud platforms are recommended.
 
-### Scenario A: Using Cloud APIs (Gemini) - *Recommended for Budget*
-If you rely on Gemini API for AI generation, the server only needs to run the Node.js application.
-*   **Minimum Specs:** 1 vCPU, 1 GB RAM (2 GB Recommended)
-*   **Storage:** 10 - 20 GB SSD/NVMe
-*   **Best for:** Render, Railway, DigitalOcean Basic Droplets, Hetzner CX11.
+- **Platform:** Google Cloud Run, Render, Railway, or a basic VPS (DigitalOcean Droplet / Hetzner CX11).
+- **Specs:** 1 vCPU, 1 GB RAM (2 GB Recommended) is more than enough since the heavy AI processing is offloaded to Cloud-OpenRouter and Gemini.
+- **Storage:** 10 - 20 GB SSD.
+- **Networking:** Ensure port `3000` is exposed.
 
-### Scenario B: Self-Hosted Local AI (Ollama + Llama 3)
-If you want total privacy and wish to run Llama 3 locally via Ollama alongside the bot.
-*   **Minimum Specs:** 2 vCPU, 8 GB RAM (Will run, but generation takes 5-15 seconds).
-*   **Recommended Specs:** 4 vCPU, 16 GB RAM.
-*   **Storage:** 50 GB+ NVMe.
-*   **Best for:** Hetzner CPX31, Contabo VPS 2.
+*(Note: If you decide to re-enable local Ollama fallback in the codebase, you will require at least 4 vCPUs and 16GB RAM for local model execution).*
 
 ---
 
-## 🏗️ Architecture / Code Structure
+## 🏗️ Code Structure Overview
 
-*   `/server.ts`: The main Express server entry point, binding the AI Core and React Dashboard.
-*   `/src/backend/core/`: Contains the `BohurupiBrain` orchestrator.
-*   `/src/backend/discord/`: Handles the Discord.js client and message event parsing.
-*   `/src/backend/emotion/`: Evaluates interaction sentiment to determine the current state.
-*   `/src/backend/identity/`: Manages character profile logic.
-*   `/src/backend/memory/`: Manages short-term context and long-term user facts.
-*   `/src/backend/providers/`: Holds the `ProviderManager` (Circuit Breaker) and individual AI providers (Gemini, Ollama).
-*   `/src/App.tsx`: The frontend React component for the Admin Control Panel.
+- `/server.ts`: The main Express server entry point, binding the AI Core and serving the compiled React frontend.
+- `/src/backend/core/BohurupiBrain.ts`: The central nervous system orchestrating all modules.
+- `/src/backend/discord/DiscordService.ts`: Handles the Discord.js client, message events, and command regex parsing.
+- `/src/backend/emotion/`: Sentiment analysis and state mapping.
+- `/src/backend/identity/`: Dynamic profile/bio switching logic.
+- `/src/backend/memory/`: Context window management and persistence logic.
+- `/src/backend/providers/`: The Provider Manager implementing the Circuit Breaker pattern across multiple LLM endpoints.
+- `/src/components/`, `/src/pages/`: Frontend React components for the Admin Dashboard.
 
 ---
 
 ## 🛡️ License
-Private / Proprietary.
+
+Private / Proprietary. Created specifically for the Bohurupi AI project.
