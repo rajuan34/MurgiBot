@@ -13,6 +13,7 @@ interface AIEngineViewProps {
   isConnected: boolean;
   latency: number;
   isSending: boolean;
+  getHeaders: () => Record<string, string>;
 }
 
 export function AIEngineView({
@@ -25,14 +26,15 @@ export function AIEngineView({
   fetchState,
   isConnected,
   latency,
-  isSending
+  isSending,
+  getHeaders
 }: AIEngineViewProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Column: Stats & Providers */}
       <div className="space-y-6">
         {/* Provider Resilience */}
-        <ProviderResilience botState={botState} fetchState={fetchState} />
+        <ProviderResilience botState={botState} fetchState={fetchState} getHeaders={getHeaders} />
 
         {/* Memory Node */}
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5">

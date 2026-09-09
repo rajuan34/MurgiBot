@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Server, Shield, RefreshCw, Settings, ChevronUp, ChevronDown, Check, X } from 'lucide-react';
 
-export function ProviderResilience({ botState, fetchState }: { botState: any, fetchState: () => void }) {
+export function ProviderResilience({ botState, fetchState, getHeaders }: { botState: any, fetchState: () => void, getHeaders: () => Record<string, string> }) {
   const [isEditing, setIsEditing] = useState(false);
   const [config, setConfig] = useState<{name: string, enabled: boolean, priority: number}[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -10,15 +10,20 @@ export function ProviderResilience({ botState, fetchState }: { botState: any, fe
     if (isEditing) {
       // Fetch current config
       fetch('/api/providers/config', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-        }
+        headers: getHeaders()
       })
       .then(res => res.json())
       .then(data => {
-        // Sort by priority
-        const sorted = data.sort((a: any, b: any) => a.priority - b.priority);
-        setConfig(sorted);
+        // Ensure data is an array before sorting
+        if (Array.isArray(data)) {
+          const sorted = data.sort((a: any, b: any) => a.priority - b.priority);
+          setConfig(sorted);
+        } else if (data && Array.isArray(data.config)) {
+          const sorted = data.config.sort((a: any, b: any) => a.priority - b.priority);
+          setConfig(sorted);
+        } else {
+          console.error("Unexpected config format from server:", data);
+        }
       })
       .catch(console.error);
     }
@@ -30,10 +35,7 @@ export function ProviderResilience({ botState, fetchState }: { botState: any, fe
       const updatedConfig = config.map((c, i) => ({ ...c, priority: i }));
       await fetch('/api/providers/config', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-        },
+        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ config: updatedConfig })
       });
       setIsEditing(false);
