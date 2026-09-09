@@ -94,6 +94,26 @@ providerManager.registerProvider({
 });
 
 // Admin Dashboard API Routes
+app.get('/api/providers/config', adminAuth, async (req, res) => {
+  try {
+    const config = await memoryEngine.getSystemConfig('provider_config');
+    res.json(config || providerManager.getConfig());
+  } catch(e) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+app.post('/api/providers/config', adminAuth, async (req, res) => {
+  try {
+    const newConfig = req.body.config;
+    await memoryEngine.setSystemConfig('provider_config', newConfig);
+    providerManager.setConfig(newConfig);
+    res.json({ success: true, config: providerManager.getConfig() });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'Bohurupi AI Core Engine' });
 });
@@ -138,6 +158,16 @@ app.post('/api/interact', adminAuth, async (req, res) => {
 });
 
 async function startServer() {
+
+  try {
+    const savedConfig = await memoryEngine.getSystemConfig('provider_config');
+    if (savedConfig) {
+      providerManager.setConfig(savedConfig);
+    }
+  } catch(e) {
+    console.error("Failed to load provider config on startup", e);
+  }
+
 // Start Discord Bot asynchronously
   // To prevent double-responses (because the bot is running on Render in production),
   // we disable the Discord listener in this development environment by default.
