@@ -14,6 +14,7 @@ import { DiscordService } from './src/backend/discord/DiscordService';
 import { GeminiProvider } from './src/backend/providers/GeminiProvider';
 import { OllamaProvider } from './src/backend/providers/OllamaProvider';
 import { OpenRouterProvider } from './src/backend/providers/OpenRouterProvider';
+import { MistralProvider } from './src/backend/providers/MistralProvider';
 import 'dotenv/config';
 
 const app = express();
@@ -78,6 +79,9 @@ providerManager.registerProvider(openRouterProvider);
 const geminiProvider = new GeminiProvider();
 providerManager.registerProvider(geminiProvider);
 
+const mistralProvider = new MistralProvider();
+providerManager.registerProvider(mistralProvider);
+
 const nemotronProvider = new OpenRouterProvider('Nemotron-Lightning-Free', 'nvidia/nemotron-3.5-lightning:free', 'CRITICAL DIRECTIVE: You are Bohurupi, a lazy Discord character who absolutely refuses to chat right now. VERY IMPORTANT RULE FOR DIVERSITY: You MUST give a UNIQUE, DIFFERENT refusal or funny excuse EVERY SINGLE TIME in Banglish or short English slang. NEVER repeat "amar mood nai" or use the same phrase repeatedly! Be creative with a brand new excuse each time (e.g. ghumachhi, phone battery 1%, biryani khachhi, brain hang marse, anime dekhchi, charge e boshaisi, net unstable, ammu dakshe, reels scroll korchi, etc.). Keep it 1 short sentence (max 10 words), raw Discord style. DO NOT answer their questions or engage in conversation.');
 providerManager.registerProvider(nemotronProvider);
 
@@ -96,8 +100,7 @@ providerManager.registerProvider({
 // Admin Dashboard API Routes
 app.get('/api/providers/config', adminAuth, async (req, res) => {
   try {
-    const config = await memoryEngine.getSystemConfig('provider_config');
-    res.json(config || providerManager.getConfig());
+    res.json(providerManager.getConfig());
   } catch(e) {
     res.status(500).json({ error: String(e) });
   }
