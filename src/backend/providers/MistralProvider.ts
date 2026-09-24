@@ -41,7 +41,9 @@ export class MistralProvider implements AIProvider {
         },
         body: JSON.stringify({
           model: this.model,
-          temperature: 0.7,
+          temperature: 0.75,
+          frequency_penalty: 0.5,
+          presence_penalty: 0.4,
           max_tokens: 1500,
           messages: [
             { role: 'system', content: systemPrompt },

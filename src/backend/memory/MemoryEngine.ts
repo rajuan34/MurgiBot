@@ -134,8 +134,10 @@ export class MemoryEngine {
   }
 
   async addShortTermMessage(userId: string, role: 'user' | 'bohurupi', text: string) {
+    if (!text || text.trim().length === 0) return;
+    const cleanText = text.trim();
     const timestamp = Date.now();
-    const data: ShortTermMessage = { role, text, timestamp };
+    const data: ShortTermMessage = { role, text: cleanText, timestamp };
     
     if (this.pool) {
       try {

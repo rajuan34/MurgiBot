@@ -354,7 +354,10 @@ export class DiscordService {
           });
         }
 
-        const cleanContent = message.content.replace(new RegExp(`<@!?${this.client.user?.id}>`, 'g'), '').trim();
+        let cleanContent = message.content.replace(new RegExp(`<@!?${this.client.user?.id}>`, 'g'), '').trim();
+        if (!cleanContent) {
+          cleanContent = "oi";
+        }
         
         const response = await this.brain.processInteraction(message.author.id, cleanContent);
         

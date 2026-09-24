@@ -28,16 +28,18 @@ export class BohurupiBrain {
   async processInteraction(userId: string, message: string) {
     logger.info(`Processing new interaction from user`, { userId });
 
+    const incomingText = (message || '').trim() || 'oi';
+
     // Step 1: Memory Engine
     const shortTermContext = await this.memory.getShortTermContext(userId);
     const longTermContext = await this.memory.getLongTermContext(userId);
     
     // Save user's incoming message to short-term memory
-    await this.memory.addShortTermMessage(userId, 'user', message);
+    await this.memory.addShortTermMessage(userId, 'user', incomingText);
 
     // Step 2: Emotion Engine
     
-    let currentMood = this.emotion.evaluateInteraction(message);
+    let currentMood = this.emotion.evaluateInteraction(incomingText);
     
     // Step 2.5: Creator Identification & State Override
     let userRole = "SERVER_MEMBER";
@@ -68,7 +70,7 @@ export class BohurupiBrain {
       Event: "Seasonal jokes, event-specific greetings.",
       Observer: "Intentional silence. Do not reply. Output exactly: *(Bohurupi watches silently)*",
       "RESPECTFUL_SON_CALM": "Mode: Son State. Tone: Extremely calm, respectful, affectionate, soft, and obedient. Address: 'Abba', 'Baba', or 'Boss'. Rules: Zero unprovoked roasting, attitude, or sarcasm. Responds warmly and eagerly to help or listen. Examples: 'ji abba shuntesi', 'bolen abba ki korbo?', 'apni bolse mane done baba'.",
-      "RESPECTFUL_FRIENDLY": "Tone: Respectful, friendly, highly cooperative, and warm. Acknowledge as co-creator.",
+      "RESPECTFUL_FRIENDLY": "Mode: Co-Creator State (with RAJUAN). Tone: Chill, respectful, friendly, and cooperative dev partner vibe. Address: 'Rajuan bhai', 'Boss', or 'Rajuan'. Rules: NEVER repeat repetitive greeting loops. NEVER say 'ami tahle server e ashe'. Answer directly to what he asked or said in natural short Banglish (1-2 sentences). Examples: 'ki obostha Rajuan bhai?', 'bolen boss ki lagbe?', 'kono kaj ase bhai?'."
     };
 
     let behaviorRules = "";
@@ -84,12 +86,17 @@ export class BohurupiBrain {
 [Current Personality State: ${currentMood}]
 This state is your most important behavioral filter right now:
 ${stateDescriptions[currentMood] || stateDescriptions['Playful']}
+
+[ANTI-REPETITION MANDATE]
+- DO NOT repeat greetings, phrases, or sentences from recent conversation context.
+- NEVER output repetitive loops like "ami tahle server e ashe" or repeat sentences twice.
+- Directly answer or react to the user's latest statement in fresh, natural Banglish.
 `.trim();
 
     // Step 5: Generation via decoupled Provider Manager
     try {
       const response = await this.providers.generateResponse({
-        prompt: message,
+        prompt: incomingText,
         context: assembledContext,
         systemInstruction: systemInstruction
       });
@@ -108,6 +115,33 @@ ${stateDescriptions[currentMood] || stateDescriptions['Playful']}
           } else {
               cleanText = "kire bhai, mood nai amar";
           }
+      }
+
+      // Clean up common hallucination loops
+      if (cleanText.toLowerCase().includes("server e ashe")) {
+        cleanText = cleanText.replace(/ami tahle server e ashe[!,.\s]*/gi, '').trim();
+        if (!cleanText || cleanText.length < 5) {
+          cleanText = userRole === 'CO_CREATOR' ? "bolen Rajuan bhai, ki obostha? ki kaj korbo?" : "ki obostha bhai? bolo ki lagbe.";
+        }
+      }
+
+      // Deduplicate repeated sentences within the response
+      const parts = cleanText.split(/([.!?\n]+)/);
+      const seen = new Set<string>();
+      let deduplicated = '';
+      for (let i = 0; i < parts.length; i += 2) {
+        const sentence = parts[i]?.trim();
+        const sep = parts[i + 1] || ' ';
+        if (sentence) {
+          const key = sentence.toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (key && !seen.has(key)) {
+            seen.add(key);
+            deduplicated += sentence + sep + ' ';
+          }
+        }
+      }
+      if (deduplicated.trim().length > 0) {
+        cleanText = deduplicated.trim();
       }
 
       // Save Bohurupi's response to memory
@@ -151,7 +185,7 @@ ${stateDescriptions[currentMood] || stateDescriptions['Playful']}
       Event: "Seasonal jokes, event-specific greetings.",
       Observer: "Intentional silence. Do not reply. Output exactly: *(Bohurupi watches silently)*",
       "RESPECTFUL_SON_CALM": "Mode: Son State. Tone: Extremely calm, respectful, affectionate, soft, and obedient. Address: 'Abba', 'Baba', or 'Boss'. Rules: Zero unprovoked roasting, attitude, or sarcasm. Responds warmly and eagerly to help or listen. Examples: 'ji abba shuntesi', 'bolen abba ki korbo?', 'apni bolse mane done baba'.",
-      "RESPECTFUL_FRIENDLY": "Tone: Respectful, friendly, highly cooperative, and warm. Acknowledge as co-creator.",
+      "RESPECTFUL_FRIENDLY": "Mode: Co-Creator State (with RAJUAN). Tone: Chill, respectful, friendly, and cooperative dev partner vibe. Address: 'Rajuan bhai', 'Boss', or 'Rajuan'. Rules: NEVER repeat repetitive loops or greetings. Answer directly to what he asked or said in natural short Banglish (1-2 sentences).",
     };
 
     const systemInstruction = `
