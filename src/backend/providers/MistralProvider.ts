@@ -28,9 +28,27 @@ export class MistralProvider implements AIProvider {
     }
 
     const systemPrompt = this.overrideSystemPrompt || request.systemInstruction || 'You are Bohurupi, a witty and helpful AI assistant.';
-    const userPrompt = request.context
-      ? `CONTEXT:\n${request.context}\n\nUSER PROMPT:\n${request.prompt}`
-      : request.prompt;
+    
+    const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
+      { role: 'system', content: systemPrompt }
+    ];
+
+    if (request.history && request.history.length > 0) {
+      for (const turn of request.history) {
+        if (turn.content && turn.content.trim()) {
+          messages.push({
+            role: turn.role === 'user' ? 'user' : 'assistant',
+            content: turn.content.trim()
+          });
+        }
+      }
+      messages.push({ role: 'user', content: request.prompt });
+    } else {
+      const userPrompt = request.context
+        ? `CONTEXT:\n${request.context}\n\nUSER PROMPT:\n${request.prompt}`
+        : request.prompt;
+      messages.push({ role: 'user', content: userPrompt });
+    }
 
     try {
       const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
@@ -45,10 +63,7 @@ export class MistralProvider implements AIProvider {
           frequency_penalty: 0.5,
           presence_penalty: 0.4,
           max_tokens: 1500,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ]
+          messages
         })
       });
 

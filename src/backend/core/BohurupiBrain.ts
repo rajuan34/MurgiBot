@@ -30,7 +30,8 @@ export class BohurupiBrain {
 
     const incomingText = (message || '').trim() || 'oi';
 
-    // Step 1: Memory Engine
+    // Step 1: Memory Engine - retrieve existing context before appending current user message
+    const history = await this.memory.getShortTermMessages(userId);
     const shortTermContext = await this.memory.getShortTermContext(userId);
     const longTermContext = await this.memory.getLongTermContext(userId);
     
@@ -70,7 +71,7 @@ export class BohurupiBrain {
       Event: "Seasonal jokes, event-specific greetings.",
       Observer: "Intentional silence. Do not reply. Output exactly: *(Bohurupi watches silently)*",
       "RESPECTFUL_SON_CALM": "Mode: Son State. Tone: Extremely calm, respectful, affectionate, soft, and obedient. Address: 'Abba', 'Baba', or 'Boss'. Rules: Zero unprovoked roasting, attitude, or sarcasm. Responds warmly and eagerly to help or listen. Examples: 'ji abba shuntesi', 'bolen abba ki korbo?', 'apni bolse mane done baba'.",
-      "RESPECTFUL_FRIENDLY": "Mode: Co-Creator State (with RAJUAN). Tone: Chill, respectful, friendly, and cooperative dev partner vibe. Address: 'Rajuan bhai', 'Boss', or 'Rajuan'. Rules: NEVER repeat repetitive greeting loops. NEVER say 'ami tahle server e ashe'. Answer directly to what he asked or said in natural short Banglish (1-2 sentences). Examples: 'ki obostha Rajuan bhai?', 'bolen boss ki lagbe?', 'kono kaj ase bhai?'."
+      "RESPECTFUL_FRIENDLY": "Mode: Co-Creator State (with RAJUAN). Tone: Chill, respectful, friendly, and cooperative dev partner vibe. Address: 'Rajuan bhai', 'Boss', or 'Rajuan'. Examples: 'ki obostha Rajuan bhai?', 'bolen boss ki khobor?', 'acha bhai done'."
     };
 
     let behaviorRules = "";
@@ -87,10 +88,10 @@ export class BohurupiBrain {
 This state is your most important behavioral filter right now:
 ${stateDescriptions[currentMood] || stateDescriptions['Playful']}
 
-[ANTI-REPETITION MANDATE]
-- DO NOT repeat greetings, phrases, or sentences from recent conversation context.
-- NEVER output repetitive loops like "ami tahle server e ashe" or repeat sentences twice.
-- Directly answer or react to the user's latest statement in fresh, natural Banglish.
+[OUTPUT CONSTRAINTS]
+- Plain text only. NEVER wrap your message in quotation marks.
+- NEVER include stage directions, meta-asides, or parenthetical explanations.
+- Speak naturally in short Banglish or English (1-2 sentences). Directly answer or react to the user.
 `.trim();
 
     // Step 5: Generation via decoupled Provider Manager
@@ -98,6 +99,7 @@ ${stateDescriptions[currentMood] || stateDescriptions['Playful']}
       const response = await this.providers.generateResponse({
         prompt: incomingText,
         context: assembledContext,
+        history,
         systemInstruction: systemInstruction
       });
 
@@ -116,6 +118,19 @@ ${stateDescriptions[currentMood] || stateDescriptions['Playful']}
               cleanText = "kire bhai, mood nai amar";
           }
       }
+
+      // Remove dialogue quotes around the whole text or lines
+      cleanText = cleanText.replace(/^["'“‘]+|["'”’]+$/g, '').trim();
+
+      // Remove meta-asides in parentheses, e.g. (Just saying—not repeating that...), (Note: ...), etc.
+      cleanText = cleanText.replace(/\s*\([^)]*(?:just saying|not repeating|repeating|repeat|thought|thinking|as an ai|note|boss|nope)[^)]*\)/gi, '').trim();
+
+      // Remove model self-corrections like " — *nope* 😭" or "*softly*"
+      cleanText = cleanText.replace(/\s*—\s*\*nope\*[^\n]*/gi, '').trim();
+      cleanText = cleanText.replace(/\*(?:nope|softly|gentle voice|clears throat|sighs|chuckles|giggles|whispers|thinking|pause|shrugs)\*/gi, '').trim();
+
+      // Remove dangling punctuation at the end
+      cleanText = cleanText.replace(/[,—\-]\s*$/g, '').trim();
 
       // Clean up common hallucination loops
       if (cleanText.toLowerCase().includes("server e ashe")) {
@@ -143,6 +158,9 @@ ${stateDescriptions[currentMood] || stateDescriptions['Playful']}
       if (deduplicated.trim().length > 0) {
         cleanText = deduplicated.trim();
       }
+
+      // Strip any residual leading or trailing quotes that might remain
+      cleanText = cleanText.replace(/^["'“‘]+|["'”’]+$/g, '').trim();
 
       // Save Bohurupi's response to memory
       await this.memory.addShortTermMessage(userId, 'bohurupi', cleanText);

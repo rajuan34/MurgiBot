@@ -200,6 +200,32 @@ export class MemoryEngine {
     return history.map(m => `${m.role === 'user' ? 'User' : 'Bohurupi'}: ${m.text}`).join('\n');
   }
 
+  async getShortTermMessages(userId: string): Promise<{ role: 'user' | 'assistant'; content: string }[]> {
+    let items: ShortTermMessage[] = [];
+    if (this.pool) {
+      try {
+        const now = Date.now();
+        const res = await this.pool.query(
+          'SELECT data FROM bohurupi_temp_memory WHERE user_id = $1 AND type = $2 AND expires_at >= $3 ORDER BY created_at ASC',
+          [userId, 'short_term_message', now]
+        );
+        items = res.rows.map(row => row.data as ShortTermMessage);
+      } catch (error) {
+        logger.error('DB Error getting short term messages', { error });
+        items = this.fallbackShortTerm.get(userId) || [];
+      }
+    } else {
+      items = this.fallbackShortTerm.get(userId) || [];
+    }
+
+    return items
+      .filter(m => m.text && m.text.trim().length > 0)
+      .map(m => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.text.trim()
+      }));
+  }
+
   async addLongTermFact(userId: string, fact: string) {
     const timestamp = Date.now();
     const data: LongTermFact = { fact, confidence: 1.0, extractedAt: timestamp };

@@ -3,7 +3,7 @@ import { AIProvider, LLMRequest } from './ProviderManager';
 import { logger } from '../telemetry/logger';
 
 export class GeminiProvider implements AIProvider {
-  name = 'Google-Gemini-3.5-Flash';
+  name = 'Google-Gemini-3.8-Flash';
   private ai: GoogleGenAI | null = null;
 
   constructor() {
@@ -17,7 +17,6 @@ export class GeminiProvider implements AIProvider {
   }
 
   isHealthy(): boolean {
-    // Healthy only if the SDK initialized correctly
     return this.ai !== null;
   }
 
@@ -28,18 +27,37 @@ export class GeminiProvider implements AIProvider {
 
     const systemInstruction = request.systemInstruction || '';
     
-    // We pass the context directly in the prompt for this implementation, 
-    // though in a full RAG system, context might be injected via specific role blocks.
-    const combinedPrompt = `${request.context ? `[System Context & Memories]\n${request.context}\n\n` : ''}User: ${request.prompt}`;
+    let contents: any[] = [];
+    if (request.history && request.history.length > 0) {
+      contents = request.history.map(h => ({
+        role: h.role === 'user' ? 'user' : 'model',
+        parts: [{ text: h.content }]
+      }));
+      contents.push({
+        role: 'user',
+        parts: [{ text: request.prompt }]
+      });
+    } else {
+      const combinedPrompt = `${request.context ? `[System Context & Memories]\n${request.context}\n\n` : ''}User: ${request.prompt}`;
+      contents = [{ role: 'user', parts: [{ text: combinedPrompt }] }];
+    }
 
     try {
-      const response = await this.ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: combinedPrompt,
+      const callPromise = this.ai.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents,
         config: {
           systemInstruction: systemInstruction,
+          maxOutputTokens: 300,
+          temperature: 0.8
         }
       });
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Gemini API request timed out after 6000ms')), 6000)
+      );
+
+      const response = await Promise.race([callPromise, timeoutPromise]);
 
       if (!response.text) {
         throw new Error('Received empty response from Gemini.');
@@ -49,7 +67,7 @@ export class GeminiProvider implements AIProvider {
     } catch (error: any) {
       const errorMessage = error.message || '';
       if (errorMessage.includes('429') || errorMessage.includes('Quota exceeded')) {
-        logger.warn('Gemini API Rate Limit Exceeded (429). Falling back to local Llama3.');
+        logger.warn('Gemini API Rate Limit Exceeded (429). Triggering failover.');
       } else {
         logger.error('Gemini API Error', { error: errorMessage });
       }

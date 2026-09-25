@@ -11,6 +11,7 @@ export interface APICallLog {
 export interface LLMRequest {
   prompt: string;
   context?: string; // Contains retrieved memory and emotion data
+  history?: { role: 'user' | 'assistant'; content: string }[];
   systemInstruction?: string; // Overrides character rules if needed
 }
 
@@ -120,8 +121,11 @@ export class ProviderManager {
         logger.info(`Attempting generation with provider: ${provider.name}`);
         start = Date.now();
         
-        // Execute AI Call
-        const text = await provider.generate(request);
+        // Execute AI Call with safety timeout to prevent stalling
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`Timeout: Provider ${provider.name} exceeded 7000ms limit`)), 7000)
+        );
+        const text = await Promise.race([provider.generate(request), timeoutPromise]);
         
         const latency = Date.now() - start;
 

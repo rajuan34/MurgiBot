@@ -27,7 +27,25 @@ export class OpenRouterProvider implements AIProvider {
     }
 
     const systemPrompt = this.overrideSystemPrompt || request.systemInstruction || 'You are a helpful AI.';
-    const userPrompt = request.context ? `CONTEXT:\n${request.context}\n\nUSER PROMPT:\n${request.prompt}` : request.prompt;
+    
+    const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
+      { role: 'system', content: systemPrompt }
+    ];
+
+    if (request.history && request.history.length > 0) {
+      for (const turn of request.history) {
+        if (turn.content && turn.content.trim()) {
+          messages.push({
+            role: turn.role === 'user' ? 'user' : 'assistant',
+            content: turn.content.trim()
+          });
+        }
+      }
+      messages.push({ role: 'user', content: request.prompt });
+    } else {
+      const userPrompt = request.context ? `CONTEXT:\n${request.context}\n\nUSER PROMPT:\n${request.prompt}` : request.prompt;
+      messages.push({ role: 'user', content: userPrompt });
+    }
 
     try {
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -40,12 +58,9 @@ export class OpenRouterProvider implements AIProvider {
         },
         body: JSON.stringify({
           model: model,
-          max_tokens: 2000,
-          temperature: 0.9, // Explicitly limit tokens so it doesn't reserve the model's max context (65k) which causes 402 on low balance
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ]
+          max_tokens: 300,
+          temperature: 0.85,
+          messages
         })
       });
 
