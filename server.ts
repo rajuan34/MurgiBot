@@ -14,7 +14,6 @@ import { DiscordService } from './src/backend/discord/DiscordService';
 import { GeminiProvider } from './src/backend/providers/GeminiProvider';
 import { OllamaProvider } from './src/backend/providers/OllamaProvider';
 import { OpenRouterProvider } from './src/backend/providers/OpenRouterProvider';
-import { MistralProvider } from './src/backend/providers/MistralProvider';
 import 'dotenv/config';
 
 const app = express();
@@ -73,9 +72,6 @@ export const bohurupiBrain = new BohurupiBrain(
 export const discordService = new DiscordService(bohurupiBrain);
 
 // Register Real AI Providers
-const mistralProvider = new MistralProvider();
-providerManager.registerProvider(mistralProvider);
-
 const openRouterProvider = new OpenRouterProvider('Cloud-OpenRouter', 'deepseek/deepseek-v4-flash-0731');
 providerManager.registerProvider(openRouterProvider);
 

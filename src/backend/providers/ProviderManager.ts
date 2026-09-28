@@ -46,16 +46,18 @@ export class ProviderManager {
   }
 
   getConfig() {
+    const registeredNames = new Set(this.providers.map(p => p.name));
     if (this.activeConfig) {
-      const existingNames = new Set(this.activeConfig.map(c => c.name));
+      const validActiveConfig = this.activeConfig.filter(c => registeredNames.has(c.name));
+      const existingNames = new Set(validActiveConfig.map(c => c.name));
       const missingProviders = this.providers
         .filter(p => !existingNames.has(p.name))
         .map((p, idx) => ({
           name: p.name,
           enabled: true,
-          priority: (this.activeConfig?.length || 0) + idx
+          priority: validActiveConfig.length + idx
         }));
-      return [...this.activeConfig, ...missingProviders];
+      return [...validActiveConfig, ...missingProviders];
     }
     // Default config based on registration order
     return this.providers.map((p, i) => ({

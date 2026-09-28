@@ -186,6 +186,11 @@ export default function LandingPage() {
       </section>
 
       <footer className="py-8 text-center text-neutral-600 border-t border-neutral-900 bg-black">
+        <div className="flex justify-center gap-6 text-sm mb-4 text-neutral-400">
+          <Link to="/commands" className="hover:text-white transition-colors">Commands</Link>
+          <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+          <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+        </div>
         <p>
           © {new Date().getFullYear()} Bohurupi AI Core Engine. All rights
           reserved.
