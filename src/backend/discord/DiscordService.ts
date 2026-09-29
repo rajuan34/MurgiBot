@@ -3,6 +3,29 @@ import cron from 'node-cron';
 import { logger } from '../telemetry/logger';
 import { BohurupiBrain } from '../core/BohurupiBrain';
 
+/**
+ * Allowed Channel IDs where Bohurupi is permitted to reply, execute commands,
+ * and send scheduled messages:
+ * - Text channel:  705092446366728236
+ * - Media channel: 1453357071931019304
+ * - Memes channel: 1470329659693600768
+ */
+export const ALLOWED_CHANNEL_IDS: string[] = [
+  '705092446366728236',  // Text channel
+  '1453357071931019304', // Media channel
+  '1470329659693600768'  // Memes channel
+];
+
+export function isChannelAllowed(channelId: string): boolean {
+  const envChannels = (process.env.ALLOWED_CHANNEL_IDS || '')
+    .split(',')
+    .map(id => id.trim())
+    .filter(id => id.length > 0);
+  
+  const allowedList = envChannels.length > 0 ? envChannels : ALLOWED_CHANNEL_IDS;
+  return allowedList.includes(channelId);
+}
+
 export class DiscordService {
   private client: Client;
   private isConnected: boolean = false;
@@ -57,47 +80,45 @@ export class DiscordService {
       let selectedMessage: Message | null = null;
       let selectedChannel = null;
 
-      // Shuffle guilds
-      const guilds = Array.from(this.client.guilds.cache.values()).sort(() => Math.random() - 0.5);
+      // Pick randomly from the allowed channels only (Text, Media, Memes)
+      const allowedChannelsShuffled = [...ALLOWED_CHANNEL_IDS].sort(() => Math.random() - 0.5);
 
-      for (const guild of guilds) {
-        const channels = Array.from(guild.channels.cache.values()).sort(() => Math.random() - 0.5);
-        for (const channel of channels) {
-          if (!channel.isTextBased() || channel.isDMBased()) continue;
+      for (const channelId of allowedChannelsShuffled) {
+        try {
+          const channel = await this.client.channels.fetch(channelId).catch(() => null);
+          if (!channel || !channel.isTextBased() || channel.isDMBased()) continue;
           
-          const perms = guild.members.me?.permissionsIn(channel);
-          if (!perms?.has('ViewChannel') || !perms?.has('ReadMessageHistory') || !perms?.has('SendMessages')) {
+          const textChannel = channel as TextChannel;
+          const perms = textChannel.guild?.members.me?.permissionsIn(textChannel);
+          if (perms && (!perms.has('ViewChannel') || !perms.has('ReadMessageHistory') || !perms.has('SendMessages'))) {
             continue;
           }
 
-          try {
-            const messages = await channel.messages.fetch({ limit: 20 });
-            // Look for recent user messages that are not from the bot itself
-            const userMessages = Array.from(messages.values()).filter(m => 
-                !m.author.bot && 
-                !m.system && 
-                m.content.trim().length > 0
-            );
+          const messages = await textChannel.messages.fetch({ limit: 20 });
+          // Look for recent user messages that are not from the bot itself
+          const userMessages = Array.from(messages.values()).filter(m => 
+              !m.author.bot && 
+              !m.system && 
+              m.content.trim().length > 0
+          );
 
-            if (userMessages.length > 0) {
-              // Pick one of the top 3 most recent messages
-              selectedMessage = userMessages[Math.floor(Math.random() * Math.min(3, userMessages.length))];
-              selectedChannel = channel;
-              break;
-            }
-          } catch (e: any) {
-             logger.warn(`Failed to fetch messages for channel ${channel.id}`, { error: e?.message || String(e) });
+          if (userMessages.length > 0) {
+            // Pick one of the top 3 most recent messages
+            selectedMessage = userMessages[Math.floor(Math.random() * Math.min(3, userMessages.length))];
+            selectedChannel = textChannel;
+            break;
           }
+        } catch (e: any) {
+          logger.warn(`Failed to fetch messages for allowed channel ${channelId}`, { error: e?.message || String(e) });
         }
-        if (selectedMessage) break;
       }
 
       if (!selectedMessage) {
-        logger.info('No suitable message found for scheduled auto-reply.');
+        logger.info('No suitable message found in allowed channels for scheduled auto-reply.');
         return;
       }
 
-      logger.info(`Selected message ${selectedMessage.id} in channel ${selectedChannel?.id} for auto-reply.`);
+      logger.info(`Selected message ${selectedMessage.id} in allowed channel ${selectedChannel?.id} for auto-reply.`);
       
       if ('sendTyping' in selectedMessage.channel) {
           await selectedMessage.channel.sendTyping().catch(() => {});
@@ -109,10 +130,10 @@ export class DiscordService {
       const contextPrefix = "[SYSTEM: You are initiating a random interaction. Act naturally, pick up on the context of their message or just roast them out of nowhere. Do not say you are initiating.]\n";
       const response = await this.brain.processInteraction(selectedMessage.author.id, contextPrefix + cleanContent);
 
-      if (response && !response.includes('*(Bohurupi watches silently)*')) {
+      if (response && response.trim().length > 0 && !response.includes('*(Bohurupi')) {
           const sanitizedResponse = response.length > 1950 ? response.substring(0, 1950) + '...' : response;
           await selectedMessage.reply(sanitizedResponse);
-          logger.info(`Successfully sent scheduled auto-reply to message ${selectedMessage.id}`);
+          logger.info(`Successfully sent scheduled auto-reply to message ${selectedMessage.id} in allowed channel ${selectedChannel?.id}`);
       }
     } catch (error: any) {
       logger.error('Scheduled auto-reply failed', { error: error?.message || String(error) });
@@ -327,6 +348,9 @@ export class DiscordService {
       // Ignore bots
       if (message.author.bot) return;
 
+      // Strict Channel Restriction: Bot only responds/operates in allowed channels (Text, Media, Memes)
+      if (!isChannelAllowed(message.channel.id)) return;
+
       // Check for commands
       if (message.content.startsWith('!')) {
         const args = message.content.slice(1).trim().split(/ +/);
@@ -361,7 +385,7 @@ export class DiscordService {
         
         const response = await this.brain.processInteraction(message.author.id, cleanContent);
         
-        if (response && !response.includes('*(Bohurupi watches silently)*')) {
+        if (response && response.trim().length > 0 && !response.includes('*(Bohurupi')) {
           // Truncate response to stay well within Discord's 2000 character limit
           const sanitizedResponse = response.length > 1950 ? response.substring(0, 1950) + '...' : response;
           

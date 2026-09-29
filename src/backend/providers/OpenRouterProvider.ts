@@ -5,12 +5,9 @@ export class OpenRouterProvider implements AIProvider {
   name: string;
   private model: string;
 
-  private overrideSystemPrompt?: string;
-
-  constructor(name: string = 'Cloud-OpenRouter', model?: string, overrideSystemPrompt?: string) {
-    this.overrideSystemPrompt = overrideSystemPrompt;
+  constructor(name: string = 'Cloud-OpenRouter', model?: string) {
     this.name = name;
-    this.model = model || process.env.OPENROUTER_MODEL || 'deepseek/deepseek-v4-flash-0731';
+    this.model = model || process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat';
   }
 
   isHealthy(): boolean {
@@ -19,14 +16,13 @@ export class OpenRouterProvider implements AIProvider {
 
   async generate(request: LLMRequest): Promise<string> {
     const apiKey = process.env.OPENROUTER_API_KEY;
-    // Defaulting to DeepSeek V4 Flash
     const model = this.model;
 
     if (!apiKey) {
       throw new Error('OPENROUTER_API_KEY is missing. Please set it in your environment variables.');
     }
 
-    const systemPrompt = this.overrideSystemPrompt || request.systemInstruction || 'You are a helpful AI.';
+    const systemPrompt = request.systemInstruction || 'You are a helpful AI.';
     
     const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
       { role: 'system', content: systemPrompt }
@@ -47,22 +43,28 @@ export class OpenRouterProvider implements AIProvider {
       messages.push({ role: 'user', content: userPrompt });
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000', // Recommended by OpenRouter
-          'X-Title': 'Bohurupi AI Core', // Recommended by OpenRouter
+          'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
+          'X-Title': 'Bohurupi AI Core',
         },
         body: JSON.stringify({
           model: model,
           max_tokens: 300,
           temperature: 0.85,
           messages
-        })
+        }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.text();
@@ -70,10 +72,16 @@ export class OpenRouterProvider implements AIProvider {
       }
 
       const data = await response.json();
+      if (!data.choices || !data.choices[0] || !data.choices[0].message?.content) {
+        throw new Error('Invalid or empty response from OpenRouter API');
+      }
       return data.choices[0].message.content;
     } catch (error: any) {
-      logger.error('OpenRouter Provider Error', { error: error.message });
-      throw error;
+      clearTimeout(timeoutId);
+      const isAbort = error.name === 'AbortError' || error.message?.includes('aborted');
+      const errDetail = isAbort ? 'OpenRouter request timed out after 10000ms' : (error.message || String(error));
+      logger.error('OpenRouter Provider Error', { error: errDetail });
+      throw new Error(errDetail);
     }
   }
 }

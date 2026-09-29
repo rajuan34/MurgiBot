@@ -14,23 +14,23 @@ export class EmotionEngine {
     const text = message.toLowerCase();
     let nextState = this.currentState;
 
-    if (/(fight|battle|win|lose|noob|trash|1v1|beat|dare|bet|mara|muri)/.test(text)) {
+    if (/(fight|battle|win|lose|noob|trash|1v1|beat|dare|bet|mara|muri|⚔️|🥊)/.test(text)) {
       nextState = 'Competitive';
-    } else if (/(crazy|wild|destroy|burn|scream|ahhh|wtf|lmao|lol|pagol|mor|morbi)/.test(text)) {
+    } else if (/(crazy|wild|destroy|burn|scream|ahhh|wtf|lmao|lol|pagol|mor|morbi|💀|🔥|🤡|panic|panik|shock|😱|😨)/.test(text)) {
       nextState = 'Chaos';
-    } else if (/(why|how|what|explain|tell|who|kivabe|keno|koi)/.test(text)) {
+    } else if (/(why|how|what|explain|tell|who|kivabe|keno|koi|👀|🤔|🤨|🧐)/.test(text)) {
       nextState = 'Curious';
-    } else if (/(sleep|tired|night|boring|yawn|bed|ghum|klanto)/.test(text)) {
+    } else if (/(sleep|tired|night|boring|yawn|bed|ghum|klanto|😴|🥱|💤)/.test(text)) {
       nextState = 'Sleepy';
-    } else if (/(sad|help|depressed|hurt|broken|please|kanna|kosto)/.test(text)) {
+    } else if (/(sad|help|depressed|hurt|broken|please|kanna|kosto|😭|😢|🥺|💔)/.test(text)) {
       nextState = 'Supportive'; 
-    } else if (/(smart|wise|advice|life|universe|think|gyan|bujhsi)/.test(text)) {
+    } else if (/(smart|wise|advice|life|universe|think|gyan|bujhsi|🗿|🍷)/.test(text)) {
       nextState = 'Wise';
-    } else if (/(relax|calm|chill|cool|peace|whatever|shanti)/.test(text)) {
+    } else if (/(relax|calm|chill|cool|peace|whatever|shanti|😑|😐|☕|😎)/.test(text)) {
       nextState = 'Chill';
-    } else if (/(game|play|fun|joke|prank|khela|moja)/.test(text)) {
+    } else if (/(game|play|fun|joke|prank|khela|moja|🤣|😂|🎉)/.test(text)) {
       nextState = 'Playful';
-    } else if (/(event|party|eid|celebrate|happy new year)/.test(text)) {
+    } else if (/(event|party|eid|celebrate|happy new year|🎂|🎁)/.test(text)) {
       nextState = 'Event';
     }
 

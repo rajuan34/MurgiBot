@@ -13,6 +13,152 @@ import { logger } from '../telemetry/logger';
 const PRIMARY_CREATOR_ID = '1059104533109821540';
 const CO_CREATOR_ID = '986296691437207592';
 
+/**
+ * Normalizes user messages that contain Discord custom emojis (<:name:id>, <a:name:id>)
+ * or unicode emojis, translating them into rich semantic context so the LLM understands
+ * what the user is expressing without getting confused by raw Discord tokens.
+ */
+export function normalizeIncomingEmojis(message: string): { normalizedText: string; isEmojiOnly: boolean } {
+  let text = (message || '').trim();
+  if (!text) return { normalizedText: 'oi', isEmojiOnly: false };
+
+  const customEmojiRegex = /<a?:([a-zA-Z0-9_~]+):([0-9]+)>/g;
+  const detectedCustomEmojis: string[] = [];
+
+  // Replace custom emoji tokens with friendly descriptors
+  let replaced = text.replace(customEmojiRegex, (match, name) => {
+    const cleanName = name.replace(/^[0-9]+/, ''); // e.g. 420802panikemoji -> panikemoji
+    detectedCustomEmojis.push(cleanName || name);
+    return `:${cleanName || name}:`;
+  });
+
+  const remainingNonEmoji = replaced.replace(/:[a-zA-Z0-9_~]+:/g, '').replace(/[\p{Emoji}\s]/gu, '').trim();
+  const isEmojiOnly = remainingNonEmoji.length === 0;
+
+  // If user sent ONLY an emoji expression (e.g., panicked emoji or 😑 or 💀)
+  if (isEmojiOnly) {
+    let emojiDescription = replaced;
+    if (detectedCustomEmojis.length > 0) {
+      emojiDescription = detectedCustomEmojis.map(name => {
+        const lower = name.toLowerCase();
+        if (/panik|panic|scared|fear|shock/i.test(lower)) return `panicked/scared reaction face (😱 :${name}:)`;
+        if (/skull|dead|ded/i.test(lower)) return `skull / laughing to death (💀 :${name}:)`;
+        if (/sob|cry|sad/i.test(lower)) return `crying / sad face (😭 :${name}:)`;
+        if (/laugh|lol|lmao|rofl/i.test(lower)) return `laughing face (🤣 :${name}:)`;
+        if (/unamused|annoyed|side_eye|meh/i.test(lower)) return `unamused / deadpan stare (😑 :${name}:)`;
+        return `:${name}: emoji`;
+      }).join(' ');
+    }
+    return {
+      normalizedText: `[User reacted/sent an emoji expression: ${emojiDescription}]`,
+      isEmojiOnly: true
+    };
+  }
+
+  return {
+    normalizedText: replaced,
+    isEmojiOnly: false
+  };
+}
+
+/**
+ * Sanitizes Bohurupi's generated text so that it never contains broken Discord custom emoji tags,
+ * markdown bullets, or stray code backticks. Converts known emoji tags to clean Unicode emojis.
+ */
+export function sanitizeOutgoingText(rawText: string, userRole: string): string {
+  let cleanText = (rawText || '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
+  // Strip raw "Here's a thinking process:"
+  if (cleanText.includes("Here's a thinking process:")) {
+    const lines = cleanText.split('\n');
+    const validLines = lines.filter(l => l.trim().length > 0 && !l.includes("Here's a thinking process:") && !l.match(/^[0-9]+\.\s/) && !l.startsWith("[") && !l.endsWith("]"));
+    cleanText = validLines.length > 0 ? validLines[validLines.length - 1] : "kire bhai, mood nai amar";
+  }
+
+  // Strip leading bullet points (•, -, *) and leading whitespace/backticks/backslashes
+  cleanText = cleanText.replace(/^[•\-\*\s`\\]+/, '').trim();
+
+  // Map known custom emoji fragments to standard Unicode emojis
+  // E.g. `<:420802panikemoji:` or `<:panikemoji:12345>` or `\`<:420802panikemoji:`
+  cleanText = cleanText.replace(/`?\\?<a?:([a-zA-Z0-9_~]+)(?::[0-9]*)?>?`?/gi, (match, name) => {
+    const lower = name.toLowerCase();
+    if (/panik|panic|scared|fear|shock/i.test(lower)) return '😱';
+    if (/skull|dead|ded/i.test(lower)) return '💀';
+    if (/sob|cry|sad/i.test(lower)) return '😭';
+    if (/lol|lmao|rofl|laugh|joy/i.test(lower)) return '🤣';
+    if (/unamused|annoyed|side_eye/i.test(lower)) return '😑';
+    if (/clown/i.test(lower)) return '🤡';
+    if (/fire/i.test(lower)) return '🔥';
+    if (/moyai|moai|chad/i.test(lower)) return '🗿';
+    if (/eyes|sus/i.test(lower)) return '👀';
+    if (/think/i.test(lower)) return '🤔';
+    if (/salute/i.test(lower)) return '🫡';
+    if (/heart|love/i.test(lower)) return '❤️';
+    return ''; // Remove unrecognized custom tags so broken code isn't shown
+  });
+
+  // Remove any remaining stray unclosed `<:...` or `<a:...` tags
+  cleanText = cleanText.replace(/<a?:[^>\n]+>?/g, '').trim();
+  cleanText = cleanText.replace(/<:[a-zA-Z0-9_~]+/g, '').trim();
+
+  // Remove dialogue quotes
+  cleanText = cleanText.replace(/^["'“‘`\\]+|["'”’`\\]+$/g, '').trim();
+
+  // Remove meta-asides in parentheses
+  cleanText = cleanText.replace(/\s*\([^)]*(?:just saying|not repeating|repeating|repeat|thought|thinking|as an ai|note|boss|nope)[^)]*\)/gi, '').trim();
+
+  // Remove model self-corrections
+  cleanText = cleanText.replace(/\s*—\s*\*nope\*[^\n]*/gi, '').trim();
+  cleanText = cleanText.replace(/\*(?:nope|softly|gentle voice|clears throat|sighs|chuckles|giggles|whispers|thinking|pause|shrugs)\*/gi, '').trim();
+
+  // Remove dangling punctuation
+  cleanText = cleanText.replace(/[,—\-]\s*$/g, '').trim();
+
+  // Clean up common hallucination loops
+  if (cleanText.toLowerCase().includes("server e ashe")) {
+    cleanText = cleanText.replace(/ami tahle server e ashe[!,.\s]*/gi, '').trim();
+    if (!cleanText || cleanText.length < 5) {
+      cleanText = userRole === 'CO_CREATOR' ? "bolen Rajuan bhai, ki obostha? ki kaj korbo?" : "ki obostha bhai? bolo ki lagbe.";
+    }
+  }
+
+  // Deduplicate repeated sentences within the response
+  const parts = cleanText.split(/([.!?\n]+)/);
+  const seen = new Set<string>();
+  let deduplicated = '';
+  for (let i = 0; i < parts.length; i += 2) {
+    const sentence = parts[i]?.trim();
+    const sep = parts[i + 1] || ' ';
+    if (sentence) {
+      const key = sentence.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        deduplicated += sentence + sep + ' ';
+      }
+    }
+  }
+  if (deduplicated.trim().length > 0) {
+    cleanText = deduplicated.trim();
+  }
+
+  // Strip bullet points, backticks, or quotes again if exposed after regex
+  cleanText = cleanText.replace(/^[•\-\*\s`\\]+/, '').trim();
+  cleanText = cleanText.replace(/^["'“‘`\\]+|["'”’`\\]+$/g, '').trim();
+
+  // If completely empty after cleaning, return role-appropriate organic reply
+  if (!cleanText || cleanText.length === 0) {
+    if (userRole === 'FATHER') {
+      return "ji abba, shunlam.";
+    } else if (userRole === 'CO_CREATOR') {
+      return "ki obostha Rajuan bhai, bolo?";
+    } else {
+      return "ki hoise bhai? 💀";
+    }
+  }
+
+  return cleanText;
+}
+
 export class BohurupiBrain {
   constructor(
     private providers: ProviderManager,
@@ -28,7 +174,8 @@ export class BohurupiBrain {
   async processInteraction(userId: string, message: string) {
     logger.info(`Processing new interaction from user`, { userId });
 
-    const incomingText = (message || '').trim() || 'oi';
+    const rawInput = (message || '').trim() || 'oi';
+    const { normalizedText } = normalizeIncomingEmojis(rawInput);
 
     // Step 1: Memory Engine - retrieve existing context before appending current user message
     const history = await this.memory.getShortTermMessages(userId);
@@ -36,11 +183,10 @@ export class BohurupiBrain {
     const longTermContext = await this.memory.getLongTermContext(userId);
     
     // Save user's incoming message to short-term memory
-    await this.memory.addShortTermMessage(userId, 'user', incomingText);
+    await this.memory.addShortTermMessage(userId, 'user', rawInput);
 
     // Step 2: Emotion Engine
-    
-    let currentMood = this.emotion.evaluateInteraction(incomingText);
+    let currentMood = this.emotion.evaluateInteraction(rawInput);
     
     // Step 2.5: Creator Identification & State Override
     let userRole = "SERVER_MEMBER";
@@ -53,7 +199,6 @@ export class BohurupiBrain {
     }
 
     // Step 3: Identity Engine Check
-    // Map behavioral states to available visual profiles. The IdentityManager handles rate limits internally.
     await this.identity.updateProfile(currentMood);
     
     // Step 4: System Prompt Assembly
@@ -92,75 +237,24 @@ ${stateDescriptions[currentMood] || stateDescriptions['Playful']}
 - Plain text only. NEVER wrap your message in quotation marks.
 - NEVER include stage directions, meta-asides, or parenthetical explanations.
 - Speak naturally in short Banglish or English (1-2 sentences). Directly answer or react to the user.
+- EMOJI RULE: Use ONLY standard Unicode emojis (e.g. 💀, 😭, 🤣, 😱, 🗿, 🤡, 👀, 😑, 🥱). NEVER output custom Discord markup like <:name:id> or • bullet points.
 `.trim();
 
     // Step 5: Generation via decoupled Provider Manager
     try {
       const response = await this.providers.generateResponse({
-        prompt: incomingText,
+        prompt: normalizedText,
         context: assembledContext,
         history,
         systemInstruction: systemInstruction
       });
 
-      // Save Bohurupi's response to memory
-      
-      // Sanitize response to remove <think>...</think> blocks leaked by R1 distillation models
-      let cleanText = response.text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-      
-      // Also catch raw "Here's a thinking process:" text if the XML tags were omitted
-      if (cleanText.includes("Here's a thinking process:")) {
-          const lines = cleanText.split('\n');
-          const validLines = lines.filter(l => l.trim().length > 0 && !l.includes("Here's a thinking process:") && !l.match(/^[0-9]+\.\s/) && !l.startsWith("[") && !l.endsWith("]"));
-          if (validLines.length > 0) {
-              cleanText = validLines[validLines.length - 1]; // Take the last valid line
-          } else {
-              cleanText = "kire bhai, mood nai amar";
-          }
+      if (response.isIgnored || !response.text || response.text.trim().length === 0) {
+        logger.info('Bohurupi is in deep sleep mode (consecutive fallbacks > 2) and ignoring message.');
+        return "";
       }
 
-      // Remove dialogue quotes around the whole text or lines
-      cleanText = cleanText.replace(/^["'“‘]+|["'”’]+$/g, '').trim();
-
-      // Remove meta-asides in parentheses, e.g. (Just saying—not repeating that...), (Note: ...), etc.
-      cleanText = cleanText.replace(/\s*\([^)]*(?:just saying|not repeating|repeating|repeat|thought|thinking|as an ai|note|boss|nope)[^)]*\)/gi, '').trim();
-
-      // Remove model self-corrections like " — *nope* 😭" or "*softly*"
-      cleanText = cleanText.replace(/\s*—\s*\*nope\*[^\n]*/gi, '').trim();
-      cleanText = cleanText.replace(/\*(?:nope|softly|gentle voice|clears throat|sighs|chuckles|giggles|whispers|thinking|pause|shrugs)\*/gi, '').trim();
-
-      // Remove dangling punctuation at the end
-      cleanText = cleanText.replace(/[,—\-]\s*$/g, '').trim();
-
-      // Clean up common hallucination loops
-      if (cleanText.toLowerCase().includes("server e ashe")) {
-        cleanText = cleanText.replace(/ami tahle server e ashe[!,.\s]*/gi, '').trim();
-        if (!cleanText || cleanText.length < 5) {
-          cleanText = userRole === 'CO_CREATOR' ? "bolen Rajuan bhai, ki obostha? ki kaj korbo?" : "ki obostha bhai? bolo ki lagbe.";
-        }
-      }
-
-      // Deduplicate repeated sentences within the response
-      const parts = cleanText.split(/([.!?\n]+)/);
-      const seen = new Set<string>();
-      let deduplicated = '';
-      for (let i = 0; i < parts.length; i += 2) {
-        const sentence = parts[i]?.trim();
-        const sep = parts[i + 1] || ' ';
-        if (sentence) {
-          const key = sentence.toLowerCase().replace(/[^a-z0-9]/g, '');
-          if (key && !seen.has(key)) {
-            seen.add(key);
-            deduplicated += sentence + sep + ' ';
-          }
-        }
-      }
-      if (deduplicated.trim().length > 0) {
-        cleanText = deduplicated.trim();
-      }
-
-      // Strip any residual leading or trailing quotes that might remain
-      cleanText = cleanText.replace(/^["'“‘]+|["'”’]+$/g, '').trim();
+      const cleanText = sanitizeOutgoingText(response.text, userRole);
 
       // Save Bohurupi's response to memory
       await this.memory.addShortTermMessage(userId, 'bohurupi', cleanText);
@@ -224,16 +318,7 @@ ${commandInstruction}
         systemInstruction: systemInstruction
       });
 
-      let cleanText = response.text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-      if (cleanText.includes("Here's a thinking process:")) {
-          const lines = cleanText.split('\n');
-          const validLines = lines.filter(l => l.trim().length > 0 && !l.includes("Here's a thinking process:") && !l.match(/^[0-9]+\.\s/) && !l.startsWith("[") && !l.endsWith("]"));
-          if (validLines.length > 0) {
-              cleanText = validLines[validLines.length - 1];
-          } else {
-              cleanText = "kire bhai, mood nai amar 💀";
-          }
-      }
+      const cleanText = sanitizeOutgoingText(response.text, userRole);
       
       await this.memory.addShortTermMessage(userId, 'user', '[User triggered a bot command]');
       await this.memory.addShortTermMessage(userId, 'bohurupi', cleanText);
@@ -244,5 +329,4 @@ ${commandInstruction}
       return "bhitor theke kono error ashse vai 💀";
     }
   }
-
 }

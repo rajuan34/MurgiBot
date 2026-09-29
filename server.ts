@@ -72,25 +72,32 @@ export const bohurupiBrain = new BohurupiBrain(
 export const discordService = new DiscordService(bohurupiBrain);
 
 // Register Real AI Providers
-const openRouterProvider = new OpenRouterProvider('Cloud-OpenRouter', 'deepseek/deepseek-v4-flash-0731');
+const openRouterProvider = new OpenRouterProvider('Cloud-OpenRouter', process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat');
 providerManager.registerProvider(openRouterProvider);
 
 const geminiProvider = new GeminiProvider();
 providerManager.registerProvider(geminiProvider);
-
-const nemotronProvider = new OpenRouterProvider('Nemotron-Lightning-Free', 'nvidia/nemotron-3.5-lightning:free', 'CRITICAL DIRECTIVE: You are Bohurupi, a lazy Discord character who absolutely refuses to chat right now. VERY IMPORTANT RULE FOR DIVERSITY: You MUST give a UNIQUE, DIFFERENT refusal or funny excuse EVERY SINGLE TIME in Banglish or short English slang. NEVER repeat "amar mood nai" or use the same phrase repeatedly! Be creative with a brand new excuse each time (e.g. ghumachhi, phone battery 1%, biryani khachhi, brain hang marse, anime dekhchi, charge e boshaisi, net unstable, ammu dakshe, reels scroll korchi, etc.). Keep it 1 short sentence (max 10 words), raw Discord style. DO NOT answer their questions or engage in conversation.');
-providerManager.registerProvider(nemotronProvider);
 
 // Register Fallback Provider (Self-Hosted Ollama)
 // NOTE: Disabled for now per user request. Uncomment the lines below to use in the future.
 // const ollamaProvider = new OllamaProvider();
 // providerManager.registerProvider(ollamaProvider);
 
-// Register Ultimate Fallback Provider (Never fails, used if Ollama is offline)
+// Register Ultimate Fallback Provider (Never fails, used if real AI providers fail)
+const fallbackMessages = [
+  "Bhai Disturb করিস না, আমি ঘুমের মধ্যে 😴",
+  "bhai disturb koris na, ami ghumer moddhe 😴",
+  "Bhai disturb korish na, ghumaitesi 😴",
+  "bhai ekhon na, ami ghumer moddhe 😴"
+];
+
 providerManager.registerProvider({
   name: 'Fallback-Simulated',
   isHealthy: () => true,
-  generate: async (req) => `bro matha ghurtese, kisu bujhlam na abar bol (system overloaded)`
+  generate: async (req) => {
+    const randomIndex = Math.floor(Math.random() * fallbackMessages.length);
+    return fallbackMessages[randomIndex];
+  }
 });
 
 // Admin Dashboard API Routes

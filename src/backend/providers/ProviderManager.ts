@@ -27,6 +27,15 @@ export interface AIProvider {
  */
 export class ProviderManager {
   private apiCallHistory: APICallLog[] = [];
+  private consecutiveFallbackCount = 0;
+
+  getConsecutiveFallbackCount(): number {
+    return this.consecutiveFallbackCount;
+  }
+
+  resetConsecutiveFallbackCount(): void {
+    this.consecutiveFallbackCount = 0;
+  }
 
   getAPICallHistory() {
     return this.apiCallHistory;
@@ -48,7 +57,13 @@ export class ProviderManager {
   getConfig() {
     const registeredNames = new Set(this.providers.map(p => p.name));
     if (this.activeConfig) {
-      const validActiveConfig = this.activeConfig.filter(c => registeredNames.has(c.name));
+      const normalizedConfig = this.activeConfig.map(c => {
+        if (c.name === 'Google-Gemini-3.8-Flash' && registeredNames.has('Google-Gemini')) {
+          return { ...c, name: 'Google-Gemini' };
+        }
+        return c;
+      });
+      const validActiveConfig = normalizedConfig.filter(c => registeredNames.has(c.name));
       const existingNames = new Set(validActiveConfig.map(c => c.name));
       const missingProviders = this.providers
         .filter(p => !existingNames.has(p.name))
@@ -105,7 +120,7 @@ export class ProviderManager {
     }));
   }
 
-  async generateResponse(request: LLMRequest): Promise<{ text: string, providerName: string }> {
+  async generateResponse(request: LLMRequest): Promise<{ text: string, providerName: string, isIgnored?: boolean }> {
     for (const provider of this.getActiveProviders()) {
       if (!provider.isHealthy()) continue;
 
@@ -125,7 +140,7 @@ export class ProviderManager {
         
         // Execute AI Call with safety timeout to prevent stalling
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Timeout: Provider ${provider.name} exceeded 7000ms limit`)), 7000)
+          setTimeout(() => reject(new Error(`Timeout: Provider ${provider.name} exceeded 12000ms limit`)), 12000)
         );
         const text = await Promise.race([provider.generate(request), timeoutPromise]);
         
@@ -134,12 +149,23 @@ export class ProviderManager {
         // Reset failures on successful completion
         this.circuitBreakerFailures.set(provider.name, 0);
 
+        if (provider.name === 'Fallback-Simulated') {
+          this.consecutiveFallbackCount++;
+          logger.warn(`Fallback-Simulated activated. Consecutive fallback count: ${this.consecutiveFallbackCount}`);
+          if (this.consecutiveFallbackCount > 2) {
+            logger.info(`Bohurupi has gone to sleep due to >2 consecutive fallbacks. Ignoring message silently (sleep mode).`);
+            return { text: '', providerName: provider.name, isIgnored: true };
+          }
+        } else {
+          this.consecutiveFallbackCount = 0;
+        }
+
         logger.info(`Generation successful via ${provider.name}`, { 
           latency_ms: latency, 
           token_estimate: Math.ceil(text.length / 4) // Rough estimation
         });
         
-        return { text, providerName: provider.name };
+        return { text, providerName: provider.name, isIgnored: false };
 
       } catch (error: any) {
         const errorMessage = error.message || '';
