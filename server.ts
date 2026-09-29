@@ -95,6 +95,22 @@ providerManager.registerProvider({
   name: 'Fallback-Simulated',
   isHealthy: () => true,
   generate: async (req) => {
+    const sys = req.systemInstruction || '';
+    if (sys.includes('COMMAND: !court')) {
+      return "Crime: 24 ghonta phone tipe chokher 12ta bajano\nPenalty: Shobai ke 1 plate kacchi khawano";
+    }
+    if (sys.includes('COMMAND: !fight')) {
+      return "Move: ULTA CHARI SLAP\nTrashTalk: tui to ek fukei ure jabi bot 💀";
+    }
+    if (sys.includes('COMMAND: !biryani_roulette')) {
+      return "Dish: TEELA POKA IN RICE\nNotes: Special crispy crunch item found.\nMock: bhai ei biryani khele hospitale bhorti howa lagbe!";
+    }
+    if (sys.includes('COMMAND: !iq')) {
+      return "Ei matha diye sudhu meme scroll kora jay, IQ 40 💀";
+    }
+    if (sys.includes('COMMAND:')) {
+      return "bhai ajke ektu chill kortesi, kichukkhon por abar try kor!";
+    }
     const randomIndex = Math.floor(Math.random() * fallbackMessages.length);
     return fallbackMessages[randomIndex];
   }

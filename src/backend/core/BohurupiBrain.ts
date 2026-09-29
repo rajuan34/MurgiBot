@@ -10,8 +10,8 @@ import { logger } from '../telemetry/logger';
  * BohurupiBrain is the central orchestrator. 
  * It glues Memory, Emotion, Identity, and AI Providers into a single organic pipeline.
  */
-const PRIMARY_CREATOR_ID = '1059104533109821540';
-const CO_CREATOR_ID = '986296691437207592';
+const PRIMARY_CREATOR_IDS = ['1059104533109821540', '1138805727025000458'];
+const CO_CREATOR_IDS = ['986296691437207592', '1131061730076639352'];
 
 /**
  * Normalizes user messages that contain Discord custom emojis (<:name:id>, <a:name:id>)
@@ -190,10 +190,10 @@ export class BohurupiBrain {
     
     // Step 2.5: Creator Identification & State Override
     let userRole = "SERVER_MEMBER";
-    if (userId === PRIMARY_CREATOR_ID) {
+    if (PRIMARY_CREATOR_IDS.includes(userId)) {
         userRole = "FATHER";
         currentMood = "RESPECTFUL_SON_CALM";
-    } else if (userId === CO_CREATOR_ID) {
+    } else if (CO_CREATOR_IDS.includes(userId)) {
         userRole = "CO_CREATOR";
         currentMood = "RESPECTFUL_FRIENDLY";
     }
@@ -272,10 +272,10 @@ ${stateDescriptions[currentMood] || stateDescriptions['Playful']}
     
     let currentMood = "Chaos"; 
     let userRole = "SERVER_MEMBER";
-    if (userId === PRIMARY_CREATOR_ID) {
+    if (PRIMARY_CREATOR_IDS.includes(userId)) {
         userRole = "FATHER";
         currentMood = "RESPECTFUL_SON_CALM";
-    } else if (userId === CO_CREATOR_ID) {
+    } else if (CO_CREATOR_IDS.includes(userId)) {
         userRole = "CO_CREATOR";
         currentMood = "RESPECTFUL_FRIENDLY";
     }
@@ -313,7 +313,7 @@ ${commandInstruction}
 
     try {
       const response = await this.providers.generateResponse({
-        prompt: "Generate the command output.",
+        prompt: commandInstruction,
         context: "",
         systemInstruction: systemInstruction
       });

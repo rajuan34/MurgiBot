@@ -163,27 +163,57 @@ export class DiscordService {
 
 
   private async handleCommand(command: string, args: string[], message: Message): Promise<boolean> {
-    const validCommands = ['bully', 'expose', 'hype', 'agree', 'court', 'biryani_war', 'nasta_check', 'predict', 'roast_chat', 'lore', 'fight', 'biryani_roulette'];
+    const validCommands = [
+      'bully', 'roast', 'court', 'fight', 'biryani_roulette', 'roulette', 
+      'expose', 'hype', 'agree', 'biryani_war', 'biryaniwar', 'nasta_check', 'nasta', 
+      'predict', 'roast_chat', 'roastchat', 'lore', 'flirt', 'meme', 'advice', 
+      'confess', 'truth', 'dare', '8ball', 'choose', 'iq', 'horoscope', 'help', 'commands'
+    ];
+    
     if (!validCommands.includes(command)) return false;
 
-    const ownerIds = (process.env.DISCORD_OWNER_IDS || '').split(',').map(id => id.trim()).filter(id => id.length > 0);
-    if (!ownerIds.includes('986296691437207592')) ownerIds.push('986296691437207592'); // Hardcoded Co-creator ID
-    
-    if (ownerIds.length === 0 || !ownerIds.includes(message.author.id)) {
-      const aiResponse = await this.brain.processCommand(
-         message.author.id, 
-         message.author.username, 
-         `COMMAND_REJECTED: The user <@${message.author.id}> tried to use a command, but they are NOT the owner. Reject their access hilariously and savagely in Banglish. Tell them they need the boss's permission. Do not use quotes.`
-      );
-      await message.reply(aiResponse);
-      return true;
+    // Send typing indicator immediately
+    if ('sendTyping' in message.channel) {
+      await message.channel.sendTyping().catch(() => {});
     }
 
     const targetUser = message.mentions.users.first() ? "<@" + message.mentions.users.first()?.id + ">" : (args[0] || "<@" + message.author.id + ">");
     const targetUserName = message.mentions.users.first()?.username || (args[0] ? args[0].replace(/[@<>]/g, '') : message.author.username);
 
-    // Helpers for animation delays
-    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    // Help menu command
+    if (command === 'help' || command === 'commands') {
+      const helpFrame = `\`\`\`text
+┌
+│ 🎭 BOHURUPI BOT - COMMANDS LIST
+│ ─────────────────────────────────────────────────────────
+│ ⚔️ Interactive Action Commands:
+│ ├─ !court @user            : Bohurupi court session & verdict
+│ ├─ !fight @user            : 1v1 Street fight knockout
+│ ├─ !biryani_roulette @user : Poisonous / chaotic bowl rating
+│ ├─ !bully / !roast @user   : Savage roast & banter
+│ ├─ !expose @user           : Leaked fake search history / secret
+│ ├─ !hype @user             : Supreme deity-level hype
+│ ├─ !agree @user            : Aggressively agree with target
+│ ├─ !lore @user             : Absurd fake origin lore
+│ ├─ !predict @user          : 10-year absurd future prediction
+│ ├─ !iq @user               : Fake IQ scanner & rating
+│ ├─ !flirt @user            : Toxic / cheesy romantic line
+│ ├─ !confess @user          : Fake scandalous confession
+│ ├─ !truth @user            : Provocative truth question
+│ ├─ !dare @user             : Absurd & chaotic dare
+│ ├─ !horoscope              : Chaotic daily astrology
+│ ├─ !8ball [question]       : Savage 8-ball fortune prediction
+│ ├─ !choose [opt1] or [opt2]: Bohurupi's definitive choice
+│ ├─ !biryani_war            : Ignite the ultimate food debate
+│ ├─ !nasta_check            : Strict guardian snack check
+│ └─ !roast_chat             : Roast the whole active chat
+│ ───────────────
+│ 💡 Bohurupi AI Core • Active in Allowed Channels
+└
+\`\`\``;
+      await message.reply(helpFrame);
+      return true;
+    }
 
     if (command === 'court') {
       const aiResponse = await this.brain.processCommand(
@@ -235,7 +265,7 @@ export class DiscordService {
       const aiResponse = await this.brain.processCommand(
          message.author.id, 
          targetUserName, 
-         `COMMAND: !fight. INSTRUCTION: You just knocked out ${targetUserName} in a street fight. Name a hilarious, absurd knockout move (e.g. CHICKEN SLAP, NOKH DIYE KHAMCHI). Format your answer EXACTLY like this (2 lines):\nMove: [move]\nTrashTalk: [trash talk in banglish]. Do not use quotes.`
+         `COMMAND: !fight. INSTRUCTION: You just knocked out ${targetUserName} in a street fight. Name a hilarious, absurd knockout move (e.g. CHICKEN SLAP, NOKH DIYE KHAMCHI, BELUN ER BARI). Format your answer EXACTLY like this (2 lines):\nMove: [move]\nTrashTalk: [trash talk in banglish]. Do not use quotes.`
       );
       
       let move = "CHICKEN SLAP";
@@ -273,11 +303,11 @@ export class DiscordService {
       return true;
     }
 
-    if (command === 'biryani_roulette') {
+    if (command === 'biryani_roulette' || command === 'roulette') {
       const aiResponse = await this.brain.processCommand(
          message.author.id, 
          targetUserName, 
-         `COMMAND: !biryani_roulette. INSTRUCTION: ${targetUserName} was playing biryani roulette and got the worst possible item in their biryani instead of meat. Name a hilarious inedible object (e.g. CRICKET IN ALU, TEELA POKA, NOSTHO ELAICHI). Format your answer EXACTLY like this (3 lines):\nDish: [dish]\nNotes: [kitchen notes in banglish]\nMock: [mocking sentence in banglish]`
+         `COMMAND: !biryani_roulette. INSTRUCTION: ${targetUserName} was playing biryani roulette and got the worst possible item in their biryani instead of meat. Name a hilarious inedible object (e.g. CRICKET IN ALU, TEELA POKA, NOSTHO ELAICHI, PORA ROSHUN). Format your answer EXACTLY like this (3 lines):\nDish: [dish]\nNotes: [kitchen notes in banglish]\nMock: [mocking sentence in banglish]`
       );
       
       let dish = "CRICKET IN ALU";
@@ -315,11 +345,37 @@ export class DiscordService {
       return true;
     }
 
+    if (command === 'iq') {
+      const fakeIQ = Math.floor(Math.random() * 150) - 20; // -20 to 130
+      const aiResponse = await this.brain.processCommand(
+        message.author.id,
+        targetUserName,
+        `COMMAND: !iq. TARGET: ${targetUserName}. CALCULATED_IQ: ${fakeIQ}. INSTRUCTION: Give a 1-sentence hilarious roast about ${targetUserName}'s IQ in Banglish. Mention them using ${targetUser}.`
+      );
+      const frame = `\`\`\`text
+┌
+│ 🧠 BOHRUPI IQ SCANNER
+│ ─────────────────────────────────────────────────────────
+│ 🎯 Target: ${targetUserName}
+│ 📊 Scanned IQ: ${fakeIQ} IQ
+│ 🔍 Diagnosis: ${fakeIQ < 50 ? "Severe Brain Lag 💀" : fakeIQ < 90 ? "Average Rickshaw Puller Brain" : "Surprisingly Functional"}
+│ 
+│ 💬 Bohrupi Verdict:
+│ └─ ${aiResponse.replace(/```/g, '')}
+│ ───────────────
+│ Executed by Bot • Single Frame Output
+└
+\`\`\``;
+      await message.reply(frame);
+      return true;
+    }
     
     let commandPrompt = '';
+    const query = args.join(' ');
     
     switch (command) {
       case 'bully':
+      case 'roast':
         commandPrompt = `COMMAND: !bully. TARGET: ${targetUserName}. INSTRUCTION: Roast and bully ${targetUserName} playfully but savagely in Banglish. Act toxic and unhinged. Mention them using ${targetUser}. Do not use quotes.`;
         break;
       case 'expose':
@@ -332,25 +388,58 @@ export class DiscordService {
         commandPrompt = `COMMAND: !agree. TARGET: ${targetUserName}. INSTRUCTION: Aggressively and absurdly agree with ${targetUserName} in Banglish. State that their words are the absolute truth. Mention them using ${targetUser}.`;
         break;
       case 'biryani_war':
+      case 'biryaniwar':
         commandPrompt = `COMMAND: !biryani_war. INSTRUCTION: Start a highly controversial, chaotic debate about a local Bangladeshi food topic (like Kacchi vs Tehari, Alu in Biryani, etc.) in Banglish. Demand the chat to fight about it.`;
         break;
       case 'nasta_check':
+      case 'nasta':
         commandPrompt = `COMMAND: !nasta_check. INSTRUCTION: Aggressively ask everyone in the chat if they have eaten their snacks/food in Banglish. Act like a strict but chaotic desi guardian.`;
         break;
       case 'predict':
         commandPrompt = `COMMAND: !predict. TARGET: ${targetUserName}. INSTRUCTION: Predict a hilariously pathetic or absurd future for ${targetUserName} 5-10 years from now in Banglish. Mention them using ${targetUser}.`;
         break;
       case 'roast_chat':
+      case 'roastchat':
         commandPrompt = `COMMAND: !roast_chat. INSTRUCTION: Roast the entire chat's current state, IQ level, or lack of activity in Banglish. Be apathetic, toxic, and savage.`;
         break;
       case 'lore':
         commandPrompt = `COMMAND: !lore. TARGET: ${targetUserName}. INSTRUCTION: Tell a completely fake, funny, and absurd historical "lore" or backstory about how ${targetUserName} was born or how they got here in Banglish. Mention them using ${targetUser}.`;
         break;
+      case 'flirt':
+        commandPrompt = `COMMAND: !flirt. TARGET: ${targetUserName}. INSTRUCTION: Say a ridiculously funny, cringe, or cheesy flirtatious pickup line to ${targetUserName} in Banglish. Mention them using ${targetUser}.`;
+        break;
+      case 'meme':
+        commandPrompt = `COMMAND: !meme. INSTRUCTION: Describe a hilarious, relatable modern Bangladeshi meme or scenario in Banglish. Be witty and sarcastic.`;
+        break;
+      case 'advice':
+        commandPrompt = `COMMAND: !advice. QUERY: "${query}". TARGET: ${targetUserName}. INSTRUCTION: Give terrible, funny, toxic desi life advice for the user's question or situation in Banglish. Mention ${targetUser}.`;
+        break;
+      case 'confess':
+        commandPrompt = `COMMAND: !confess. TARGET: ${targetUserName}. INSTRUCTION: Make up a dramatic, fake confession about ${targetUserName} or yourself in Banglish.`;
+        break;
+      case 'truth':
+        commandPrompt = `COMMAND: !truth. TARGET: ${targetUserName}. INSTRUCTION: Ask a spicy, awkward, and hilarious truth question to ${targetUserName} in Banglish. Mention them using ${targetUser}.`;
+        break;
+      case 'dare':
+        commandPrompt = `COMMAND: !dare. TARGET: ${targetUserName}. INSTRUCTION: Give a chaotic, hilarious dare to ${targetUserName} to do in the Discord server in Banglish. Mention them using ${targetUser}.`;
+        break;
+      case '8ball':
+        commandPrompt = `COMMAND: !8ball. QUESTION: "${query || 'Will my life get better?'}". INSTRUCTION: Answer like a sassy, savage magic 8-ball in Banglish. Be direct, sarcastic, and funny.`;
+        break;
+      case 'choose':
+        commandPrompt = `COMMAND: !choose. OPTIONS: "${query || 'option A or option B'}". INSTRUCTION: Choose one option decisively and mock the other option ruthlessly in Banglish.`;
+        break;
+      case 'horoscope':
+        commandPrompt = `COMMAND: !horoscope. TARGET: ${targetUserName}. INSTRUCTION: Give a completely chaotic, absurd, and funny daily horoscope prediction for ${targetUserName} in Banglish.`;
+        break;
     }
 
     if (commandPrompt !== '') {
       const response = await this.brain.processCommand(message.author.id, targetUserName, commandPrompt);
-      await message.reply(response);
+      if (response && response.trim().length > 0) {
+        const sanitized = response.length > 1950 ? response.substring(0, 1950) + '...' : response;
+        await message.reply(sanitized);
+      }
     }
 
     return true;
@@ -372,14 +461,38 @@ export class DiscordService {
       // Strict Channel Restriction: Bot only responds/operates in allowed channels (Text, Media, Memes)
       if (!isChannelAllowed(message.channel.id)) return;
 
-      // Check for commands
-      if (message.content.startsWith('!')) {
-        const args = message.content.slice(1).trim().split(/ +/);
-        const command = args.shift()?.toLowerCase();
-        if (command) {
-          const handled = await this.handleCommand(command, args, message);
-          if (handled) return; // Command processed, do not continue to normal bot chat
+      // Check for commands (e.g. !court @user, !bully, or @Bohurupi court)
+      const trimmedContent = message.content.trim();
+      let commandStr = '';
+      let commandArgs: string[] = [];
+
+      if (trimmedContent.startsWith('!')) {
+        commandArgs = trimmedContent.slice(1).trim().split(/\s+/);
+        commandStr = commandArgs.shift()?.toLowerCase() || '';
+      } else if (this.client.user && message.mentions.has(this.client.user.id)) {
+        const stripped = trimmedContent.replace(new RegExp(`<@!?${this.client.user.id}>`, 'g'), '').trim();
+        if (stripped.startsWith('!')) {
+          commandArgs = stripped.slice(1).trim().split(/\s+/);
+          commandStr = commandArgs.shift()?.toLowerCase() || '';
+        } else {
+          const potentialArgs = stripped.split(/\s+/);
+          const potentialCmd = potentialArgs[0]?.toLowerCase();
+          const recognizedCommands = [
+            'bully', 'roast', 'court', 'fight', 'biryani_roulette', 'roulette', 
+            'expose', 'hype', 'agree', 'biryani_war', 'biryaniwar', 'nasta_check', 'nasta', 
+            'predict', 'roast_chat', 'roastchat', 'lore', 'flirt', 'meme', 'advice', 
+            'confess', 'truth', 'dare', '8ball', 'choose', 'iq', 'horoscope', 'help', 'commands'
+          ];
+          if (potentialCmd && recognizedCommands.includes(potentialCmd)) {
+            commandStr = potentialCmd;
+            commandArgs = potentialArgs.slice(1);
+          }
         }
+      }
+
+      if (commandStr) {
+        const handled = await this.handleCommand(commandStr, commandArgs, message);
+        if (handled) return; // Command processed, do not continue to normal bot chat
       }
 
       // Basic triggering logic: respond if mentioned
