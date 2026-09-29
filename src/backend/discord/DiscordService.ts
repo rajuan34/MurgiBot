@@ -16,6 +16,12 @@ export const ALLOWED_CHANNEL_IDS: string[] = [
   '1470329659693600768'  // Memes channel
 ];
 
+/**
+ * Designated Server / Guild ID where Bohurupi is strictly permitted to send scheduled messages:
+ * Server ID: 705092446366728233
+ */
+export const SCHEDULED_SERVER_ID: string = '705092446366728233';
+
 export function isChannelAllowed(channelId: string): boolean {
   const envChannels = (process.env.ALLOWED_CHANNEL_IDS || '')
     .split(',')
@@ -24,6 +30,12 @@ export function isChannelAllowed(channelId: string): boolean {
   
   const allowedList = envChannels.length > 0 ? envChannels : ALLOWED_CHANNEL_IDS;
   return allowedList.includes(channelId);
+}
+
+export function isScheduledServerAllowed(guildId?: string | null): boolean {
+  if (!guildId) return false;
+  const targetServerId = process.env.SCHEDULED_SERVER_ID || SCHEDULED_SERVER_ID;
+  return guildId === targetServerId;
 }
 
 export class DiscordService {
@@ -70,7 +82,8 @@ export class DiscordService {
   }
 
   private async triggerAutoReply() {
-    logger.info('Running scheduled Discord auto-reply task...');
+    const targetServerId = process.env.SCHEDULED_SERVER_ID || SCHEDULED_SERVER_ID;
+    logger.info(`Running scheduled Discord auto-reply task strictly for server [${targetServerId}]...`);
     if (!this.isConnected || !this.client.user) {
       logger.warn('Skipping auto-reply, Discord client not connected.');
       return;
@@ -78,7 +91,7 @@ export class DiscordService {
 
     try {
       let selectedMessage: Message | null = null;
-      let selectedChannel = null;
+      let selectedChannel: TextChannel | null = null;
 
       // Pick randomly from the allowed channels only (Text, Media, Memes)
       const allowedChannelsShuffled = [...ALLOWED_CHANNEL_IDS].sort(() => Math.random() - 0.5);
@@ -89,6 +102,14 @@ export class DiscordService {
           if (!channel || !channel.isTextBased() || channel.isDMBased()) continue;
           
           const textChannel = channel as TextChannel;
+          const guildId = textChannel.guildId || textChannel.guild?.id;
+
+          // STRICT CHECK: The bot will ONLY send scheduled messages in server 705092446366728233
+          if (!isScheduledServerAllowed(guildId)) {
+            logger.debug(`Skipping channel ${channelId} because its guild [${guildId}] is not the designated scheduled server [${targetServerId}].`);
+            continue;
+          }
+
           const perms = textChannel.guild?.members.me?.permissionsIn(textChannel);
           if (perms && (!perms.has('ViewChannel') || !perms.has('ReadMessageHistory') || !perms.has('SendMessages'))) {
             continue;
@@ -113,12 +134,12 @@ export class DiscordService {
         }
       }
 
-      if (!selectedMessage) {
-        logger.info('No suitable message found in allowed channels for scheduled auto-reply.');
+      if (!selectedMessage || !selectedChannel) {
+        logger.info(`No suitable message found in allowed channels within server [${targetServerId}] for scheduled auto-reply.`);
         return;
       }
 
-      logger.info(`Selected message ${selectedMessage.id} in allowed channel ${selectedChannel?.id} for auto-reply.`);
+      logger.info(`Selected message ${selectedMessage.id} in allowed channel ${selectedChannel.id} (Server: ${selectedChannel.guildId || selectedChannel.guild?.id}) for auto-reply.`);
       
       if ('sendTyping' in selectedMessage.channel) {
           await selectedMessage.channel.sendTyping().catch(() => {});
