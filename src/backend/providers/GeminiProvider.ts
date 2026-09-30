@@ -8,21 +8,20 @@ import { logger } from '../telemetry/logger';
  * falls back to the next available model in the cascade.
  */
 export const DEFAULT_GEMINI_MODELS = [
-  'gemini-3.8-flash',
-  'gemini-3.7-flash',
-  'gemini-3.6-flash',
-  'gemini-3.5-flash',
   'gemini-3.5-flash-lite',
+  'gemini-flash-lite-latest',
+  'gemini-3.5-flash',
   'gemini-3.1-flash-lite',
-  'gemini-2.5-flash',
-  'gemini-flash-latest'
+  'gemini-flash-latest',
+  'gemini-3.7-flash',
+  'gemini-3.8-flash'
 ];
 
 export class GeminiProvider implements AIProvider {
   name: string;
   private ai: GoogleGenAI | null = null;
   private models: string[];
-  private lastSuccessfulModel: string | null = null;
+  private lastSuccessfulModel: string | null = 'gemini-3.5-flash-lite';
 
   constructor(name: string = 'Google-Gemini') {
     this.name = name;
@@ -74,12 +73,23 @@ export class GeminiProvider implements AIProvider {
       contents = [{ role: 'user', parts: [{ text: combinedPrompt }] }];
     }
 
+    // Build model try list: start with lastSuccessfulModel, then rest of models
+    const candidateModels: string[] = [];
+    if (this.lastSuccessfulModel && this.models.includes(this.lastSuccessfulModel)) {
+      candidateModels.push(this.lastSuccessfulModel);
+    }
+    for (const m of this.models) {
+      if (!candidateModels.includes(m)) {
+        candidateModels.push(m);
+      }
+    }
+
     let lastError: any = null;
 
-    // Cascading model failover loop: tries 3.8-flash -> 3.7-flash -> 3.6-flash -> 3.5-flash -> 3.5-flash-lite -> 3.1-flash-lite -> 2.5-flash -> flash-latest
-    for (let i = 0; i < this.models.length; i++) {
-      const model = this.models[i];
-      const nextModel = this.models[i + 1];
+    // Cascading model failover loop
+    for (let i = 0; i < candidateModels.length; i++) {
+      const model = candidateModels[i];
+      const nextModel = candidateModels[i + 1];
 
       try {
         const callPromise = this.ai.models.generateContent({
@@ -93,7 +103,7 @@ export class GeminiProvider implements AIProvider {
         });
 
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Gemini request for model [${model}] timed out after 4500ms`)), 4500)
+          setTimeout(() => reject(new Error(`Gemini request for model [${model}] timed out after 3000ms`)), 3000)
         );
 
         const response = await Promise.race([callPromise, timeoutPromise]);
@@ -117,17 +127,17 @@ export class GeminiProvider implements AIProvider {
           errorMessage.includes('high demand') ||
           errorMessage.includes('UNAVAILABLE') ||
           errorMessage.includes('404') ||
-          errorMessage.includes('NOT_FOUND');
+          errorMessage.includes('NOT_FOUND') ||
+          errorMessage.includes('timed out');
 
         if (isQuotaOrDemand && nextModel) {
-          logger.warn(`[Google-Gemini] Model [${model}] credit/rate limit or high demand reached (${errorMessage}). Cascading to next free model: [${nextModel}]...`);
-          // Continue loop to attempt next model in cascade
+          logger.info(`[Google-Gemini] Model [${model}] busy/limited, cascading to [${nextModel}]...`);
           continue;
         } else if (nextModel) {
-          logger.warn(`[Google-Gemini] Model [${model}] error (${errorMessage}). Trying next model: [${nextModel}]...`);
+          logger.info(`[Google-Gemini] Model [${model}] error, trying [${nextModel}]...`);
           continue;
         } else {
-          logger.error(`[Google-Gemini] Model [${model}] failed and no more cascading models left in list: ${errorMessage}`);
+          logger.error(`[Google-Gemini] Model [${model}] failed and no cascading models left: ${errorMessage}`);
         }
       }
     }
