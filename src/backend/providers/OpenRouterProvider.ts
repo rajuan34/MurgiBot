@@ -86,7 +86,7 @@ export class OpenRouterProvider implements AIProvider {
           },
           body: JSON.stringify({
             model: model,
-            max_tokens: 150,
+            max_tokens: 500,
             temperature: 0.85,
             messages
           }),
@@ -101,13 +101,20 @@ export class OpenRouterProvider implements AIProvider {
         }
 
         const data = await response.json();
-        if (!data.choices || !data.choices[0] || !data.choices[0].message?.content) {
+        const rawContent = data.choices?.[0]?.message?.content;
+        if (!rawContent || !rawContent.trim()) {
           throw new Error('Invalid or empty response from OpenRouter API');
+        }
+
+        // Clean out any <think> tags from reasoning models
+        const cleanContent = rawContent.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+        if (!cleanContent) {
+          throw new Error('Response contained only reasoning tokens without text content');
         }
 
         this.lastSuccessfulModel = model;
         logger.info(`[OpenRouter] Successfully generated response using model: ${model}`);
-        return data.choices[0].message.content;
+        return cleanContent;
       } catch (error: any) {
         clearTimeout(timeoutId);
         lastError = error;
