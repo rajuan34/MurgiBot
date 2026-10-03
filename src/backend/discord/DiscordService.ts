@@ -284,8 +284,27 @@ export class DiscordService {
       await message.channel.sendTyping().catch(() => {});
     }
 
+    const authorTag = message.author.tag || message.author.username;
+    const authorDisplayName = message.member?.displayName || message.author.displayName || message.author.username;
+    const channelName = 'name' in message.channel ? (message.channel as any).name : message.channel.id;
+    const guildName = message.guild?.name || 'DM';
+
     const targetUser = message.mentions.users.first() ? "<@" + message.mentions.users.first()?.id + ">" : (args[0] || "<@" + message.author.id + ">");
     const targetUserName = message.mentions.users.first()?.username || (args[0] ? args[0].replace(/[@<>]/g, '') : message.author.username);
+
+    logger.info(`⚔️ [Discord Command] !${command} invoked by @${authorDisplayName} (${authorTag} | ID: ${message.author.id}) in #${channelName} [${guildName}] targeting: ${targetUserName}`, {
+      type: 'DISCORD_COMMAND',
+      command: `!${command}`,
+      user: {
+        id: message.author.id,
+        tag: authorTag,
+        displayName: authorDisplayName
+      },
+      target: targetUserName,
+      channel: '#' + channelName,
+      guild: guildName,
+      args
+    });
 
     // Help menu command
     if (command === 'help' || command === 'commands') {
@@ -319,6 +338,13 @@ export class DiscordService {
 └─────────────────────────────────────────────────────────┘
 \`\`\``;
       await message.reply(helpFrame);
+      logger.info(`📖 [Discord Command Reply] !help menu displayed for @${authorDisplayName} in #${channelName}`, {
+        type: 'DISCORD_COMMAND_REPLY',
+        command: '!help',
+        user: { id: message.author.id, tag: authorTag, displayName: authorDisplayName },
+        channel: '#' + channelName,
+        guild: guildName
+      });
       return true;
     }
 
@@ -359,6 +385,14 @@ export class DiscordService {
 └─────────────────────────────────────────────────────────┘
 \`\`\``;
       await message.reply(frame);
+      logger.info(`🤖 [Discord Command Reply] !court executed by @${authorDisplayName} against ${targetUserName}: Crime: "${crime}" | Penalty: "${penalty}"`, {
+        type: 'DISCORD_COMMAND_REPLY',
+        command: '!court',
+        user: { id: message.author.id, tag: authorTag, displayName: authorDisplayName },
+        target: targetUserName,
+        channel: '#' + channelName,
+        reply: `Crime: ${crime} | Penalty: ${penalty}`
+      });
       return true;
     }
 
@@ -393,6 +427,14 @@ export class DiscordService {
 └─────────────────────────────────────────────────────────┘
 \`\`\``;
       await message.reply(frame);
+      logger.info(`🤖 [Discord Command Reply] !fight executed by @${authorDisplayName} against ${targetUserName}: Move: [${move}] | TrashTalk: "${trashTalk}"`, {
+        type: 'DISCORD_COMMAND_REPLY',
+        command: '!fight',
+        user: { id: message.author.id, tag: authorTag, displayName: authorDisplayName },
+        target: targetUserName,
+        channel: '#' + channelName,
+        reply: `Move: ${move} | TrashTalk: ${trashTalk}`
+      });
       return true;
     }
 
@@ -433,6 +475,14 @@ export class DiscordService {
 └─────────────────────────────────────────────────────────┘
 \`\`\``;
       await message.reply(frame);
+      logger.info(`🤖 [Discord Command Reply] !biryani_roulette executed by @${authorDisplayName} for ${targetUserName}: Dish: "${dish}" | Mock: "${mock}"`, {
+        type: 'DISCORD_COMMAND_REPLY',
+        command: '!biryani_roulette',
+        user: { id: message.author.id, tag: authorTag, displayName: authorDisplayName },
+        target: targetUserName,
+        channel: '#' + channelName,
+        reply: `Dish: ${dish} | Mock: ${mock}`
+      });
       return true;
     }
 
@@ -530,6 +580,15 @@ export class DiscordService {
       if (response && response.trim().length > 0) {
         const sanitized = response.length > 1950 ? response.substring(0, 1950) + '...' : response;
         await message.reply(sanitized);
+        logger.info(`🤖 [Discord Command Reply] !${command} for @${authorDisplayName}: "${sanitized}"`, {
+          type: 'DISCORD_COMMAND_REPLY',
+          command: `!${command}`,
+          user: { id: message.author.id, tag: authorTag, displayName: authorDisplayName },
+          target: targetUserName,
+          channel: '#' + channelName,
+          guild: guildName,
+          reply: sanitized
+        });
       }
     }
 
@@ -620,7 +679,34 @@ export class DiscordService {
       // Only respond if mentioned or replied to, to prevent unprompted spamming
       if (!isMentioned && !isReplyToBot) return;
 
-      logger.info(`Received Discord mention in #${message.channel.id} by ${message.author.id}`);
+      const authorTag = message.author.tag || message.author.username;
+      const authorDisplayName = message.member?.displayName || message.author.displayName || message.author.username;
+      const channelName = 'name' in message.channel ? (message.channel as any).name : message.channel.id;
+      const guildName = message.guild?.name || 'DM';
+
+      let cleanContent = message.content.replace(new RegExp(`<@!?${this.client.user?.id}>`, 'g'), '').trim();
+      if (!cleanContent) {
+        cleanContent = "oi";
+      }
+
+      logger.info(`💬 [Discord Mention] @${authorDisplayName} (${authorTag} | ID: ${message.author.id}) in #${channelName} [${guildName}]: "${cleanContent}"`, {
+        type: 'DISCORD_MENTION',
+        interaction: isReplyToBot ? 'REPLY_TO_BOT' : 'DIRECT_MENTION',
+        user: {
+          id: message.author.id,
+          tag: authorTag,
+          displayName: authorDisplayName
+        },
+        channel: {
+          id: message.channel.id,
+          name: channelName
+        },
+        guild: {
+          id: message.guildId || 'DM',
+          name: guildName
+        },
+        incomingMessage: cleanContent
+      });
 
       // Process via Brain
       try {
@@ -628,11 +714,6 @@ export class DiscordService {
           await message.channel.sendTyping().catch((err) => {
             logger.warn('Failed to send typing indicator in Discord channel', { error: err?.message || String(err) });
           });
-        }
-
-        let cleanContent = message.content.replace(new RegExp(`<@!?${this.client.user?.id}>`, 'g'), '').trim();
-        if (!cleanContent) {
-          cleanContent = "oi";
         }
         
         const response = await this.brain.processInteraction(message.author.id, cleanContent);
@@ -655,6 +736,25 @@ export class DiscordService {
               });
             }
           }
+
+          logger.info(`🤖 [Discord Reply] To @${authorDisplayName} (${authorTag} | ID: ${message.author.id}) in #${channelName} [${guildName}]: "${sanitizedResponse}"`, {
+            type: 'DISCORD_REPLY',
+            user: {
+              id: message.author.id,
+              tag: authorTag,
+              displayName: authorDisplayName
+            },
+            channel: {
+              id: message.channel.id,
+              name: '#' + channelName
+            },
+            guild: {
+              id: message.guildId || 'DM',
+              name: guildName
+            },
+            prompt: cleanContent,
+            reply: sanitizedResponse
+          });
         }
       } catch (error: any) {
         logger.error('Failed to process Discord message', {

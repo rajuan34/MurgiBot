@@ -259,7 +259,11 @@ ${stateDescriptions[currentMood] || stateDescriptions['Playful']}
       // Save Bohurupi's response to memory
       await this.memory.addShortTermMessage(userId, 'bohurupi', cleanText);
       
-      logger.info('Brain finished processing pipeline successfully.');
+      logger.info(`Brain generation complete [${response.providerName}] for user ${userId}. Reply: "${cleanText}"`, {
+        userId,
+        provider: response.providerName,
+        reply: cleanText
+      });
       return cleanText;
     } catch (error) {
       logger.error('Brain processing failed', { error });
