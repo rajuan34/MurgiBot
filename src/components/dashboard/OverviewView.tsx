@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cpu, Database, Network, Clock, Activity, AlertCircle, Smile, Send, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
+import { Cpu, Database, Network, Clock, Activity, AlertCircle, Smile, Send, RefreshCw, CheckCircle2, XCircle, Pause, Play, PauseCircle, PlayCircle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export function OverviewView({ 
@@ -17,6 +17,26 @@ export function OverviewView({
 }) {
   const [isTriggering, setIsTriggering] = useState(false);
   const [triggerStatus, setTriggerStatus] = useState<{ success?: boolean; message?: string; results?: any[] } | null>(null);
+  const [isTogglingPause, setIsTogglingPause] = useState(false);
+
+  const handleTogglePause = async () => {
+    setIsTogglingPause(true);
+    try {
+      const headers = getHeaders ? getHeaders() : { 'Content-Type': 'application/json' };
+      const endpoint = botState?.discord?.isPaused ? '/api/discord/resume' : '/api/discord/pause';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers
+      });
+      if (res.ok) {
+        if (fetchState) await fetchState();
+      }
+    } catch (err) {
+      console.error('Failed to toggle bot pause state:', err);
+    } finally {
+      setIsTogglingPause(false);
+    }
+  };
 
   const handleTriggerSchedule = async () => {
     setIsTriggering(true);
@@ -107,6 +127,39 @@ export function OverviewView({
 
   return (
     <div className="space-y-6">
+      {/* Bot Paused Banner Notification */}
+      {botState?.discord?.isPaused && (
+        <div className="bg-amber-950/40 border border-amber-500/50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-amber-950/30">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0 border border-amber-500/30">
+              <PauseCircle className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-bold text-amber-300">Bot Activity is Currently PAUSED</h4>
+                <span className="bg-amber-500/20 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-500/40 uppercase">Standby</span>
+              </div>
+              <p className="text-xs text-neutral-400 mt-0.5">
+                Incoming mentions, commands, and scheduled auto-replies are paused. Discord gateway remains connected for instant resume.
+                {botState.discord.pausedAt && (
+                  <span className="text-amber-400/80 ml-1 font-mono text-[11px]">
+                    (Paused at {new Date(botState.discord.pausedAt).toLocaleTimeString()})
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleTogglePause}
+            disabled={isTogglingPause}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold rounded-lg text-xs flex items-center gap-2 transition-all shadow-lg shadow-emerald-950/40 cursor-pointer flex-shrink-0"
+          >
+            {isTogglingPause ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-current" />}
+            Resume Bot Activity
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
@@ -146,14 +199,24 @@ export function OverviewView({
         </div>
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-neutral-400">System Health</h3>
-            <Activity className={`w-4 h-4 ${isConnected ? 'text-emerald-400' : 'text-red-400'}`} />
+            <h3 className="text-sm font-medium text-neutral-400">Bot Activity</h3>
+            {botState?.discord?.isPaused ? (
+              <PauseCircle className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Activity className={`w-4 h-4 ${isConnected ? 'text-emerald-400' : 'text-red-400'}`} />
+            )}
           </div>
           <div className="text-2xl font-bold text-white mb-1">
-            {isConnected ? 'Healthy' : 'Degraded'}
+            {botState?.discord?.isPaused ? (
+              <span className="text-amber-400">Paused</span>
+            ) : isConnected ? (
+              <span className="text-emerald-400">Active</span>
+            ) : (
+              <span className="text-red-400">Offline</span>
+            )}
           </div>
           <div className="text-xs text-neutral-500">
-            All primary services online
+            {botState?.discord?.isPaused ? 'Activity temporarily held' : 'Responding to server'}
           </div>
         </div>
       </div>
@@ -183,22 +246,91 @@ export function OverviewView({
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-neutral-300 uppercase tracking-wider">Discord Operations & Channels</h3>
-              <span className={`px-2 py-0.5 rounded text-xs font-semibold ${botState?.discord?.connected ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'}`}>
-                {botState?.discord?.connected ? `ONLINE (${botState.discord.botTag})` : 'STANDBY / OFFLINE'}
-              </span>
+              <h3 className="text-sm font-bold text-neutral-300 uppercase tracking-wider">Discord Operations & Controls</h3>
+              <div className="flex items-center gap-2">
+                {botState?.discord?.isPaused ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                    PAUSED
+                  </span>
+                ) : (
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${botState?.discord?.connected ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'}`}>
+                    {botState?.discord?.connected ? `ONLINE (${botState.discord.botTag})` : 'STANDBY / OFFLINE'}
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3.5">
+              {/* Dedicated Bot Pause / Resume Control Card */}
+              <div className={`border rounded-lg p-3.5 flex items-center justify-between transition-colors ${
+                botState?.discord?.isPaused 
+                  ? 'bg-amber-950/30 border-amber-500/40' 
+                  : 'bg-neutral-950 border-neutral-800'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                    botState?.discord?.isPaused 
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
+                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  }`}>
+                    {botState?.discord?.isPaused ? <PauseCircle className="w-5 h-5" /> : <PlayCircle className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white">
+                        {botState?.discord?.isPaused ? 'Bot Status: Paused' : 'Bot Status: Active'}
+                      </span>
+                      <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        botState?.discord?.isPaused 
+                          ? 'bg-amber-500/20 text-amber-400' 
+                          : 'bg-emerald-500/20 text-emerald-400'
+                      }`}>
+                        {botState?.discord?.isPaused ? 'Paused' : 'Active'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">
+                      {botState?.discord?.isPaused 
+                        ? 'Chat, mentions, and scheduled tasks are suspended.' 
+                        : 'Bot is actively listening and replying in Discord.'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleTogglePause}
+                  disabled={isTogglingPause}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-md ${
+                    botState?.discord?.isPaused
+                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-950/40'
+                      : 'bg-neutral-800 hover:bg-amber-950/50 hover:text-amber-300 hover:border-amber-700/50 border border-neutral-700 text-neutral-200'
+                  }`}
+                >
+                  {isTogglingPause ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : botState?.discord?.isPaused ? (
+                    <>
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      Resume Bot
+                    </>
+                  ) : (
+                    <>
+                      <Pause className="w-3.5 h-3.5" />
+                      Pause Bot
+                    </>
+                  )}
+                </button>
+              </div>
+
               {/* Allowed Servers */}
               <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3">
                 <div className="flex items-center justify-between text-xs text-neutral-500 mb-2">
                   <span className="font-semibold text-neutral-400">Connected / Allowed Servers</span>
                   <span className="text-[10px] text-neutral-600">{displayServers.length} Server(s)</span>
                 </div>
-                <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                <div className="space-y-1.5 max-h-28 overflow-y-auto pr-1">
                   {displayServers.map((srv: any) => (
-                    <div key={srv.id} className="flex items-center justify-between bg-neutral-900/80 border border-neutral-800/80 rounded px-3 py-2 text-xs hover:border-neutral-700 transition-colors">
+                    <div key={srv.id} className="flex items-center justify-between bg-neutral-900/80 border border-neutral-800/80 rounded px-3 py-1.5 text-xs hover:border-neutral-700 transition-colors">
                       <div className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                         <span className="font-bold text-white">{srv.name}</span>
@@ -213,11 +345,17 @@ export function OverviewView({
               <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3">
                 <div className="flex items-center justify-between text-xs text-neutral-500 mb-2">
                   <span className="font-semibold text-neutral-400">3 Scheduled Active Channels</span>
-                  <span className="text-[10px] text-emerald-400 bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-800/50">Auto-Reply Active</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                    botState?.discord?.isPaused 
+                      ? 'text-amber-400 bg-amber-950/40 border-amber-800/50' 
+                      : 'text-emerald-400 bg-emerald-950/40 border-emerald-800/50'
+                  }`}>
+                    {botState?.discord?.isPaused ? 'Auto-Reply Paused' : 'Auto-Reply Active'}
+                  </span>
                 </div>
                 <div className="space-y-1.5">
                   {displayChannels.map((ch: any) => (
-                    <div key={ch.id} className="flex items-center justify-between bg-neutral-900/80 border border-neutral-800/80 rounded px-3 py-2 text-xs">
+                    <div key={ch.id} className="flex items-center justify-between bg-neutral-900/80 border border-neutral-800/80 rounded px-3 py-1.5 text-xs">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-emerald-400">{ch.name}</span>
                       </div>
@@ -242,13 +380,18 @@ export function OverviewView({
           <div className="pt-4 mt-4 border-t border-neutral-800">
             <button
               onClick={handleTriggerSchedule}
-              disabled={isTriggering}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg text-xs transition-colors shadow-lg shadow-emerald-950/40 cursor-pointer"
+              disabled={isTriggering || botState?.discord?.isPaused}
+              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg text-xs transition-colors shadow-lg shadow-emerald-950/40 cursor-pointer disabled:cursor-not-allowed"
             >
               {isTriggering ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                   Selecting random channel & posting...
+                </>
+              ) : botState?.discord?.isPaused ? (
+                <>
+                  <Pause className="w-3.5 h-3.5 text-amber-300" />
+                  Auto-Reply Held (Bot is currently paused)
                 </>
               ) : (
                 <>

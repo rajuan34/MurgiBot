@@ -2,6 +2,7 @@ import { Client, GatewayIntentBits, Events, Message, TextChannel, Options } from
 import cron from 'node-cron';
 import { logger } from '../telemetry/logger';
 import { BohurupiBrain } from '../core/BohurupiBrain';
+import { MemoryEngine } from '../memory/MemoryEngine';
 
 /**
  * Allowed Channel IDs where Bohurupi is permitted to reply, execute commands,
@@ -78,8 +79,11 @@ export class DiscordService {
   private client: Client;
   private isConnected: boolean = false;
   private schedulerStarted: boolean = false;
+  private isPaused: boolean = false;
+  private pausedAt: string | null = null;
+  private pausedBy: string = 'Admin';
 
-  constructor(private brain: BohurupiBrain) {
+  constructor(private brain: BohurupiBrain, private memoryEngine?: MemoryEngine) {
     this.client = new Client({
       intents: [
         GatewayIntentBits.Guilds,
@@ -104,6 +108,91 @@ export class DiscordService {
     });
 
     this.registerEvents();
+  }
+
+  public async loadPersistedState() {
+    if (this.memoryEngine) {
+      try {
+        const saved = await this.memoryEngine.getSystemConfig('bot_paused_state');
+        if (saved && typeof saved.isPaused === 'boolean') {
+          this.isPaused = saved.isPaused;
+          this.pausedAt = saved.pausedAt || null;
+          this.pausedBy = saved.pausedBy || 'Admin';
+          logger.info(`DiscordService restored bot pause state: ${this.isPaused ? 'PAUSED' : 'ACTIVE'}`);
+        }
+      } catch (e) {
+        logger.warn('Failed to load persisted bot pause state', { error: String(e) });
+      }
+    }
+  }
+
+  public async pause(by: string = 'Admin'): Promise<{ success: boolean; isPaused: boolean; pausedAt: string }> {
+    this.isPaused = true;
+    this.pausedAt = new Date().toISOString();
+    this.pausedBy = by;
+
+    logger.warn(`⏸️ Discord bot activity has been PAUSED by ${by}. Mentions, commands, and scheduled auto-replies are temporarily suspended.`);
+
+    try {
+      if (this.isConnected && this.client.user) {
+        this.client.user.setPresence({
+          activities: [{ name: '⏸️ Activity Paused by Admin' }],
+          status: 'idle'
+        });
+      }
+    } catch (e) {}
+
+    if (this.memoryEngine) {
+      try {
+        await this.memoryEngine.setSystemConfig('bot_paused_state', {
+          isPaused: true,
+          pausedAt: this.pausedAt,
+          pausedBy: this.pausedBy
+        });
+      } catch (e) {}
+    }
+
+    return {
+      success: true,
+      isPaused: true,
+      pausedAt: this.pausedAt
+    };
+  }
+
+  public async resume(by: string = 'Admin'): Promise<{ success: boolean; isPaused: boolean }> {
+    this.isPaused = false;
+    this.pausedAt = null;
+    this.pausedBy = by;
+
+    logger.info(`▶️ Discord bot activity has been RESUMED by ${by}. Normal chat, mentions, and scheduled tasks are active.`);
+
+    try {
+      if (this.isConnected && this.client.user) {
+        this.client.user.setPresence({
+          activities: [{ name: 'Watching over server' }],
+          status: 'online'
+        });
+      }
+    } catch (e) {}
+
+    if (this.memoryEngine) {
+      try {
+        await this.memoryEngine.setSystemConfig('bot_paused_state', {
+          isPaused: false,
+          pausedAt: null,
+          pausedBy: this.pausedBy
+        });
+      } catch (e) {}
+    }
+
+    return {
+      success: true,
+      isPaused: false
+    };
+  }
+
+  public isBotPaused(): boolean {
+    return this.isPaused;
   }
 
   
@@ -155,6 +244,11 @@ export class DiscordService {
   }
 
   public async triggerAutoReply(): Promise<{ success: boolean; result?: any; results?: any[] }> {
+    if (this.isPaused) {
+      logger.info('Skipping scheduled auto-reply because bot is currently PAUSED by admin.');
+      return { success: false, results: [{ error: 'Bot is currently paused by admin' }] };
+    }
+
     const channelsToPickFrom = getAllowedChannelIds();
 
     logger.info(`Running scheduled Discord auto-reply task. Picking 1 random channel from [${channelsToPickFrom.join(', ')}]...`);
@@ -618,6 +712,15 @@ export class DiscordService {
       this.brain.getIdentityManager().setClient(readyClient);
       logger.info(`Discord Service Online! Logged in as ${readyClient.user.tag}`);
       
+      if (this.isPaused) {
+        try {
+          readyClient.user.setPresence({
+            activities: [{ name: '⏸️ Activity Paused by Admin' }],
+            status: 'idle'
+          });
+        } catch (e) {}
+      }
+
       // Start scheduler once ready
       this.startScheduler();
     });
@@ -625,6 +728,11 @@ export class DiscordService {
     this.client.on(Events.MessageCreate, async (message: Message) => {
       // Ignore bots
       if (message.author.bot) return;
+
+      // If the bot activity is paused by admin, ignore all incoming messages, commands, and mentions
+      if (this.isPaused) {
+        return;
+      }
 
       const guildId = message.guildId || message.guild?.id;
 
@@ -861,6 +969,9 @@ export class DiscordService {
 
     return {
       connected: this.isConnected,
+      isPaused: this.isPaused,
+      pausedAt: this.pausedAt,
+      pausedBy: this.pausedBy,
       botTag: this.client.user?.tag || 'Not Logged In',
       allowedServers: serversInfo,
       allowedServer: serversInfo[0] || { id: SCHEDULED_SERVER_IDS[0], name: 'Bohurupi Main Guild' },

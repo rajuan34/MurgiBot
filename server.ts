@@ -68,7 +68,7 @@ export const bohurupiBrain = new BohurupiBrain(
 );
 
 // Initialize Discord Integration
-export const discordService = new DiscordService(bohurupiBrain);
+export const discordService = new DiscordService(bohurupiBrain, memoryEngine);
 
 // Register Real AI Providers (Google-Gemini first for lowest latency and highest reliability)
 const geminiProvider = new GeminiProvider();
@@ -194,19 +194,33 @@ app.post('/api/discord/trigger-schedule', adminAuth, async (req, res) => {
   }
 });
 
-app.post('/api/discord/standby', adminAuth, async (req, res) => {
+app.post(['/api/discord/pause', '/api/bot/pause'], adminAuth, async (req, res) => {
   try {
-    await discordService.stop();
-    res.json({ success: true, status: 'STANDBY' });
+    const result = await discordService.pause('Admin');
+    res.json({ success: true, ...result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.post('/api/discord/resume', adminAuth, async (req, res) => {
+app.post(['/api/discord/resume', '/api/bot/resume'], adminAuth, async (req, res) => {
   try {
-    await discordService.resume();
-    res.json({ success: true, status: 'ONLINE' });
+    const result = await discordService.resume('Admin');
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post(['/api/discord/toggle-pause', '/api/bot/toggle-pause'], adminAuth, async (req, res) => {
+  try {
+    if (discordService.isBotPaused()) {
+      const result = await discordService.resume('Admin');
+      res.json({ success: true, action: 'resumed', ...result });
+    } else {
+      const result = await discordService.pause('Admin');
+      res.json({ success: true, action: 'paused', ...result });
+    }
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -219,8 +233,9 @@ async function startServer() {
     if (savedConfig) {
       providerManager.setConfig(savedConfig);
     }
+    await discordService.loadPersistedState();
   } catch(e) {
-    console.error("Failed to load provider config on startup", e);
+    console.error("Failed to load configs on startup", e);
   }
 
   // Start Discord Bot if DISCORD_TOKEN is provided

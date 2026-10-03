@@ -6,7 +6,7 @@ import { LogsView } from './components/dashboard/LogsView';
 import { APILogsView } from './components/dashboard/APILogsView';
 import { MoodIndicator } from './components/dashboard/MoodIndicator';
 import { AIEngineView } from './components/dashboard/AIEngineView';
-import { Activity, ShieldAlert, Rocket, Database, Settings, Menu } from 'lucide-react';
+import { Activity, ShieldAlert, Rocket, Database, Settings, Menu, Pause, Play, PauseCircle, RefreshCw } from 'lucide-react';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [chatLog, setChatLog] = useState<{role: string, text: string}[]>([]);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isTogglingPause, setIsTogglingPause] = useState(false);
 
   const [adminPassword, setAdminPassword] = useState(localStorage.getItem('admin_password') || '');
   const passwordRef = useRef(localStorage.getItem('admin_password') || '');
@@ -30,10 +31,28 @@ export default function Dashboard() {
   
   
   const getHeaders = () => {
-    const headers = { 'Content-Type': 'application/json' };
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     const pwd = passwordRef.current;
     if (pwd) headers['x-admin-password'] = pwd;
     return headers;
+  };
+
+  const handleTogglePause = async () => {
+    setIsTogglingPause(true);
+    try {
+      const endpoint = botState?.discord?.isPaused ? '/api/discord/resume' : '/api/discord/pause';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: getHeaders()
+      });
+      if (res.ok) {
+        await fetchState();
+      }
+    } catch (err) {
+      console.error('Failed to toggle bot pause state:', err);
+    } finally {
+      setIsTogglingPause(false);
+    }
   };
 
 
@@ -173,7 +192,30 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Quick Bot Pause/Resume Action Button */}
+            {botState?.discord?.isPaused ? (
+              <button
+                onClick={handleTogglePause}
+                disabled={isTogglingPause}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-emerald-950/40 cursor-pointer"
+                title="Bot is paused. Click to resume bot activity."
+              >
+                {isTogglingPause ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                Resume Bot
+              </button>
+            ) : (
+              <button
+                onClick={handleTogglePause}
+                disabled={isTogglingPause}
+                className="px-3 py-1.5 bg-neutral-950 hover:bg-amber-950/50 hover:text-amber-300 hover:border-amber-700/50 border border-neutral-800 text-neutral-400 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer"
+                title="Pause Discord bot activity (mentions, commands, auto-replies)"
+              >
+                {isTogglingPause ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Pause className="w-3.5 h-3.5" />}
+                Pause Bot
+              </button>
+            )}
+
             <div className="flex items-center gap-2 bg-neutral-950 border border-neutral-800 rounded-full px-3 py-1">
               <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold">
                 SA
