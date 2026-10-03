@@ -101,7 +101,7 @@ export class GeminiProvider implements AIProvider {
         });
 
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Gemini request for model [${model}] timed out after 3000ms`)), 3000)
+          setTimeout(() => reject(new Error(`Gemini request for model [${model}] timed out after 6000ms`)), 6000)
         );
 
         const response = await Promise.race([callPromise, timeoutPromise]);

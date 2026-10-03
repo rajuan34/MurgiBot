@@ -140,7 +140,7 @@ export class ProviderManager {
         
         // Execute AI Call with safety timeout to prevent stalling
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Timeout: Provider ${provider.name} exceeded 12000ms limit`)), 12000)
+          setTimeout(() => reject(new Error(`Timeout: Provider ${provider.name} exceeded 18000ms limit`)), 18000)
         );
         const text = await Promise.race([provider.generate(request), timeoutPromise]);
         
