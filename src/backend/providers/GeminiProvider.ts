@@ -96,7 +96,10 @@ export class GeminiProvider implements AIProvider {
           config: {
             systemInstruction: systemInstruction,
             maxOutputTokens: 300,
-            temperature: 0.8
+            temperature: 0.8,
+            thinkingConfig: {
+              thinkingBudget: 0
+            }
           }
         });
 

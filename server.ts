@@ -194,6 +194,24 @@ app.post('/api/discord/trigger-schedule', adminAuth, async (req, res) => {
   }
 });
 
+app.post('/api/discord/standby', adminAuth, async (req, res) => {
+  try {
+    await discordService.stop();
+    res.json({ success: true, status: 'STANDBY' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/discord/resume', adminAuth, async (req, res) => {
+  try {
+    await discordService.resume();
+    res.json({ success: true, status: 'ONLINE' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 async function startServer() {
 
   try {

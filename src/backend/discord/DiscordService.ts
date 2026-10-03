@@ -211,8 +211,9 @@ export class DiscordService {
           // Contextual reply to one of recent user messages
           const selectedMessage: any = userMessages[Math.floor(Math.random() * Math.min(3, userMessages.length))];
           const cleanContent = selectedMessage.content.replace(new RegExp(`<@!?${this.client.user?.id}>`, 'g'), '').trim();
-          const contextPrefix = `[SYSTEM: You are Bohurupi initiating a scheduled spontaneous interaction in #${textChannel.name}. Speak authentic Banglish slang. Roast or remark on their message naturally.]\n`;
-          const response = await this.brain.processInteraction(selectedMessage.author.id, contextPrefix + cleanContent);
+          
+          // Pass the user's message directly to the brain without conflicting [SYSTEM: ...] prompt tags
+          const response = await this.brain.processInteraction(selectedMessage.author.id, cleanContent || 'oi');
 
           if (response && response.trim().length > 0 && !response.includes('*(Bohurupi')) {
             const sanitized = response.length > 1950 ? response.substring(0, 1950) + '...' : response;
@@ -234,9 +235,9 @@ export class DiscordService {
         } else {
           // Channel is quiet: send a spontaneous proactive Banglish starter
           const channelStarterPrompts = [
-            `[SYSTEM: Generate a spontaneous, sarcastic, and funny Banglish one-liner or conversation starter for #${textChannel.name}. Bohurupi is bored because chat is dead. Speak authentic Banglish.]`,
-            `[SYSTEM: Bohurupi suddenly awakens and drops an absurd Banglish hot-take in #${textChannel.name}. Keep it 1-2 short sentences.]`,
-            `[SYSTEM: Bohurupi mocks the silence in #${textChannel.name} asking if everyone went to sleep. Short witty Banglish.]`
+            `Drop a spontaneous, sarcastic, and funny Banglish one-liner or conversation starter. Bohurupi is bored because chat is dead. Speak authentic Banglish in 1-2 sentences.`,
+            `Drop an absurd, funny Banglish hot-take in 1-2 short sentences.`,
+            `Mock the silence in the Discord server asking if everyone went to sleep. Short witty Banglish.`
           ];
           const prompt = channelStarterPrompts[Math.floor(Math.random() * channelStarterPrompts.length)];
           const response = await this.brain.processInteraction('scheduled-cron', prompt);

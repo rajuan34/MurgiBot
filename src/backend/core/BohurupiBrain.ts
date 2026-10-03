@@ -66,20 +66,34 @@ export function normalizeIncomingEmojis(message: string): { normalizedText: stri
  * markdown bullets, or stray code backticks. Converts known emoji tags to clean Unicode emojis.
  */
 export function sanitizeOutgoingText(rawText: string, userRole: string): string {
-  let cleanText = (rawText || '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  let cleanText = (rawText || '')
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/```(?:thought|thinking)?[\s\S]*?```/gi, '')
+    .trim();
 
-  // Strip raw "Here's a thinking process:"
-  if (cleanText.includes("Here's a thinking process:")) {
+  // Strip raw "Here's a thinking process:" or similar chain-of-thought intros
+  if (/Here's a thinking process:/i.test(cleanText) || /^Thinking Process:/i.test(cleanText)) {
     const lines = cleanText.split('\n');
-    const validLines = lines.filter(l => l.trim().length > 0 && !l.includes("Here's a thinking process:") && !l.match(/^[0-9]+\.\s/) && !l.startsWith("[") && !l.endsWith("]"));
-    cleanText = validLines.length > 0 ? validLines[validLines.length - 1] : "kire bhai, mood nai amar";
+    const validLines = lines.filter(l => 
+      l.trim().length > 0 && 
+      !/thinking process/i.test(l) && 
+      !l.match(/^[0-9]+\.\s/) && 
+      !l.startsWith("[") && 
+      !l.endsWith("]")
+    );
+    cleanText = validLines.length > 0 ? validLines[validLines.length - 1] : "";
   }
+
+  // Remove parenthetical/bracketed thoughts or asides: (thinking: ...) or [thought: ...]
+  cleanText = cleanText.replace(/[\(\[]\s*(?:thinking|thought|reasoning|system prompt|metadata|internal|as an ai|note|boss|nope|just saying)[\s\S]*?[\)\]]/gi, '').trim();
+
+  // Strip any leading stray brackets, colons, quotes, or dashes that may remain after stripping reasoning
+  cleanText = cleanText.replace(/^[)\]}>"'`\s:;,\-]+/, '').trim();
 
   // Strip leading bullet points (•, -, *) and leading whitespace/backticks/backslashes
   cleanText = cleanText.replace(/^[•\-\*\s`\\]+/, '').trim();
 
   // Map known custom emoji fragments to standard Unicode emojis
-  // E.g. `<:420802panikemoji:` or `<:panikemoji:12345>` or `\`<:420802panikemoji:`
   cleanText = cleanText.replace(/`?\\?<a?:([a-zA-Z0-9_~]+)(?::[0-9]*)?>?`?/gi, (match, name) => {
     const lower = name.toLowerCase();
     if (/panik|panic|scared|fear|shock/i.test(lower)) return '😱';
@@ -105,14 +119,17 @@ export function sanitizeOutgoingText(rawText: string, userRole: string): string 
   cleanText = cleanText.replace(/^["'“‘`\\]+|["'”’`\\]+$/g, '').trim();
 
   // Remove meta-asides in parentheses
-  cleanText = cleanText.replace(/\s*\([^)]*(?:just saying|not repeating|repeating|repeat|thought|thinking|as an ai|note|boss|nope)[^)]*\)/gi, '').trim();
+  cleanText = cleanText.replace(/\s*\([^)]*(?:just saying|not repeating|repeating|repeat|thought|thinking|as an ai|note|boss|nope|system prompt|metadata)[^)]*\)/gi, '').trim();
 
   // Remove model self-corrections
   cleanText = cleanText.replace(/\s*—\s*\*nope\*[^\n]*/gi, '').trim();
   cleanText = cleanText.replace(/\*(?:nope|softly|gentle voice|clears throat|sighs|chuckles|giggles|whispers|thinking|pause|shrugs)\*/gi, '').trim();
 
   // Remove dangling punctuation
-  cleanText = cleanText.replace(/[,—\-]\s*$/g, '').trim();
+  cleanText = cleanText.replace(/[,—\-:;(\[{<]+\s*$/, '').trim();
+
+  // Strip leading stray brackets again
+  cleanText = cleanText.replace(/^[)\]}>"'`\s:;,\-]+/, '').trim();
 
   // Clean up common hallucination loops
   if (cleanText.toLowerCase().includes("server e ashe")) {
@@ -144,15 +161,54 @@ export function sanitizeOutgoingText(rawText: string, userRole: string): string 
   // Strip bullet points, backticks, or quotes again if exposed after regex
   cleanText = cleanText.replace(/^[•\-\*\s`\\]+/, '').trim();
   cleanText = cleanText.replace(/^["'“‘`\\]+|["'”’`\\]+$/g, '').trim();
+  cleanText = cleanText.replace(/^[)\]}>"'`\s:;,\-]+/, '').trim();
 
-  // If completely empty after cleaning, return role-appropriate organic reply
-  if (!cleanText || cleanText.length === 0) {
+  // HARD GUARD: Detect any internal meta-leakage or prompt exposure
+  const metaLeakagePatterns = [
+    /system prompt/i,
+    /prompt metadata/i,
+    /system metadata/i,
+    /because the system/i,
+    /behavioral filter/i,
+    /personality state/i,
+    /user role/i,
+    /respectful_son/i,
+    /respectful_friendly/i,
+    /internal instruction/i,
+    /language model/i,
+    /my instructions/i,
+    /instruction says/i,
+    /system instruction/i,
+    /as an ai/i
+  ];
+
+  const hasMetaLeakage = metaLeakagePatterns.some(pattern => pattern.test(cleanText));
+
+  // If contaminated with meta-leakage or too short/empty, return high-quality authentic fallback
+  if (hasMetaLeakage || !cleanText || cleanText.length < 3) {
+    logger.warn(`Filtered invalid or meta-leaking AI response: "${rawText}". Generating pristine fallback.`);
     if (userRole === 'FATHER') {
-      return "ji abba, shunlam.";
+      const fatherFallbacks = [
+        "ji abba, shuntesi. bolen ki lagbe?",
+        "ji abba, bolen.",
+        "bolen baba, ki korbo?",
+        "ji abba, shob thik ase."
+      ];
+      return fatherFallbacks[Math.floor(Math.random() * fatherFallbacks.length)];
     } else if (userRole === 'CO_CREATOR') {
-      return "ki obostha Rajuan bhai, bolo?";
+      const creatorFallbacks = [
+        "bolen Rajuan bhai, ki obostha? ki kaj korbo?",
+        "ji Rajuan bhai, bolo ki khobor?",
+        "acha Rajuan bhai, bolo."
+      ];
+      return creatorFallbacks[Math.floor(Math.random() * creatorFallbacks.length)];
     } else {
-      return "ki hoise bhai? 💀";
+      const generalFallbacks = [
+        "ki obostha bhai? bolo ki lagbe.",
+        "kire bhai, ki hoise? 💀",
+        "bol bhai, shuntesi."
+      ];
+      return generalFallbacks[Math.floor(Math.random() * generalFallbacks.length)];
     }
   }
 
@@ -226,18 +282,26 @@ export class BohurupiBrain {
       logger.warn('Failed to read behavior.md file', { error: err });
     }
 
+    let relationshipDirective = "";
+    if (userRole === "FATHER") {
+      relationshipDirective = `DIRECTIVE: You are speaking directly with your father & primary creator (Leably / Zabir). You are his loyal, respectful, affectionate son. Address him respectfully as "Abba" or "Baba". Speak naturally in 1-2 short Banglish sentences. Never roast him.`;
+    } else if (userRole === "CO_CREATOR") {
+      relationshipDirective = `DIRECTIVE: You are speaking with your co-creator (Rajuan). Speak like a chill, friendly dev buddy. Address him as "Rajuan bhai" or "Boss". Answer directly in 1-2 short Banglish sentences.`;
+    } else {
+      relationshipDirective = `Current Personality Mode: ${currentMood} (${stateDescriptions[currentMood] || stateDescriptions['Playful']})`;
+    }
+
     const systemInstruction = `${behaviorRules}
 
-[Current User Role: ${userRole}]
-[Current Personality State: ${currentMood}]
-This state is your most important behavioral filter right now:
-${stateDescriptions[currentMood] || stateDescriptions['Playful']}
+${relationshipDirective}
 
-[OUTPUT CONSTRAINTS]
-- Plain text only. NEVER wrap your message in quotation marks.
-- NEVER include stage directions, meta-asides, or parenthetical explanations.
-- Speak naturally in short Banglish or English (1-2 sentences). Directly answer or react to the user.
-- EMOJI RULE: Use ONLY standard Unicode emojis (e.g. 💀, 😭, 🤣, 😱, 🗿, 🤡, 👀, 😑, 🥱). NEVER output custom Discord markup like <:name:id> or • bullet points.
+[CRITICAL OUTPUT DIRECTIVES - NEVER LEAK META TALK]
+- Output ONLY the raw dialogue spoken by Bohurupi in Discord chat.
+- NEVER output thoughts, chain-of-thought, or explain your instructions.
+- NEVER mention "system prompt", "metadata", "rules", "instructions", "state", or "role".
+- NEVER start your message with a parenthesis or bracket.
+- Length: 1-2 sentences maximum in authentic Banglish.
+- Emoji rule: standard Unicode only (e.g. 💀, 😭, 🤣, 😱, 🗿, 🤡, 👀, 😑, 🥱).
 `.trim();
 
     // Step 5: Generation via decoupled Provider Manager
@@ -304,15 +368,25 @@ ${stateDescriptions[currentMood] || stateDescriptions['Playful']}
       "RESPECTFUL_FRIENDLY": "Mode: Co-Creator State (with RAJUAN). Tone: Chill, respectful, friendly, and cooperative dev partner vibe. Address: 'Rajuan bhai', 'Boss', or 'Rajuan'. Rules: NEVER repeat repetitive loops or greetings. Answer directly to what he asked or said in natural short Banglish (1-2 sentences).",
     };
 
+    let characterDirective = "";
+    if (userRole === "FATHER") {
+      characterDirective = `DIRECTIVE: You are responding to command for your father (Leably). Be calm and respectful.`;
+    } else if (userRole === "CO_CREATOR") {
+      characterDirective = `DIRECTIVE: You are responding to command for co-creator (Rajuan).`;
+    } else {
+      characterDirective = `Current Personality Mode: ${currentMood} (${stateDescriptions[currentMood] || stateDescriptions['Chaos']})`;
+    }
+
     const systemInstruction = `
 ${behaviorRules}
 
-[Current User Role: ${userRole}]
-[Current Personality State: ${currentMood}]
-This state is your most important behavioral filter right now:
-${stateDescriptions[currentMood] || stateDescriptions['Chaos']}
+${characterDirective}
 
 ${commandInstruction}
+
+[CRITICAL OUTPUT DIRECTIVES]
+- Output ONLY the final dialogue or command result.
+- NEVER explain your reasoning or mention system prompts, instructions, or metadata.
     `.trim();
 
     try {
