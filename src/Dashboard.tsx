@@ -186,7 +186,7 @@ export default function Dashboard() {
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto p-6 bg-[#0a0a0a]">
           <div className={`mx-auto w-full flex flex-col ${(activeTab === 'logs' || activeTab === 'api') ? 'max-w-full flex-1 h-full' : 'max-w-7xl'}`}>
-            {activeTab === 'overview' && <OverviewView metrics={metrics} isConnected={isConnected} botState={botState} />}
+            {activeTab === 'overview' && <OverviewView metrics={metrics} isConnected={isConnected} botState={botState} getHeaders={getHeaders} fetchState={fetchState} />}
             {activeTab === 'tasks' && <TasksView />}
             {activeTab === 'ai-engine' && <AIEngineView botState={botState} chatLog={chatLog} input={input} setInput={setInput} sendMessage={sendMessage} exportChatLog={exportChatLog} fetchState={fetchState} isConnected={isConnected} latency={latency} isSending={isSending} getHeaders={getHeaders} />}
             {activeTab === 'logs' && <LogsView serverLogs={serverLogs} isConnected={isConnected} />}

@@ -1,8 +1,84 @@
-import React from 'react';
-import { Cpu, Database, Network, Clock, Activity, AlertCircle, Smile } from 'lucide-react';
+import React, { useState } from 'react';
+import { Cpu, Database, Network, Clock, Activity, AlertCircle, Smile, Send, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-export function OverviewView({ metrics, isConnected, botState }: { metrics: any, isConnected: boolean, botState?: any }) {
+export function OverviewView({ 
+  metrics, 
+  isConnected, 
+  botState, 
+  getHeaders, 
+  fetchState 
+}: { 
+  metrics: any; 
+  isConnected: boolean; 
+  botState?: any; 
+  getHeaders?: () => Record<string, string>; 
+  fetchState?: () => Promise<void>; 
+}) {
+  const [isTriggering, setIsTriggering] = useState(false);
+  const [triggerStatus, setTriggerStatus] = useState<{ success?: boolean; message?: string; results?: any[] } | null>(null);
+
+  const handleTriggerSchedule = async () => {
+    setIsTriggering(true);
+    setTriggerStatus(null);
+    try {
+      const headers = getHeaders ? getHeaders() : { 'Content-Type': 'application/json' };
+      const res = await fetch('/api/discord/trigger-schedule', {
+        method: 'POST',
+        headers
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const posted = data.result || (data.results && data.results[0]);
+        setTriggerStatus({
+          success: true,
+          message: posted ? `Auto-reply sent to random channel #${posted.channelName}!` : 'Auto-reply processed for 1 random channel!',
+          results: data.results
+        });
+      } else {
+        setTriggerStatus({
+          success: false,
+          message: data.error || (data.results && data.results[0]?.error) || 'Failed to trigger schedule'
+        });
+      }
+      if (fetchState) await fetchState();
+    } catch (err: any) {
+      setTriggerStatus({
+        success: false,
+        message: err?.message || 'Network error triggering schedule'
+      });
+    } finally {
+      setIsTriggering(false);
+    }
+  };
+
+  const defaultChannels = [
+    { id: '705092446366728236', name: '#bot-tasting-general' },
+    { id: '1453357071931019304', name: '#media' },
+    { id: '1470329659693600768', name: '#memes' }
+  ];
+
+  const defaultServers = [
+    { id: '1522520842163060809', name: 'Bohurupi Main Guild' },
+    { id: '705092446366728233', name: 'Bohurupi Primary Server' }
+  ];
+
+  const displayServers = (botState?.discord?.allowedServers && botState.discord.allowedServers.length > 0)
+    ? botState.discord.allowedServers
+    : (botState?.discord?.allowedServer ? [botState.discord.allowedServer] : defaultServers);
+
+  // Guarantee all 3 channels are always visible, using live Discord names when available:
+  const loadedChannels = botState?.discord?.allowedChannels || [];
+  const displayChannels = defaultChannels.map(dc => {
+    const found = loadedChannels.find((lc: any) => lc.id === dc.id);
+    return found || dc;
+  });
+  // Also include any extra custom channels configured:
+  for (const lc of loadedChannels) {
+    if (!displayChannels.some(dc => dc.id === lc.id)) {
+      displayChannels.push(lc);
+    }
+  }
   const cpuData = Array.from({ length: 20 }).map((_, i) => ({
     time: i,
     value: Math.random() * 30 + (metrics?.cpu?.usage || 10)
@@ -104,57 +180,102 @@ export function OverviewView({ metrics, isConnected, botState }: { metrics: any,
           </ResponsiveContainer>
         </div>
         
-        <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
-          <h3 className="text-sm font-bold text-neutral-300 mb-4 uppercase tracking-wider">Database & Cache Status</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between bg-neutral-950 border border-neutral-800 rounded-lg p-3">
-              <div className="flex items-center gap-3">
-                <Database className="w-4 h-4 text-emerald-400" />
-                <span className="text-sm text-neutral-200">PostgreSQL Cache</span>
-              </div>
-              <span className={`text-xs px-2 py-1 rounded ${botState?.memory?.storage === 'postgres-cache' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-                {botState?.memory?.storage === 'postgres-cache' ? 'Connected' : 'Offline'}
+        <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-neutral-300 uppercase tracking-wider">Discord Operations & Channels</h3>
+              <span className={`px-2 py-0.5 rounded text-xs font-semibold ${botState?.discord?.connected ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'}`}>
+                {botState?.discord?.connected ? `ONLINE (${botState.discord.botTag})` : 'STANDBY / OFFLINE'}
               </span>
             </div>
-            
-            {botState?.memory?.storage === 'postgres-cache' && botState?.memory?.dbStatus && (
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3">
-                   <div className="text-xs text-neutral-500 mb-1">Active Connections</div>
-                   <div className="text-lg font-bold text-neutral-200">{botState.memory.dbStatus.activeConnections}</div>
-                 </div>
-                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3">
-                   <div className="text-xs text-neutral-500 mb-1">Idle Connections</div>
-                   <div className="text-lg font-bold text-neutral-200">{botState.memory.dbStatus.idleConnections}</div>
-                 </div>
-                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3 col-span-2 flex justify-between items-center">
-                   <div className="text-xs text-neutral-500">DB Uptime</div>
-                   <div className="text-sm font-medium text-neutral-300">{formatUptime(botState.memory.dbStatus.uptimeSeconds)}</div>
-                 </div>
-                 
-                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3 col-span-2">
-                   <div className="text-xs text-neutral-500 mb-2">Query Activity (Live)</div>
-                   <div className="h-12 w-full">
-                     <ResponsiveContainer width="100%" height="100%">
-                       <AreaChart data={queryData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                         <defs>
-                           <linearGradient id="colorQuery" x1="0" y1="0" x2="0" y2="1">
-                             <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                             <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                           </linearGradient>
-                         </defs>
-                         <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={1.5} fillOpacity={1} fill="url(#colorQuery)" isAnimationActive={false} />
-                       </AreaChart>
-                     </ResponsiveContainer>
-                   </div>
-                 </div>
-              </div>
-            )}
 
-            {botState?.memory?.storage !== 'postgres-cache' && (
-              <div className="p-3 text-xs text-neutral-500 flex gap-2 items-start mt-2">
-                <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0" />
-                <p>PostgreSQL cache is currently offline. System has fallen back to temporary in-memory storage.</p>
+            <div className="space-y-4">
+              {/* Allowed Servers */}
+              <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3">
+                <div className="flex items-center justify-between text-xs text-neutral-500 mb-2">
+                  <span className="font-semibold text-neutral-400">Connected / Allowed Servers</span>
+                  <span className="text-[10px] text-neutral-600">{displayServers.length} Server(s)</span>
+                </div>
+                <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                  {displayServers.map((srv: any) => (
+                    <div key={srv.id} className="flex items-center justify-between bg-neutral-900/80 border border-neutral-800/80 rounded px-3 py-2 text-xs hover:border-neutral-700 transition-colors">
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        <span className="font-bold text-white">{srv.name}</span>
+                      </div>
+                      <span className="font-mono text-[11px] text-neutral-400 bg-neutral-950 px-2 py-0.5 rounded border border-neutral-800">{srv.id}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3 Scheduled Channels */}
+              <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-3">
+                <div className="flex items-center justify-between text-xs text-neutral-500 mb-2">
+                  <span className="font-semibold text-neutral-400">3 Scheduled Active Channels</span>
+                  <span className="text-[10px] text-emerald-400 bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-800/50">Auto-Reply Active</span>
+                </div>
+                <div className="space-y-1.5">
+                  {displayChannels.map((ch: any) => (
+                    <div key={ch.id} className="flex items-center justify-between bg-neutral-900/80 border border-neutral-800/80 rounded px-3 py-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-emerald-400">{ch.name}</span>
+                      </div>
+                      <span className="font-mono text-[11px] text-neutral-400">{ch.id}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Schedule Timing Info */}
+              <div className="bg-neutral-950/60 border border-neutral-800/60 rounded-lg p-2.5 text-xs flex items-center justify-between text-neutral-400">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Scheduled: <strong>15:30</strong> & <strong>22:30</strong> (Asia/Dhaka)</span>
+                </div>
+                <span className="text-[10px] text-emerald-400 bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-800/50">Randomly 1 of 3 Channels</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Trigger Scheduled Auto-Reply Button */}
+          <div className="pt-4 mt-4 border-t border-neutral-800">
+            <button
+              onClick={handleTriggerSchedule}
+              disabled={isTriggering}
+              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg text-xs transition-colors shadow-lg shadow-emerald-950/40 cursor-pointer"
+            >
+              {isTriggering ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  Selecting random channel & posting...
+                </>
+              ) : (
+                <>
+                  <Send className="w-3.5 h-3.5" />
+                  ⚡ Trigger Scheduled Auto-Reply (Random 1 Channel) Now
+                </>
+              )}
+            </button>
+
+            {triggerStatus && (
+              <div className={`mt-2 p-2.5 rounded-lg border text-xs flex items-start gap-2 ${triggerStatus.success ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300' : 'bg-red-950/40 border-red-800 text-red-300'}`}>
+                {triggerStatus.success ? <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" /> : <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />}
+                <div className="flex-1">
+                  <p className="font-semibold">{triggerStatus.message}</p>
+                  {triggerStatus.results && (
+                    <div className="mt-1 space-y-1 text-[11px] text-neutral-300">
+                      {triggerStatus.results.map((res: any, idx: number) => (
+                        <div key={idx} className="flex justify-between items-center bg-black/40 px-2 py-1 rounded">
+                          <span>{res.channelName ? `#${res.channelName}` : res.channelId}</span>
+                          <span className={`font-mono ${res.status === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
+                            {res.status === 'replied_to_user' ? 'Replied to user' : (res.status === 'sent_spontaneous' ? 'Sent opener' : res.status)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Events, Message, TextChannel } from 'discord.js';
+import { Client, GatewayIntentBits, Events, Message, TextChannel, Options } from 'discord.js';
 import cron from 'node-cron';
 import { logger } from '../telemetry/logger';
 import { BohurupiBrain } from '../core/BohurupiBrain';
@@ -10,32 +10,68 @@ import { BohurupiBrain } from '../core/BohurupiBrain';
  * - Media channel: 1453357071931019304
  * - Memes channel: 1470329659693600768
  */
-export const ALLOWED_CHANNEL_IDS: string[] = [
-  '705092446366728236',  // Text channel
-  '1453357071931019304', // Media channel
-  '1470329659693600768'  // Memes channel
+export const DEFAULT_ALLOWED_CHANNEL_IDS: string[] = [
+  '705092446366728236',  // #bot-tasting-general (formerly text)
+  '1453357071931019304',  // Media channel
+  '1470329659693600768',  // Memes channel
 ];
 
-/**
- * Designated Server / Guild ID where Bohurupi is strictly permitted to send scheduled messages:
- * Server ID: 705092446366728233
- */
-export const SCHEDULED_SERVER_ID: string = '705092446366728233';
+export const ALLOWED_CHANNEL_IDS: string[] = DEFAULT_ALLOWED_CHANNEL_IDS;
 
-export function isChannelAllowed(channelId: string): boolean {
+export function getAllowedChannelIds(): string[] {
   const envChannels = (process.env.ALLOWED_CHANNEL_IDS || '')
     .split(',')
     .map(id => id.trim())
     .filter(id => id.length > 0);
   
-  const allowedList = envChannels.length > 0 ? envChannels : ALLOWED_CHANNEL_IDS;
-  return allowedList.includes(channelId);
+  // Merge the standard 3 channels with any additional channels configured in env:
+  return Array.from(new Set([
+    ...DEFAULT_ALLOWED_CHANNEL_IDS,
+    ...envChannels
+  ]));
+}
+
+/**
+ * Designated Server / Guild IDs where Bohurupi is permitted:
+ */
+export const SCHEDULED_SERVER_IDS: string[] = [
+  '1522520842163060809',
+  '705092446366728233'
+];
+export const SCHEDULED_SERVER_ID: string = SCHEDULED_SERVER_IDS[0];
+
+export function isChannelAllowed(channelId: string, guildId?: string | null): boolean {
+  if (!guildId) return true; // Direct messages or uncached
+
+  const allowedList = getAllowedChannelIds();
+
+  // The primary designated server (705092446366728233) strictly restricts replies to the 3 channels:
+  const restrictedServers = ['705092446366728233'];
+  if (restrictedServers.includes(guildId)) {
+    return allowedList.includes(channelId);
+  }
+
+  // If this channel is explicitly in allowed list, allow:
+  if (allowedList.includes(channelId)) {
+    return true;
+  }
+
+  // In all other servers where the bot is invited, allow interactions in text channels!
+  return true;
 }
 
 export function isScheduledServerAllowed(guildId?: string | null): boolean {
-  if (!guildId) return false;
-  const targetServerId = process.env.SCHEDULED_SERVER_ID || SCHEDULED_SERVER_ID;
-  return guildId === targetServerId;
+  if (!guildId) return true;
+  const envServers = (process.env.SCHEDULED_SERVER_ID || process.env.SCHEDULED_SERVER_IDS || '')
+    .split(',')
+    .map(id => id.trim())
+    .filter(id => id.length > 0);
+  
+  const allowedServers = Array.from(new Set([
+    ...SCHEDULED_SERVER_IDS,
+    ...envServers
+  ]));
+  return allowedServers.includes(guildId);
 }
 
 export class DiscordService {
@@ -50,6 +86,21 @@ export class DiscordService {
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
       ],
+      // Render Free Tier memory optimization (512MB RAM cap protection)
+      makeCache: Options.cacheWithLimits({
+        MessageManager: 50,
+        PresenceManager: 0,
+        ThreadManager: 0,
+        ReactionManager: 0,
+        GuildMemberManager: 50,
+        UserManager: 100,
+      }),
+      sweepers: {
+        messages: {
+          interval: 300,
+          lifetime: 900,
+        },
+      },
     });
 
     this.registerEvents();
@@ -63,102 +114,158 @@ export class DiscordService {
     const schedule1 = process.env.SCHEDULE_1 || '15:30';
     const schedule2 = process.env.SCHEDULE_2 || '22:30';
 
-    const parseSchedule = (timeStr: string) => {
-      const [hour, minute] = timeStr.split(':');
-      return `${minute} ${hour} * * *`;
+    const parseSchedule = (timeStr: string, defaultHour: string, defaultMinute: string) => {
+      try {
+        if (!timeStr || typeof timeStr !== 'string') return `${defaultMinute} ${defaultHour} * * *`;
+        const parts = timeStr.trim().split(':');
+        const hour = parseInt(parts[0], 10);
+        const minute = parseInt(parts[1], 10);
+        if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+          return `${defaultMinute} ${defaultHour} * * *`;
+        }
+        return `${minute} ${hour} * * *`;
+      } catch (e) {
+        return `${defaultMinute} ${defaultHour} * * *`;
+      }
     };
 
-    const cronExpr1 = parseSchedule(schedule1);
-    const cronExpr2 = parseSchedule(schedule2);
+    const cronExpr1 = parseSchedule(schedule1, '15', '30');
+    const cronExpr2 = parseSchedule(schedule2, '22', '30');
 
-    logger.info(`Initializing Discord Auto-Reply Scheduler: ${schedule1} & ${schedule2} (${tz})`);
+    logger.info(`Initializing Discord Auto-Reply Scheduler: ${cronExpr1} & ${cronExpr2} (${tz})`);
 
     const task = async () => {
-      await this.triggerAutoReply();
+      try {
+        await this.triggerAutoReply();
+      } catch (err: any) {
+        logger.error('Error executing scheduled auto-reply task:', { error: err?.message || String(err) });
+      }
     };
 
-    cron.schedule(cronExpr1, task, { timezone: tz });
-    cron.schedule(cronExpr2, task, { timezone: tz });
+    try {
+      cron.schedule(cronExpr1, task, { timezone: tz });
+    } catch (e: any) {
+      logger.error('Failed to schedule cron job 1:', { error: e?.message || String(e) });
+    }
+    try {
+      cron.schedule(cronExpr2, task, { timezone: tz });
+    } catch (e: any) {
+      logger.error('Failed to schedule cron job 2:', { error: e?.message || String(e) });
+    }
   }
 
-  private async triggerAutoReply() {
-    const targetServerId = process.env.SCHEDULED_SERVER_ID || SCHEDULED_SERVER_ID;
-    logger.info(`Running scheduled Discord auto-reply task strictly for server [${targetServerId}]...`);
+  public async triggerAutoReply(): Promise<{ success: boolean; result?: any; results?: any[] }> {
+    const channelsToPickFrom = getAllowedChannelIds();
+
+    logger.info(`Running scheduled Discord auto-reply task. Picking 1 random channel from [${channelsToPickFrom.join(', ')}]...`);
     if (!this.isConnected || !this.client.user) {
       logger.warn('Skipping auto-reply, Discord client not connected.');
-      return;
+      return { success: false, results: [{ error: 'Discord client not connected' }] };
     }
 
-    try {
-      let selectedMessage: Message | null = null;
-      let selectedChannel: TextChannel | null = null;
+    // Shuffle the 3 channels to randomly select ONE
+    const shuffledChannels = [...channelsToPickFrom].sort(() => Math.random() - 0.5);
 
-      // Pick randomly from the allowed channels only (Text, Media, Memes)
-      const allowedChannelsShuffled = [...ALLOWED_CHANNEL_IDS].sort(() => Math.random() - 0.5);
+    let postedResult: any = null;
 
-      for (const channelId of allowedChannelsShuffled) {
-        try {
-          const channel = await this.client.channels.fetch(channelId).catch(() => null);
-          if (!channel || !channel.isTextBased() || channel.isDMBased()) continue;
-          
-          const textChannel = channel as TextChannel;
-          const guildId = textChannel.guildId || textChannel.guild?.id;
-
-          // STRICT CHECK: The bot will ONLY send scheduled messages in server 705092446366728233
-          if (!isScheduledServerAllowed(guildId)) {
-            logger.debug(`Skipping channel ${channelId} because its guild [${guildId}] is not the designated scheduled server [${targetServerId}].`);
-            continue;
-          }
-
-          const perms = textChannel.guild?.members.me?.permissionsIn(textChannel);
-          if (perms && (!perms.has('ViewChannel') || !perms.has('ReadMessageHistory') || !perms.has('SendMessages'))) {
-            continue;
-          }
-
-          const messages = await textChannel.messages.fetch({ limit: 20 });
-          // Look for recent user messages that are not from the bot itself
-          const userMessages = Array.from(messages.values()).filter(m => 
-              !m.author.bot && 
-              !m.system && 
-              m.content.trim().length > 0
-          );
-
-          if (userMessages.length > 0) {
-            // Pick one of the top 3 most recent messages
-            selectedMessage = userMessages[Math.floor(Math.random() * Math.min(3, userMessages.length))];
-            selectedChannel = textChannel;
-            break;
-          }
-        } catch (e: any) {
-          logger.warn(`Failed to fetch messages for allowed channel ${channelId}`, { error: e?.message || String(e) });
+    for (const channelId of shuffledChannels) {
+      try {
+        const channel = await this.client.channels.fetch(channelId).catch(() => null);
+        if (!channel || !channel.isTextBased() || channel.isDMBased()) {
+          logger.warn(`Channel ${channelId} not found or not text-based, trying next random channel...`);
+          continue;
         }
-      }
 
-      if (!selectedMessage || !selectedChannel) {
-        logger.info(`No suitable message found in allowed channels within server [${targetServerId}] for scheduled auto-reply.`);
-        return;
-      }
+        const textChannel = channel as TextChannel;
+        const guildId = textChannel.guildId || textChannel.guild?.id;
 
-      logger.info(`Selected message ${selectedMessage.id} in allowed channel ${selectedChannel.id} (Server: ${selectedChannel.guildId || selectedChannel.guild?.id}) for auto-reply.`);
-      
-      if ('sendTyping' in selectedMessage.channel) {
-          await selectedMessage.channel.sendTyping().catch(() => {});
-      }
+        // Check if server is allowed for scheduled posts
+        if (guildId && !isScheduledServerAllowed(guildId)) {
+          logger.debug(`Skipping channel ${channelId} because its guild [${guildId}] is not in scheduled server list.`);
+          continue;
+        }
 
-      const cleanContent = selectedMessage.content.replace(new RegExp(`<@!?${this.client.user.id}>`, 'g'), '').trim();
-      
-      // Inject some context to brain that this is an auto-reply so Bohurupi acts naturally
-      const contextPrefix = "[SYSTEM: You are initiating a random interaction. Act naturally, pick up on the context of their message or just roast them out of nowhere. Do not say you are initiating.]\n";
-      const response = await this.brain.processInteraction(selectedMessage.author.id, contextPrefix + cleanContent);
+        const perms = textChannel.guild?.members.me?.permissionsIn(textChannel);
+        if (perms && (!perms.has('ViewChannel') || !perms.has('SendMessages'))) {
+          logger.warn(`Missing permissions in channel #${textChannel.name} (${channelId}), trying next random channel...`);
+          continue;
+        }
 
-      if (response && response.trim().length > 0 && !response.includes('*(Bohurupi')) {
-          const sanitizedResponse = response.length > 1950 ? response.substring(0, 1950) + '...' : response;
-          await selectedMessage.reply(sanitizedResponse);
-          logger.info(`Successfully sent scheduled auto-reply to message ${selectedMessage.id} in allowed channel ${selectedChannel?.id}`);
+        // Try to fetch recent messages
+        let messages: any = null;
+        if (!perms || perms.has('ReadMessageHistory')) {
+          messages = await textChannel.messages.fetch({ limit: 15 }).catch(() => null);
+        }
+
+        const userMessages = messages ? Array.from(messages.values()).filter((m: any) => 
+          !m.author.bot && 
+          !m.system && 
+          m.content && m.content.trim().length > 0
+        ) : [];
+
+        if ('sendTyping' in textChannel) {
+          await textChannel.sendTyping().catch(() => {});
+        }
+
+        if (userMessages.length > 0) {
+          // Contextual reply to one of recent user messages
+          const selectedMessage: any = userMessages[Math.floor(Math.random() * Math.min(3, userMessages.length))];
+          const cleanContent = selectedMessage.content.replace(new RegExp(`<@!?${this.client.user?.id}>`, 'g'), '').trim();
+          const contextPrefix = `[SYSTEM: You are Bohurupi initiating a scheduled spontaneous interaction in #${textChannel.name}. Speak authentic Banglish slang. Roast or remark on their message naturally.]\n`;
+          const response = await this.brain.processInteraction(selectedMessage.author.id, contextPrefix + cleanContent);
+
+          if (response && response.trim().length > 0 && !response.includes('*(Bohurupi')) {
+            const sanitized = response.length > 1950 ? response.substring(0, 1950) + '...' : response;
+            try {
+              await selectedMessage.reply(sanitized);
+            } catch (err) {
+              await textChannel.send(sanitized);
+            }
+            logger.info(`Scheduled auto-reply sent to user message in random channel #${textChannel.name} (${channelId})`);
+            postedResult = {
+              channelId,
+              channelName: textChannel.name,
+              status: 'replied_to_user',
+              messageId: selectedMessage.id,
+              text: sanitized
+            };
+            break; // Stop after successfully sending to 1 channel!
+          }
+        } else {
+          // Channel is quiet: send a spontaneous proactive Banglish starter
+          const channelStarterPrompts = [
+            `[SYSTEM: Generate a spontaneous, sarcastic, and funny Banglish one-liner or conversation starter for #${textChannel.name}. Bohurupi is bored because chat is dead. Speak authentic Banglish.]`,
+            `[SYSTEM: Bohurupi suddenly awakens and drops an absurd Banglish hot-take in #${textChannel.name}. Keep it 1-2 short sentences.]`,
+            `[SYSTEM: Bohurupi mocks the silence in #${textChannel.name} asking if everyone went to sleep. Short witty Banglish.]`
+          ];
+          const prompt = channelStarterPrompts[Math.floor(Math.random() * channelStarterPrompts.length)];
+          const response = await this.brain.processInteraction('scheduled-cron', prompt);
+
+          if (response && response.trim().length > 0 && !response.includes('*(Bohurupi')) {
+            const sanitized = response.length > 1950 ? response.substring(0, 1950) + '...' : response;
+            await textChannel.send(sanitized);
+            logger.info(`Scheduled spontaneous message sent to random channel #${textChannel.name} (${channelId})`);
+            postedResult = {
+              channelId,
+              channelName: textChannel.name,
+              status: 'sent_spontaneous',
+              text: sanitized
+            };
+            break; // Stop after successfully sending to 1 channel!
+          }
+        }
+      } catch (err: any) {
+        logger.error(`Failed scheduled post attempt in channel ${channelId}`, { error: err?.message || String(err) });
       }
-    } catch (error: any) {
-      logger.error('Scheduled auto-reply failed', { error: error?.message || String(error) });
     }
+
+    if (!postedResult) {
+      logger.warn('Could not post scheduled auto-reply to any available channel.');
+      return { success: false, results: [{ error: 'No channel accessible for posting' }] };
+    }
+
+    logger.info(`Scheduled Discord task completed. Randomly posted to #${postedResult.channelName}.`);
+    return { success: true, result: postedResult, results: [postedResult] };
   }
 
 
@@ -183,33 +290,33 @@ export class DiscordService {
     // Help menu command
     if (command === 'help' || command === 'commands') {
       const helpFrame = `\`\`\`text
-┌
-│ 🎭 BOHURUPI BOT - COMMANDS LIST
-│ ─────────────────────────────────────────────────────────
+┌─────────────────────────────────────────────────────────┐
+│ 🎭  BOHURUPI BOT - OFFICIAL COMMANDS LIST               │
+├─────────────────────────────────────────────────────────┤
 │ ⚔️ Interactive Action Commands:
 │ ├─ !court @user            : Bohurupi court session & verdict
 │ ├─ !fight @user            : 1v1 Street fight knockout
-│ ├─ !biryani_roulette @user : Poisonous / chaotic bowl rating
+│ ├─ !biryani_roulette @user : Poisonous chaotic bowl rating
 │ ├─ !bully / !roast @user   : Savage roast & banter
-│ ├─ !expose @user           : Leaked fake search history / secret
+│ ├─ !expose @user           : Fake leaked search history
 │ ├─ !hype @user             : Supreme deity-level hype
 │ ├─ !agree @user            : Aggressively agree with target
 │ ├─ !lore @user             : Absurd fake origin lore
 │ ├─ !predict @user          : 10-year absurd future prediction
 │ ├─ !iq @user               : Fake IQ scanner & rating
-│ ├─ !flirt @user            : Toxic / cheesy romantic line
+│ ├─ !flirt @user            : Cheesy / toxic romantic line
 │ ├─ !confess @user          : Fake scandalous confession
 │ ├─ !truth @user            : Provocative truth question
-│ ├─ !dare @user             : Absurd & chaotic dare
+│ ├─ !dare @user             : Absurd chaotic dare
 │ ├─ !horoscope              : Chaotic daily astrology
 │ ├─ !8ball [question]       : Savage 8-ball fortune prediction
 │ ├─ !choose [opt1] or [opt2]: Bohurupi's definitive choice
 │ ├─ !biryani_war            : Ignite the ultimate food debate
 │ ├─ !nasta_check            : Strict guardian snack check
-│ └─ !roast_chat             : Roast the whole active chat
-│ ───────────────
-│ 💡 Bohurupi AI Core • Active in Allowed Channels
-└
+│ └─ !roast_chat             : Roast the active chat
+├─────────────────────────────────────────────────────────┤
+│ 💡 Bohurupi AI Core • Active in Allowed Channels        │
+└─────────────────────────────────────────────────────────┘
 \`\`\``;
       await message.reply(helpFrame);
       return true;
@@ -231,31 +338,25 @@ export class DiscordService {
       if (penaltyMatch) penalty = penaltyMatch[1].replace(/\*\*/g, '').trim();
 
       const frame = `\`\`\`text
-┌
-│ ⚖️ BOHRUPI COURT IN SESSION
-│ ─────────────────────────────────────────────────────────
-│ 
-│ 👨⚖️ Presiding Judge: Bohrupi
-│ 🎯 Accused Member: ${targetUserName}
+┌─────────────────────────────────────────────────────────┐
+│ ⚖️  BOHURUPI SUPREME COURT IN SESSION                   │
+├─────────────────────────────────────────────────────────┤
+│ 👨‍⚖️ Presiding Judge : Bohurupi
+│ 🎯 Accused Member   : ${targetUserName}
 │ 
 │ 📋 Offense:
 │ └─ "${crime}"
 │ 
-│ 🏛️ Courtroom Visual:
-│ ┌────────────────────────────────────────┐
-│ │  👨⚖️ Bohrupi : "Order in the court!"   │
-│ │  🔨 *Gavel Smashes*                    │
-│ │  ⛓️ ${targetUserName.padEnd(9)} : "Bhai ami innocent!"    │
-│ └────────────────────────────────────────┘
+│ 🏛️ Courtroom Dialogue:
+│ ├─ Bohurupi : "Order in the court! Haturir bari khabi?"
+│ └─ ${targetUserName} : "Bhai ami nirdosh, maf koira den!"
 │ 
-│ 📊 Server Jury Status:
-│ 🟢 Not Guilty [ 1 ]  |  🔴 Guilty [ 42 ]
-│ 
-│ 🚨 Verdict: GUILTY - NO MERCY
-│ 💸 Penalty: ${penalty}
-│ ───────────────
-│ Executed by Bot • Single Frame Output
-└
+│ 📊 Server Jury Vote : 🟢 0 Innocent  |  🔴 42 Guilty
+│ 🚨 Final Verdict    : GUILTY - NO MERCY!
+│ 💸 Court Penalty    : ${penalty}
+├─────────────────────────────────────────────────────────┤
+│ ⚖️ Executed by Bohurupi AI • Single Frame Output
+└─────────────────────────────────────────────────────────┘
 \`\`\``;
       await message.reply(frame);
       return true;
@@ -277,27 +378,19 @@ export class DiscordService {
       if (trashTalkMatch) trashTalk = trashTalkMatch[1].replace(/\*\*/g, '').trim();
 
       const frame = `\`\`\`text
-┌
-│ ⚔️ BOHRUPI STREET FIGHT - MATCH RESULT
-│ ─────────────────────────────────────────────────────────
+┌─────────────────────────────────────────────────────────┐
+│ ⚔️  BOHURUPI STREET FIGHT - MATCH RESULT                 │
+├─────────────────────────────────────────────────────────┤
+│ 🥊 Bohurupi   : [██████████] 100 HP
+│ 💀 ${targetUserName} : [░░░░░░░░░░] 0 HP (K.O.)
 │ 
-│ 🥊 Fighters:
-│ ├─ 🐔 Bohrupi  : [██████████] 100 HP
-│ └─ 💀 ${targetUserName.padEnd(8)} : [░░░░░░░░░░] 0 HP (KO)
-│ 
-│ 📍 Battle Location:
-│ └─ Mirpur 10 Circle
-│ 
-│ 💥 Final Knockout Move:
-│ ┌────────────────────────────────────────┐
-│ │  🐔 Bohrupi ───💥 [${move}] ───> 💀 ${targetUserName} │
-│ └────────────────────────────────────────┘
-│ 
-│ 🏆 Result: CRITICAL HIT! Bohrupi landed a 100 DMG KO SLAP!
-│ 💬 Comment: ${trashTalk}
-│ ───────────────
-│ Executed by Bot • Single Frame Output
-└
+│ 📍 Arena       : Mirpur 10 Golchottor
+│ 💥 K.O. Move   : [ ${move} ]
+│ 🏆 Verdict     : CRITICAL HIT! 100 DMG K.O. SLAP!
+│ 💬 Bohurupi    : "${trashTalk}"
+├─────────────────────────────────────────────────────────┤
+│ ⚔️ Match Official: Bohurupi AI • Single Frame Output
+└─────────────────────────────────────────────────────────┘
 \`\`\``;
       await message.reply(frame);
       return true;
@@ -322,24 +415,22 @@ export class DiscordService {
       if (mockMatch) mock = mockMatch[1].replace(/\*\*/g, '').trim();
 
       const frame = `\`\`\`text
-┌
-│ 🎰 BOHRUPI BIRYANI ROULETTE
-│ ─────────────────────────────────────────────────────────
-│ 
-│ 👤 Customer: ${targetUserName}
-│ 🍗 Bowl Dish: ${dish}
-│ 
-│ 📊 Dish Rating: 0/10 (FATAL DANGER)
-│ 🤢 Status: POISONOUS BOWL
+┌─────────────────────────────────────────────────────────┐
+│ 🎰  BOHURUPI BIRYANI ROULETTE                           │
+├─────────────────────────────────────────────────────────┤
+│ 👤 Customer    : ${targetUserName}
+│ 🍗 Served Dish : ${dish}
+│ 📊 Rating      : 0/10 (FATAL DANGER)
+│ 🤢 Status      : POISONOUS BOWL
 │ 
 │ 📋 Kitchen Notes:
 │ └─ "${notes}"
 │ 
-│ 🚨 Result: WORST BOWL EVER 💀
-│ 💬 Message: ${mock}
-│ ───────────────
-│ Executed by Bot • Single Frame Output
-└
+│ 🚨 Result      : WORST BOWL EVER 💀
+│ 💬 Bohurupi    : "${mock}"
+├─────────────────────────────────────────────────────────┤
+│ 🎰 Chef: Bohurupi AI • Single Frame Output
+└─────────────────────────────────────────────────────────┘
 \`\`\``;
       await message.reply(frame);
       return true;
@@ -353,18 +444,18 @@ export class DiscordService {
         `COMMAND: !iq. TARGET: ${targetUserName}. CALCULATED_IQ: ${fakeIQ}. INSTRUCTION: Give a 1-sentence hilarious roast about ${targetUserName}'s IQ in Banglish. Mention them using ${targetUser}.`
       );
       const frame = `\`\`\`text
-┌
-│ 🧠 BOHRUPI IQ SCANNER
-│ ─────────────────────────────────────────────────────────
-│ 🎯 Target: ${targetUserName}
-│ 📊 Scanned IQ: ${fakeIQ} IQ
-│ 🔍 Diagnosis: ${fakeIQ < 50 ? "Severe Brain Lag 💀" : fakeIQ < 90 ? "Average Rickshaw Puller Brain" : "Surprisingly Functional"}
+┌─────────────────────────────────────────────────────────┐
+│ 🧠  BOHURUPI IQ SCANNER                                 │
+├─────────────────────────────────────────────────────────┤
+│ 🎯 Target      : ${targetUserName}
+│ 📊 Scanned IQ  : ${fakeIQ} IQ
+│ 🔍 Diagnosis   : ${fakeIQ < 50 ? "Severe Brain Lag 💀" : fakeIQ < 90 ? "Average Rickshaw Puller Brain" : "Surprisingly Functional"}
 │ 
-│ 💬 Bohrupi Verdict:
+│ 💬 Bohurupi Verdict:
 │ └─ ${aiResponse.replace(/```/g, '')}
-│ ───────────────
-│ Executed by Bot • Single Frame Output
-└
+├─────────────────────────────────────────────────────────┤
+│ 🧠 Lab: Bohurupi AI • Single Frame Output
+└─────────────────────────────────────────────────────────┘
 \`\`\``;
       await message.reply(frame);
       return true;
@@ -445,6 +536,23 @@ export class DiscordService {
     return true;
   }
   private registerEvents() {
+    this.client.on(Events.Error, (error) => {
+      logger.error('Discord client encountered an error:', { error: error?.message || String(error) });
+    });
+
+    this.client.on(Events.ShardError, (error, shardId) => {
+      logger.error(`Discord client shard ${shardId} error:`, { error: error?.message || String(error) });
+    });
+
+    this.client.on(Events.ShardDisconnect, (event, shardId) => {
+      this.isConnected = false;
+      logger.warn(`Discord shard ${shardId} disconnected with code: ${event?.code || 'unknown'}`);
+    });
+
+    this.client.on(Events.ShardReconnecting, (shardId) => {
+      logger.info(`Discord shard ${shardId} reconnecting...`);
+    });
+
     this.client.once(Events.ClientReady, (readyClient) => {
       this.isConnected = true;
       this.brain.getIdentityManager().setClient(readyClient);
@@ -458,8 +566,10 @@ export class DiscordService {
       // Ignore bots
       if (message.author.bot) return;
 
-      // Strict Channel Restriction: Bot only responds/operates in allowed channels (Text, Media, Memes)
-      if (!isChannelAllowed(message.channel.id)) return;
+      const guildId = message.guildId || message.guild?.id;
+
+      // Strict Channel Restriction for primary server, allowed elsewhere:
+      if (!isChannelAllowed(message.channel.id, guildId)) return;
 
       // Check for commands (e.g. !court @user, !bully, or @Bohurupi court)
       const trimmedContent = message.content.trim();
@@ -495,12 +605,20 @@ export class DiscordService {
         if (handled) return; // Command processed, do not continue to normal bot chat
       }
 
-      // Basic triggering logic: respond if mentioned
+      // Check if message is a direct mention or a reply to Bohurupi
+      const isMentioned = Boolean(this.client.user && message.mentions.has(this.client.user.id));
+      let isReplyToBot = false;
+      if (message.reference && message.reference.messageId) {
+        try {
+          const repliedMsg = await message.channel.messages.fetch(message.reference.messageId).catch(() => null);
+          if (repliedMsg && repliedMsg.author.id === this.client.user?.id) {
+            isReplyToBot = true;
+          }
+        } catch (e) {}
+      }
       
-      const isMentioned = this.client.user && message.mentions.has(this.client.user.id);
-      
-      // For now, only respond to mentions to prevent spamming
-      if (!isMentioned) return;
+      // Only respond if mentioned or replied to, to prevent unprompted spamming
+      if (!isMentioned && !isReplyToBot) return;
 
       logger.info(`Received Discord mention in #${message.channel.id} by ${message.author.id}`);
 
@@ -560,10 +678,93 @@ export class DiscordService {
     }
   }
 
-  getStatus() {
+  async getStatus() {
+    const envServers = (process.env.SCHEDULED_SERVER_ID || process.env.SCHEDULED_SERVER_IDS || '')
+      .split(',')
+      .map(id => id.trim())
+      .filter(id => id.length > 0);
+    const targetServers = envServers.length > 0 ? envServers : SCHEDULED_SERVER_IDS;
+
+    const targetChannels = getAllowedChannelIds();
+
+    const serversInfo: { id: string; name: string }[] = [];
+    const channelsInfo: { id: string; name: string }[] = [];
+    const guildChannels: { id: string; name: string; guildId: string; guildName: string }[] = [];
+
+    // If connected to Discord, collect all guilds from client cache (every server the bot joined)
+    if (this.isConnected) {
+      for (const [gId, guild] of this.client.guilds.cache) {
+        serversInfo.push({
+          id: gId,
+          name: guild.name
+        });
+
+        // Collect text channels from joined servers so admin can see server channels
+        try {
+          const textChannels = guild.channels.cache.filter((c: any) => c.isTextBased() && !c.isDMBased());
+          for (const [cId, c] of textChannels) {
+            guildChannels.push({
+              id: cId,
+              name: `#${(c as any).name}`,
+              guildId: gId,
+              guildName: guild.name
+            });
+          }
+        } catch (e) {}
+      }
+    }
+
+    // Also include any target servers from config if not yet in cache
+    for (const sId of targetServers) {
+      if (!serversInfo.some(s => s.id === sId)) {
+        let sName = sId === '1522520842163060809' ? 'Bohurupi Main Guild' : (sId === '705092446366728233' ? 'Bohurupi Primary Server' : `Server (${sId})`);
+        if (this.isConnected) {
+          try {
+            const guild = await this.client.guilds.fetch(sId).catch(() => null);
+            if (guild) sName = guild.name;
+          } catch (e) {}
+        }
+        serversInfo.push({ id: sId, name: sName });
+      }
+    }
+
+    const defaultChannelNames: Record<string, string> = {
+      '705092446366728236': '#bot-tasting-general',
+      '1453357071931019304': '#media',
+      '1470329659693600768': '#memes'
+    };
+
+    if (this.isConnected) {
+      for (const chId of targetChannels) {
+        try {
+          const ch = await this.client.channels.fetch(chId).catch(() => null);
+          channelsInfo.push({
+            id: chId,
+            name: ch && 'name' in ch ? `#${(ch as any).name}` : (defaultChannelNames[chId] || `#${chId}`)
+          });
+        } catch (e) {
+          channelsInfo.push({
+            id: chId,
+            name: defaultChannelNames[chId] || `#${chId}`
+          });
+        }
+      }
+    } else {
+      for (const chId of targetChannels) {
+        channelsInfo.push({
+          id: chId,
+          name: defaultChannelNames[chId] || `#${chId}`
+        });
+      }
+    }
+
     return {
       connected: this.isConnected,
-      botTag: this.client.user?.tag || 'Not Logged In'
+      botTag: this.client.user?.tag || 'Not Logged In',
+      allowedServers: serversInfo,
+      allowedServer: serversInfo[0] || { id: SCHEDULED_SERVER_IDS[0], name: 'Bohurupi Main Guild' },
+      allowedChannels: channelsInfo,
+      guildChannels
     };
   }
 }

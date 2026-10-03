@@ -12,12 +12,11 @@ import { EmotionEngine } from './src/backend/emotion/EmotionEngine';
 import { BohurupiBrain } from './src/backend/core/BohurupiBrain';
 import { DiscordService } from './src/backend/discord/DiscordService';
 import { GeminiProvider } from './src/backend/providers/GeminiProvider';
-import { OllamaProvider } from './src/backend/providers/OllamaProvider';
 import { OpenRouterProvider } from './src/backend/providers/OpenRouterProvider';
 import 'dotenv/config';
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -71,17 +70,12 @@ export const bohurupiBrain = new BohurupiBrain(
 // Initialize Discord Integration
 export const discordService = new DiscordService(bohurupiBrain);
 
-// Register Real AI Providers
-const openRouterProvider = new OpenRouterProvider('Cloud-OpenRouter', process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat');
-providerManager.registerProvider(openRouterProvider);
-
+// Register Real AI Providers (Google-Gemini first for lowest latency and highest reliability)
 const geminiProvider = new GeminiProvider();
 providerManager.registerProvider(geminiProvider);
 
-// Register Fallback Provider (Self-Hosted Ollama)
-// NOTE: Disabled for now per user request. Uncomment the lines below to use in the future.
-// const ollamaProvider = new OllamaProvider();
-// providerManager.registerProvider(ollamaProvider);
+const openRouterProvider = new OpenRouterProvider('Cloud-OpenRouter');
+providerManager.registerProvider(openRouterProvider);
 
 // Register Ultimate Fallback Provider (Never fails, used if real AI providers fail)
 const fallbackMessages = [
@@ -136,8 +130,19 @@ app.post('/api/providers/config', adminAuth, async (req, res) => {
   }
 });
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'Bohurupi AI Core Engine' });
+app.get(['/health', '/api/health'], (req, res) => {
+  const mem = process.memoryUsage();
+  res.status(200).json({
+    status: 'ok',
+    service: 'Bohurupi AI Core Engine',
+    uptimeSeconds: Math.floor(process.uptime()),
+    memoryMB: {
+      rss: Math.round(mem.rss / 1024 / 1024),
+      heapUsed: Math.round(mem.heapUsed / 1024 / 1024),
+      heapTotal: Math.round(mem.heapTotal / 1024 / 1024)
+    },
+    timestamp: new Date().toISOString()
+  });
 });
 
 
@@ -164,7 +169,7 @@ app.get('/api/state', adminAuth, async (req, res) => {
     providers: providerManager.getProviderStatus(),
     emotion: emotionEngine.getCurrentMood(),
     memory: await memoryEngine.getStats(),
-    discord: discordService.getStatus()
+    discord: await discordService.getStatus()
   });
 });
 
@@ -174,6 +179,16 @@ app.post('/api/interact', adminAuth, async (req, res) => {
     // Treat API interactions as coming from a system/web user ID
     const responseText = await bohurupiBrain.processInteraction('web-admin-id', message);
     res.json({ success: true, text: responseText });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/discord/trigger-schedule', adminAuth, async (req, res) => {
+  try {
+    logger.info("Admin triggered scheduled auto-reply manually from dashboard");
+    const result = await discordService.triggerAutoReply();
+    res.json(result);
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -190,14 +205,11 @@ async function startServer() {
     console.error("Failed to load provider config on startup", e);
   }
 
-// Start Discord Bot asynchronously
-  // To prevent double-responses (because the bot is running on Render in production),
-  // we disable the Discord listener in this development environment by default.
-  if (process.env.NODE_ENV === 'production' || process.env.ENABLE_DEV_DISCORD === 'true') {
+  // Start Discord Bot if DISCORD_TOKEN is provided
+  if (process.env.DISCORD_TOKEN && process.env.DISABLE_DISCORD !== 'true') {
     discordService.start(process.env.DISCORD_TOKEN);
   } else {
-    logger.info("Discord Bot is PAUSED in development to prevent double-responses. The Render production bot is handling messages.");
-    logger.info("Add ENABLE_DEV_DISCORD=true to .env if you want to test Discord locally.");
+    logger.info("Discord Bot not started (DISCORD_TOKEN missing or DISABLE_DISCORD=true)");
   }
 
   if (process.env.NODE_ENV !== 'production') {
@@ -216,7 +228,33 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     logger.info(`Bohurupi AI Core Engine running on port ${PORT}`);
+
+    // Render Free Tier Keep-Alive Ping (prevents 15-minute sleep)
+    const pingHost = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL;
+    if (pingHost) {
+      const pingEndpoint = `${pingHost.replace(/\/$/, '')}/api/health`;
+      logger.info(`Render Keep-Alive active. Pinging: ${pingEndpoint} every 14 mins.`);
+      setInterval(async () => {
+        try {
+          await fetch(pingEndpoint).catch(() => {});
+        } catch (e) {}
+      }, 14 * 60 * 1000);
+    }
   });
 }
+
+process.on('unhandledRejection', (reason: any) => {
+  logger.error('Unhandled Promise Rejection caught at process level:', {
+    error: reason?.message || String(reason),
+    stack: reason?.stack
+  });
+});
+
+process.on('uncaughtException', (error: Error) => {
+  logger.error('Uncaught Exception caught at process level:', {
+    error: error?.message || String(error),
+    stack: error?.stack
+  });
+});
 
 startServer();

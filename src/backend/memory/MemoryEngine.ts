@@ -167,6 +167,10 @@ export class MemoryEngine {
     
     // Fallback
     if (!this.fallbackShortTerm.has(userId)) {
+      if (this.fallbackShortTerm.size >= 500) {
+        const oldestKey = this.fallbackShortTerm.keys().next().value;
+        if (oldestKey) this.fallbackShortTerm.delete(oldestKey);
+      }
       this.fallbackShortTerm.set(userId, []);
     }
     const history = this.fallbackShortTerm.get(userId)!;
@@ -247,6 +251,10 @@ export class MemoryEngine {
     
     // Fallback
     if (!this.fallbackLongTerm.has(userId)) {
+      if (this.fallbackLongTerm.size >= 500) {
+        const oldestKey = this.fallbackLongTerm.keys().next().value;
+        if (oldestKey) this.fallbackLongTerm.delete(oldestKey);
+      }
       this.fallbackLongTerm.set(userId, []);
     }
     this.fallbackLongTerm.get(userId)!.push(data);
