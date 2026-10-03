@@ -8,18 +8,18 @@ import { logger } from '../telemetry/logger';
  * falls back to the next available model in the cascade.
  */
 export const DEFAULT_GEMINI_MODELS = [
-  'gemini-3.5-flash',
   'gemini-3.1-flash-lite',
+  'gemini-3.5-flash',
   'gemini-3.8-flash',
-  'gemini-flash-latest',
-  'gemini-3.1-pro-preview'
+  'gemini-2.5-flash',
+  'gemini-flash-latest'
 ];
 
 export class GeminiProvider implements AIProvider {
   name: string;
   private ai: GoogleGenAI | null = null;
   private models: string[];
-  private lastSuccessfulModel: string | null = 'gemini-3.5-flash';
+  private lastSuccessfulModel: string | null = 'gemini-3.1-flash-lite';
 
   constructor(name: string = 'Google-Gemini') {
     this.name = name;
