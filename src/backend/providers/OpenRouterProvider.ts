@@ -3,25 +3,19 @@ import { logger } from '../telemetry/logger';
 
 /**
  * Ultra-cheap and high-definition models on OpenRouter.
- * DeepSeek V4 Flash 0731 ($0.006 / 1M tokens) is set as the primary model.
- * Backed by 100% FREE (:free) models and sub-penny micro-cost backups.
+ * Uses OpenRouter's official Free Router (openrouter/free) and active verified models.
+ * Sub-penny micro-cost models (fractions of a cent per 1M tokens) serve as last-resort backup.
  */
 export const DEFAULT_OPENROUTER_MODELS = [
-  // Primary: DeepSeek V4 Flash 0731 (Ultra-cheap $0.006 / 1M tokens, 284B MoE, ultra-fast reasoning)
-  'deepseek/deepseek-v4-flash-0731',
-  'deepseek/deepseek-v4-flash-0731:free',
+  // Primary & Free Tier (Cost: $0.00 / Zero balance burn)
+  'openrouter/free',                         // OpenRouter Official Free Auto-Router (Always online, 0 cost)
+  'nvidia/nemotron-3.5-lightning:free',      // High-speed low-latency inference, 100% free
+  'liquid/lfm-2.5-2.6b:free',                // Lightweight free endpoint
 
-  // Tier A: 100% FREE Models (Cost: $0.00 / Zero balance burn)
-  'google/gemini-2.0-flash-exp:free',          // Ultra-fast, high intelligence, native multilingual
-  'meta-llama/llama-3.3-70b-instruct:free',    // Powerful 70B parameter frontier model, 100% free
-  'mistralai/mistral-small-24b-instruct-2501:free', // Ultra-efficient 24B instruct, 100% free
-  'nvidia/nemotron-3.5-lightning:free',        // High-speed low-latency inference, 100% free
-  'qwen/qwen-2.5-coder-32b-instruct:free',     // Sharp logic, 100% free
-  'deepseek/deepseek-chat:free',               // DeepSeek V3 free endpoint
-
-  // Tier B: Sub-Penny Micro-Cost Backups (Cost: $0.02 - $0.14 per 1M tokens)
-  'meta-llama/llama-3.2-3b-instruct',          // Micro-cost ~$0.02 / 1M tokens
-  'deepseek/deepseek-chat'                     // DeepSeek V3 budget tier ~$0.14 / 1M tokens
+  // Sub-Penny Micro-Cost Backups (Cost: $0.01 - $0.14 per 1M tokens)
+  'meta-llama/llama-3.2-3b-instruct',        // Micro-cost ~$0.02 / 1M tokens
+  'meta-llama/llama-3.2-1b-instruct',        // Micro-cost ~$0.01 / 1M tokens
+  'deepseek/deepseek-chat'                   // DeepSeek V3 budget tier ~$0.14 / 1M tokens
 ];
 
 export class OpenRouterProvider implements AIProvider {
@@ -31,7 +25,7 @@ export class OpenRouterProvider implements AIProvider {
 
   constructor(name: string = 'Cloud-OpenRouter', model?: string) {
     this.name = name;
-    const primary = model || process.env.OPENROUTER_MODEL || 'deepseek/deepseek-v4-flash-0731';
+    const primary = model || process.env.OPENROUTER_MODEL || 'openrouter/free';
     this.models = Array.from(new Set([primary, ...DEFAULT_OPENROUTER_MODELS]));
   }
 
@@ -55,7 +49,7 @@ export class OpenRouterProvider implements AIProvider {
     }
 
     const systemPrompt = (request.systemInstruction || 'You are Bohurupi, a witty Discord bot who speaks authentic Banglish.') +
-      '\n\nSTRICT INSTRUCTION: Output ONLY the final dialogue in Banglish. NEVER output thinking steps, reasoning, prompt analysis, quotes of system/user instructions, or meta-commentary (such as "Actually, the prompt says...").';
+      '\n\nCRITICAL INSTRUCTION: Output ONLY the direct conversational dialogue as Bohurupi in Banglish. NEVER output thinking steps, reasoning analysis, or phrases like "Here\'s a thinking process". Jump STRAIGHT into spoken dialogue.';
     
     const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
       { role: 'system', content: systemPrompt }
@@ -123,7 +117,7 @@ export class OpenRouterProvider implements AIProvider {
           },
           body: JSON.stringify({
             model: model,
-            max_tokens: 220,
+            max_tokens: 350,
             temperature: temperature,
             top_p: top_p,
             frequency_penalty: 0.15,
@@ -153,8 +147,36 @@ export class OpenRouterProvider implements AIProvider {
           .replace(/```(?:thought|thinking)?[\s\S]*?```/gi, '')
           .trim();
 
+        // Strip raw thinking process blocks like "Here's a thinking process: 1. **Analyze User Input:** ... "
+        if (
+          /Here's a thinking process:/i.test(cleanContent) || 
+          /^Thinking Process:/i.test(cleanContent) ||
+          /Analyze User Input:/i.test(cleanContent) ||
+          /Check Persona Constraints:/i.test(cleanContent)
+        ) {
+          const matchDialogue = cleanContent.match(/(?:Final Response|Output|Dialogue|Response|Bohurupi):\s*([\s\S]+)$/i);
+          if (matchDialogue && matchDialogue[1]?.trim()) {
+            cleanContent = matchDialogue[1].trim();
+          } else {
+            const lines = cleanContent.split('\n');
+            const dialogueLines = lines.filter(l => {
+              const trimmed = l.trim();
+              if (!trimmed) return false;
+              if (/thinking process/i.test(trimmed)) return false;
+              if (/^[0-9]+\.\s*\*\*/.test(trimmed)) return false;
+              if (/^[-*•]/.test(trimmed)) return false;
+              if (/user is asking/i.test(trimmed)) return false;
+              if (/constraints from/i.test(trimmed)) return false;
+              if (/respond as bohurupi/i.test(trimmed)) return false;
+              if (trimmed.startsWith('[') && trimmed.endsWith(']')) return false;
+              return true;
+            });
+            cleanContent = dialogueLines.join(' ').trim();
+          }
+        }
+
         // Strip model role echoes like "Bohurupi:" or "Assistant:"
-        cleanContent = cleanContent.replace(/^(?:Bohurupi|Assistant|Bot|Reply|Output):\s*/i, '').trim();
+        cleanContent = cleanContent.replace(/^(?:Bohurupi|Assistant|Bot|Reply|Output|Dialogue|Final Response):\s*/i, '').trim();
 
         // Strip quotes if the whole message was wrapped in quotes
         cleanContent = cleanContent.replace(/^["'“‘`\\]+|["'”’`\\]+$/g, '').trim();

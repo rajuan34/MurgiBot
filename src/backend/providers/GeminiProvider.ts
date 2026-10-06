@@ -8,18 +8,22 @@ import { logger } from '../telemetry/logger';
  * falls back to the next available model in the cascade.
  */
 export const DEFAULT_GEMINI_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
   'gemini-3.1-flash-lite',
   'gemini-3.5-flash',
-  'gemini-3.8-flash',
-  'gemini-2.5-flash',
-  'gemini-flash-latest'
+  'gemini-3.8-flash'
 ];
 
 export class GeminiProvider implements AIProvider {
   name: string;
   private ai: GoogleGenAI | null = null;
   private models: string[];
-  private lastSuccessfulModel: string | null = 'gemini-3.1-flash-lite';
+  private lastSuccessfulModel: string | null = 'gemini-2.5-flash';
 
   constructor(name: string = 'Google-Gemini') {
     this.name = name;
@@ -108,7 +112,7 @@ export class GeminiProvider implements AIProvider {
         });
 
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Gemini request for model [${model}] timed out after 6000ms`)), 6000)
+          setTimeout(() => reject(new Error(`Gemini request for model [${model}] timed out after 10000ms`)), 10000)
         );
 
         const response = await Promise.race([callPromise, timeoutPromise]);

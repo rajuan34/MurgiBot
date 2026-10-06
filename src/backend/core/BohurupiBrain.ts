@@ -72,16 +72,33 @@ export function sanitizeOutgoingText(rawText: string, userRole: string): string 
     .trim();
 
   // Strip raw "Here's a thinking process:" or similar chain-of-thought intros
-  if (/Here's a thinking process:/i.test(cleanText) || /^Thinking Process:/i.test(cleanText)) {
-    const lines = cleanText.split('\n');
-    const validLines = lines.filter(l => 
-      l.trim().length > 0 && 
-      !/thinking process/i.test(l) && 
-      !l.match(/^[0-9]+\.\s/) && 
-      !l.startsWith("[") && 
-      !l.endsWith("]")
-    );
-    cleanText = validLines.length > 0 ? validLines[validLines.length - 1] : "";
+  if (
+    /Here's a thinking process:/i.test(cleanText) || 
+    /^Thinking Process:/i.test(cleanText) ||
+    /Analyze User Input:/i.test(cleanText) ||
+    /Check Persona Constraints:/i.test(cleanText) ||
+    /^Thinking:/i.test(cleanText)
+  ) {
+    const matchDialogue = cleanText.match(/(?:Final Response|Output|Dialogue|Response|Bohurupi):\s*([\s\S]+)$/i);
+    if (matchDialogue && matchDialogue[1]?.trim()) {
+      cleanText = matchDialogue[1].trim();
+    } else {
+      const lines = cleanText.split('\n');
+      const validLines = lines.filter(l => {
+        const t = l.trim();
+        if (!t) return false;
+        if (/thinking process/i.test(t)) return false;
+        if (/^[0-9]+\.\s*\*\*/.test(t)) return false;
+        if (/^[-*•]\s+/.test(t)) return false;
+        if (t.startsWith('[') && t.endsWith(']')) return false;
+        if (/^[-*•]/.test(t)) return false;
+        if (/user is asking/i.test(t)) return false;
+        if (/constraints from/i.test(t)) return false;
+        if (/respond as bohurupi/i.test(t)) return false;
+        return true;
+      });
+      cleanText = validLines.length > 0 ? validLines[validLines.length - 1].trim() : "";
+    }
   }
 
   // Remove parenthetical/bracketed thoughts or asides: (thinking: ...) or [thought: ...]
@@ -190,7 +207,13 @@ export function sanitizeOutgoingText(rawText: string, userRole: string): string 
     /given prompt/i,
     /user reacted/i,
     /user sent an emoji/i,
-    /^the prompt/i
+    /^the prompt/i,
+    /thinking process/i,
+    /analyze user input/i,
+    /check persona/i,
+    /constraints from/i,
+    /short responses:\s*1-3/i,
+    /only standard unicode emojis/i
   ];
 
   const hasMetaLeakage = metaLeakagePatterns.some(pattern => pattern.test(cleanText));
