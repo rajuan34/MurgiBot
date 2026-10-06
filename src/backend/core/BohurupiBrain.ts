@@ -416,7 +416,7 @@ ${commandInstruction}
 
       const cleanText = sanitizeOutgoingText(response.text, userRole);
       
-      await this.memory.addShortTermMessage(userId, 'user', 'User triggered command: ' + command);
+      await this.memory.addShortTermMessage(userId, 'user', 'User triggered command: ' + commandInstruction);
       await this.memory.addShortTermMessage(userId, 'bohurupi', cleanText);
       
       return cleanText;

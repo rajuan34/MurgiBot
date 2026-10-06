@@ -130,6 +130,48 @@ app.post('/api/providers/config', adminAuth, async (req, res) => {
   }
 });
 
+app.get('/api/providers/resilience', adminAuth, (req, res) => {
+  try {
+    res.json(providerManager.getDetailedResilienceReport());
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/providers/reset-circuit', adminAuth, (req, res) => {
+  try {
+    const { providerName } = req.body;
+    if (!providerName) return res.status(400).json({ error: 'providerName required' });
+    const success = providerManager.resetCircuitBreaker(providerName);
+    res.json({ success, providers: providerManager.getProviderStatus() });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/providers/test', adminAuth, async (req, res) => {
+  try {
+    const { providerName } = req.body;
+    if (!providerName) return res.status(400).json({ error: 'providerName required' });
+    const result = await providerManager.testProvider(providerName);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post(['/api/bot/mood', '/api/bot/emotion', '/api/emotion/set'], adminAuth, async (req, res) => {
+  try {
+    const { mood } = req.body;
+    if (!mood) return res.status(400).json({ error: 'mood required' });
+    const newMood = emotionEngine.setState(mood);
+    await identityManager.updateProfile(newMood);
+    res.json({ success: true, mood: newMood, profile: identityManager.getCurrentProfile() });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 app.get(['/health', '/api/health'], (req, res) => {
   const mem = process.memoryUsage();
   res.status(200).json({

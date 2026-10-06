@@ -1,14 +1,27 @@
 import { AIProvider, LLMRequest } from './ProviderManager';
 import { logger } from '../telemetry/logger';
 
+/**
+ * Ultra-cheap and high-definition models on OpenRouter.
+ * DeepSeek V4 Flash 0731 ($0.006 / 1M tokens) is set as the primary model.
+ * Backed by 100% FREE (:free) models and sub-penny micro-cost backups.
+ */
 export const DEFAULT_OPENROUTER_MODELS = [
-  'deepseek/deepseek-chat',
-  'google/gemini-2.0-flash-exp:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'nvidia/nemotron-3.5-lightning:free',
-  'qwen/qwen-2.5-72b-instruct',
-  'mistralai/mistral-small-24b-instruct-2501:free',
-  'liquid/lfm-2.5-2.6b:free'
+  // Primary: DeepSeek V4 Flash 0731 (Ultra-cheap $0.006 / 1M tokens, 284B MoE, ultra-fast reasoning)
+  'deepseek/deepseek-v4-flash-0731',
+  'deepseek/deepseek-v4-flash-0731:free',
+
+  // Tier A: 100% FREE Models (Cost: $0.00 / Zero balance burn)
+  'google/gemini-2.0-flash-exp:free',          // Ultra-fast, high intelligence, native multilingual
+  'meta-llama/llama-3.3-70b-instruct:free',    // Powerful 70B parameter frontier model, 100% free
+  'mistralai/mistral-small-24b-instruct-2501:free', // Ultra-efficient 24B instruct, 100% free
+  'nvidia/nemotron-3.5-lightning:free',        // High-speed low-latency inference, 100% free
+  'qwen/qwen-2.5-coder-32b-instruct:free',     // Sharp logic, 100% free
+  'deepseek/deepseek-chat:free',               // DeepSeek V3 free endpoint
+
+  // Tier B: Sub-Penny Micro-Cost Backups (Cost: $0.02 - $0.14 per 1M tokens)
+  'meta-llama/llama-3.2-3b-instruct',          // Micro-cost ~$0.02 / 1M tokens
+  'deepseek/deepseek-chat'                     // DeepSeek V3 budget tier ~$0.14 / 1M tokens
 ];
 
 export class OpenRouterProvider implements AIProvider {
@@ -18,7 +31,7 @@ export class OpenRouterProvider implements AIProvider {
 
   constructor(name: string = 'Cloud-OpenRouter', model?: string) {
     this.name = name;
-    const primary = model || process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat';
+    const primary = model || process.env.OPENROUTER_MODEL || 'deepseek/deepseek-v4-flash-0731';
     this.models = Array.from(new Set([primary, ...DEFAULT_OPENROUTER_MODELS]));
   }
 
@@ -28,6 +41,10 @@ export class OpenRouterProvider implements AIProvider {
 
   getLastSuccessfulModel(): string | null {
     return this.lastSuccessfulModel;
+  }
+
+  getAvailableModels(): string[] {
+    return [...this.models];
   }
 
   async generate(request: LLMRequest): Promise<string> {
@@ -106,7 +123,7 @@ export class OpenRouterProvider implements AIProvider {
           },
           body: JSON.stringify({
             model: model,
-            max_tokens: 450,
+            max_tokens: 220,
             temperature: temperature,
             top_p: top_p,
             frequency_penalty: 0.15,

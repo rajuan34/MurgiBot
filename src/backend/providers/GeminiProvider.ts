@@ -49,6 +49,10 @@ export class GeminiProvider implements AIProvider {
     return this.lastSuccessfulModel;
   }
 
+  getAvailableModels(): string[] {
+    return [...this.models];
+  }
+
   async generate(request: LLMRequest): Promise<string> {
     if (!this.ai) {
       throw new Error('Gemini API is not initialized. Check GEMINI_API_KEY.');

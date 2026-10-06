@@ -19,6 +19,45 @@ export interface AIProvider {
   name: string;
   generate(request: LLMRequest): Promise<string>;
   isHealthy(): boolean;
+  getLastSuccessfulModel?(): string | null;
+  getAvailableModels?(): string[];
+}
+
+export interface ProviderMetrics {
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  rateLimitedRequests: number;
+  totalLatencyMs: number;
+  lastLatencyMs: number;
+  lastCalledAt: string | null;
+  lastSuccessAt: string | null;
+  lastErrorAt: string | null;
+  lastErrorDetail: string | null;
+}
+
+export interface DetailedProviderStatus {
+  name: string;
+  healthy: boolean;
+  enabled: boolean;
+  priority: number;
+  tier: string;
+  circuitState: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+  failures: number;
+  maxFailures: number;
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  rateLimitedRequests: number;
+  successRate: number;
+  avgLatencyMs: number;
+  lastLatencyMs: number;
+  lastCalledAt: string | null;
+  lastSuccessAt: string | null;
+  lastErrorAt: string | null;
+  lastErrorDetail: string | null;
+  activeModel: string | null;
+  cascadingModels: string[];
 }
 
 /**
@@ -104,20 +143,182 @@ export class ProviderManager {
 
   private providers: AIProvider[] = [];
   private circuitBreakerFailures: Map<string, number> = new Map();
+  private providerMetrics: Map<string, ProviderMetrics> = new Map();
   private readonly MAX_FAILURES = 3; // Block provider after 3 consecutive failures
+
+  private getOrInitMetrics(name: string): ProviderMetrics {
+    let m = this.providerMetrics.get(name);
+    if (!m) {
+      m = {
+        totalRequests: 0,
+        successfulRequests: 0,
+        failedRequests: 0,
+        rateLimitedRequests: 0,
+        totalLatencyMs: 0,
+        lastLatencyMs: 0,
+        lastCalledAt: null,
+        lastSuccessAt: null,
+        lastErrorAt: null,
+        lastErrorDetail: null,
+      };
+      this.providerMetrics.set(name, m);
+    }
+    return m;
+  }
 
   registerProvider(provider: AIProvider) {
     this.providers.push(provider);
     this.circuitBreakerFailures.set(provider.name, 0);
+    this.getOrInitMetrics(provider.name);
     logger.info(`Registered AI Provider: ${provider.name}`);
   }
 
-  getProviderStatus() {
-    return this.getActiveProviders().map(p => ({
-      name: p.name,
-      healthy: p.isHealthy(),
-      failures: this.circuitBreakerFailures.get(p.name) || 0
-    }));
+  getProviderStatus(): DetailedProviderStatus[] {
+    const config = this.getConfig();
+    const configMap = new Map(config.map(c => [c.name, c]));
+
+    return this.providers.map((p, idx) => {
+      const cfg = configMap.get(p.name);
+      const enabled = cfg ? cfg.enabled : true;
+      const priority = cfg ? cfg.priority : idx;
+      const failures = this.circuitBreakerFailures.get(p.name) || 0;
+      const metrics = this.getOrInitMetrics(p.name);
+
+      let circuitState: 'CLOSED' | 'OPEN' | 'HALF_OPEN' = 'CLOSED';
+      if (failures >= this.MAX_FAILURES) {
+        circuitState = 'OPEN';
+      } else if (failures > 0) {
+        circuitState = 'HALF_OPEN';
+      }
+
+      let tier = 'Tier 2: Secondary Failover';
+      if (p.name.includes('Gemini')) tier = 'Tier 1: Primary AI Engine';
+      else if (p.name.includes('Fallback')) tier = 'Tier 3: Offline Safe Guard';
+
+      const avgLatencyMs = metrics.successfulRequests > 0 
+        ? Math.round(metrics.totalLatencyMs / metrics.successfulRequests)
+        : metrics.lastLatencyMs;
+
+      const successRate = metrics.totalRequests > 0
+        ? Math.round((metrics.successfulRequests / metrics.totalRequests) * 1000) / 10
+        : (p.isHealthy() ? 100 : 0);
+
+      const activeModel = p.getLastSuccessfulModel ? p.getLastSuccessfulModel() : (p.name.includes('Gemini') ? 'gemini-3.1-flash-lite' : (p.name.includes('OpenRouter') ? 'deepseek/deepseek-chat' : 'Deterministic offline generator'));
+      const cascadingModels = p.getAvailableModels ? p.getAvailableModels() : [];
+
+      return {
+        name: p.name,
+        healthy: p.isHealthy(),
+        enabled,
+        priority,
+        tier,
+        circuitState,
+        failures,
+        maxFailures: this.MAX_FAILURES,
+        totalRequests: metrics.totalRequests,
+        successfulRequests: metrics.successfulRequests,
+        failedRequests: metrics.failedRequests,
+        rateLimitedRequests: metrics.rateLimitedRequests,
+        successRate,
+        avgLatencyMs,
+        lastLatencyMs: metrics.lastLatencyMs,
+        lastCalledAt: metrics.lastCalledAt,
+        lastSuccessAt: metrics.lastSuccessAt,
+        lastErrorAt: metrics.lastErrorAt,
+        lastErrorDetail: metrics.lastErrorDetail,
+        activeModel: activeModel || null,
+        cascadingModels: cascadingModels || []
+      };
+    }).sort((a, b) => a.priority - b.priority);
+  }
+
+  resetCircuitBreaker(providerName: string): boolean {
+    if (this.circuitBreakerFailures.has(providerName)) {
+      this.circuitBreakerFailures.set(providerName, 0);
+      const metrics = this.getOrInitMetrics(providerName);
+      metrics.lastErrorDetail = null;
+      logger.info(`Circuit breaker manually reset for provider: ${providerName}`);
+      return true;
+    }
+    return false;
+  }
+
+  async testProvider(providerName: string): Promise<{ success: boolean; latencyMs: number; model?: string; output?: string; error?: string }> {
+    const provider = this.providers.find(p => p.name === providerName);
+    if (!provider) {
+      return { success: false, latencyMs: 0, error: `Provider "${providerName}" not found` };
+    }
+
+    if (!provider.isHealthy()) {
+      return { success: false, latencyMs: 0, error: `Provider "${providerName}" has no active API key or configuration` };
+    }
+
+    const start = Date.now();
+    try {
+      const output = await provider.generate({
+        prompt: 'Say: "Health check OK"',
+        systemInstruction: 'Respond in 1-2 words in Banglish.'
+      });
+      const latencyMs = Date.now() - start;
+      const model = provider.getLastSuccessfulModel ? provider.getLastSuccessfulModel() || undefined : undefined;
+      
+      const metrics = this.getOrInitMetrics(providerName);
+      metrics.totalRequests++;
+      metrics.successfulRequests++;
+      metrics.totalLatencyMs += latencyMs;
+      metrics.lastLatencyMs = latencyMs;
+      metrics.lastSuccessAt = new Date().toISOString();
+      this.circuitBreakerFailures.set(providerName, 0);
+
+      this.addApiLog({
+        provider: providerName,
+        status: 'success',
+        latencyMs,
+        errorDetail: undefined
+      });
+
+      return {
+        success: true,
+        latencyMs,
+        model,
+        output: output.slice(0, 100)
+      };
+    } catch (e: any) {
+      const latencyMs = Date.now() - start;
+      const metrics = this.getOrInitMetrics(providerName);
+      metrics.totalRequests++;
+      metrics.failedRequests++;
+      metrics.lastErrorAt = new Date().toISOString();
+      metrics.lastErrorDetail = e?.message || String(e);
+
+      this.addApiLog({
+        provider: providerName,
+        status: 'error',
+        latencyMs,
+        errorDetail: e?.message || String(e)
+      });
+
+      return {
+        success: false,
+        latencyMs,
+        error: e?.message || String(e)
+      };
+    }
+  }
+
+  getDetailedResilienceReport() {
+    const providers = this.getProviderStatus();
+    const healthyCount = providers.filter(p => p.healthy && p.enabled && p.circuitState !== 'OPEN').length;
+    
+    return {
+      redundancyLevel: healthyCount,
+      totalTiers: providers.length,
+      consecutiveFallbackCount: this.consecutiveFallbackCount,
+      sleepModeActive: this.consecutiveFallbackCount > 2,
+      maxFailuresThreshold: this.MAX_FAILURES,
+      providers,
+      recentFailovers: this.apiCallHistory.slice(0, 15)
+    };
   }
 
   async generateResponse(request: LLMRequest): Promise<{ text: string, providerName: string, isIgnored?: boolean }> {
@@ -132,6 +333,10 @@ export class ProviderManager {
          }
          continue; // Move to fallback provider
       }
+
+      const metrics = this.getOrInitMetrics(provider.name);
+      metrics.totalRequests++;
+      metrics.lastCalledAt = new Date().toISOString();
 
       let start = Date.now();
       try {
@@ -148,6 +353,12 @@ export class ProviderManager {
 
         // Reset failures on successful completion
         this.circuitBreakerFailures.set(provider.name, 0);
+
+        metrics.successfulRequests++;
+        metrics.totalLatencyMs += latency;
+        metrics.lastLatencyMs = latency;
+        metrics.lastSuccessAt = new Date().toISOString();
+        metrics.lastErrorDetail = null;
 
         if (provider.name === 'Fallback-Simulated') {
           this.consecutiveFallbackCount++;
@@ -174,12 +385,17 @@ export class ProviderManager {
         if (errorMessage.includes('429') || errorMessage.includes('Quota exceeded')) {
           logger.warn(`Provider ${provider.name} rate limited (429). Triggering failover.`);
           status = 'rate_limit';
+          metrics.rateLimitedRequests++;
         } else if (errorMessage.includes('fetch failed') || errorMessage.includes('ECONNREFUSED')) {
           logger.warn(`Provider ${provider.name} is unreachable. Triggering failover.`);
         } else {
           logger.error(`Provider ${provider.name} failed`, { error: errorMessage });
         }
         
+        metrics.failedRequests++;
+        metrics.lastErrorAt = new Date().toISOString();
+        metrics.lastErrorDetail = errorMessage;
+
         this.addApiLog({
           provider: provider.name,
           status,
