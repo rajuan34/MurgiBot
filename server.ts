@@ -212,6 +212,15 @@ app.post(['/api/discord/resume', '/api/bot/resume'], adminAuth, async (req, res)
   }
 });
 
+app.post(['/api/discord/standby', '/api/bot/standby'], adminAuth, async (req, res) => {
+  try {
+    await discordService.stop();
+    res.json({ success: true, status: 'STANDBY', message: 'Discord client disconnected and placed in Standby.' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 app.post(['/api/discord/toggle-pause', '/api/bot/toggle-pause'], adminAuth, async (req, res) => {
   try {
     if (discordService.isBotPaused()) {

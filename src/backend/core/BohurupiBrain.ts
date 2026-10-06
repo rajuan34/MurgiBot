@@ -41,16 +41,16 @@ export function normalizeIncomingEmojis(message: string): { normalizedText: stri
     if (detectedCustomEmojis.length > 0) {
       emojiDescription = detectedCustomEmojis.map(name => {
         const lower = name.toLowerCase();
-        if (/panik|panic|scared|fear|shock/i.test(lower)) return `panicked/scared reaction face (😱 :${name}:)`;
-        if (/skull|dead|ded/i.test(lower)) return `skull / laughing to death (💀 :${name}:)`;
-        if (/sob|cry|sad/i.test(lower)) return `crying / sad face (😭 :${name}:)`;
-        if (/laugh|lol|lmao|rofl/i.test(lower)) return `laughing face (🤣 :${name}:)`;
-        if (/unamused|annoyed|side_eye|meh/i.test(lower)) return `unamused / deadpan stare (😑 :${name}:)`;
-        return `:${name}: emoji`;
+        if (/panik|panic|scared|fear|shock/i.test(lower)) return '😱';
+        if (/skull|dead|ded/i.test(lower)) return '💀';
+        if (/sob|cry|sad/i.test(lower)) return '😭';
+        if (/laugh|lol|lmao|rofl/i.test(lower)) return '🤣';
+        if (/unamused|annoyed|side_eye|meh/i.test(lower)) return '😑';
+        return `:${name}:`;
       }).join(' ');
     }
     return {
-      normalizedText: `[User reacted/sent an emoji expression: ${emojiDescription}]`,
+      normalizedText: emojiDescription || 'oi',
       isEmojiOnly: true
     };
   }
@@ -179,7 +179,18 @@ export function sanitizeOutgoingText(rawText: string, userRole: string): string 
     /my instructions/i,
     /instruction says/i,
     /system instruction/i,
-    /as an ai/i
+    /as an ai/i,
+    /actually,\s*the\s*prompt/i,
+    /the\s*prompt\s*says/i,
+    /the\s*prompt\s*is/i,
+    /the\s*user\s*prompt/i,
+    /prompt contains/i,
+    /prompt specifies/i,
+    /according to the prompt/i,
+    /given prompt/i,
+    /user reacted/i,
+    /user sent an emoji/i,
+    /^the prompt/i
   ];
 
   const hasMetaLeakage = metaLeakagePatterns.some(pattern => pattern.test(cleanText));
@@ -258,7 +269,14 @@ export class BohurupiBrain {
     await this.identity.updateProfile(currentMood);
     
     // Step 4: System Prompt Assembly
-    const assembledContext = `[Long-Term Facts about User]\n${longTermContext}\n[Recent Conversation Context]\n${shortTermContext}`.trim();
+    const contextSections: string[] = [];
+    if (longTermContext && longTermContext.trim()) {
+      contextSections.push(`USER FACTS:\n${longTermContext.trim()}`);
+    }
+    if (shortTermContext && shortTermContext.trim()) {
+      contextSections.push(`RECENT CONVERSATION:\n${shortTermContext.trim()}`);
+    }
+    const assembledContext = contextSections.join('\n\n');
 
     const stateDescriptions: Record<string, string> = {
       Playful: "Friendly, energetic, active. Uses short messages, fast reply cadence, Banglish, reaction humor (bro 💀, nah bhai, ayo, ki obostha, lmao, 😭).",
@@ -398,7 +416,7 @@ ${commandInstruction}
 
       const cleanText = sanitizeOutgoingText(response.text, userRole);
       
-      await this.memory.addShortTermMessage(userId, 'user', '[User triggered a bot command]');
+      await this.memory.addShortTermMessage(userId, 'user', 'User triggered command: ' + command);
       await this.memory.addShortTermMessage(userId, 'bohurupi', cleanText);
       
       return cleanText;

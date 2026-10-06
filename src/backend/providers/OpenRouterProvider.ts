@@ -3,8 +3,11 @@ import { logger } from '../telemetry/logger';
 
 export const DEFAULT_OPENROUTER_MODELS = [
   'deepseek/deepseek-chat',
-  'qwen/qwen3.8-27b:free',
+  'google/gemini-2.0-flash-exp:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
   'nvidia/nemotron-3.5-lightning:free',
+  'qwen/qwen-2.5-72b-instruct',
+  'mistralai/mistral-small-24b-instruct-2501:free',
   'liquid/lfm-2.5-2.6b:free'
 ];
 
@@ -34,7 +37,8 @@ export class OpenRouterProvider implements AIProvider {
       throw new Error('OPENROUTER_API_KEY is missing. Please set it in your environment variables.');
     }
 
-    const systemPrompt = request.systemInstruction || 'You are a helpful AI.';
+    const systemPrompt = (request.systemInstruction || 'You are Bohurupi, a witty Discord bot who speaks authentic Banglish.') +
+      '\n\nSTRICT INSTRUCTION: Output ONLY the final dialogue in Banglish. NEVER output thinking steps, reasoning, prompt analysis, quotes of system/user instructions, or meta-commentary (such as "Actually, the prompt says...").';
     
     const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
       { role: 'system', content: systemPrompt }
@@ -73,7 +77,23 @@ export class OpenRouterProvider implements AIProvider {
       const nextModel = candidateModels[i + 1];
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => controller.abort(), 9000);
+
+      // Tailor parameters specifically for model family
+      const isNemotron = /nemotron/i.test(model);
+      const isLlama = /llama/i.test(model);
+
+      const temperature = (isNemotron || isLlama) ? 0.7 : 0.8;
+      const top_p = 0.9;
+      const stopTokens = [
+        '\nUser:',
+        '\nAssistant:',
+        '\nSystem:',
+        '<|im_end|>',
+        '<|endoftext|>',
+        '<|eot_id|>',
+        'Actually, the prompt'
+      ];
 
       try {
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -86,8 +106,12 @@ export class OpenRouterProvider implements AIProvider {
           },
           body: JSON.stringify({
             model: model,
-            max_tokens: 500,
-            temperature: 0.85,
+            max_tokens: 450,
+            temperature: temperature,
+            top_p: top_p,
+            frequency_penalty: 0.15,
+            presence_penalty: 0.1,
+            stop: stopTokens,
             messages
           }),
           signal: controller.signal
@@ -106,8 +130,18 @@ export class OpenRouterProvider implements AIProvider {
           throw new Error('Invalid or empty response from OpenRouter API');
         }
 
-        // Clean out any <think> tags from reasoning models
-        const cleanContent = rawContent.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+        // Clean out any <think> or markdown code block reasoning from models
+        let cleanContent = rawContent
+          .replace(/<think>[\s\S]*?<\/think>/gi, '')
+          .replace(/```(?:thought|thinking)?[\s\S]*?```/gi, '')
+          .trim();
+
+        // Strip model role echoes like "Bohurupi:" or "Assistant:"
+        cleanContent = cleanContent.replace(/^(?:Bohurupi|Assistant|Bot|Reply|Output):\s*/i, '').trim();
+
+        // Strip quotes if the whole message was wrapped in quotes
+        cleanContent = cleanContent.replace(/^["'“‘`\\]+|["'”’`\\]+$/g, '').trim();
+
         if (!cleanContent) {
           throw new Error('Response contained only reasoning tokens without text content');
         }
@@ -119,7 +153,7 @@ export class OpenRouterProvider implements AIProvider {
         clearTimeout(timeoutId);
         lastError = error;
         const isAbort = error.name === 'AbortError' || error.message?.includes('aborted');
-        const errDetail = isAbort ? `OpenRouter model [${model}] timed out after 8000ms` : (error.message || String(error));
+        const errDetail = isAbort ? `OpenRouter model [${model}] timed out after 9000ms` : (error.message || String(error));
         
         if (nextModel) {
           logger.warn(`[OpenRouter] Model [${model}] failed (${errDetail.slice(0, 80)}). Cascading to [${nextModel}]...`);

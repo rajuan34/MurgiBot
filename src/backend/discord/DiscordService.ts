@@ -887,6 +887,19 @@ export class DiscordService {
     }
   }
 
+  async stop() {
+    this.isPaused = true;
+    try {
+      if (this.isConnected) {
+        await this.client.destroy();
+        this.isConnected = false;
+        logger.info('Discord client disconnected and destroyed. Bot is now in full STANDBY.');
+      }
+    } catch (e: any) {
+      logger.warn('Error destroying Discord client:', { error: e?.message || String(e) });
+    }
+  }
+
   async getStatus() {
     const envServers = (process.env.SCHEDULED_SERVER_ID || process.env.SCHEDULED_SERVER_IDS || '')
       .split(',')
