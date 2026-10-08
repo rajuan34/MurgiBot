@@ -210,7 +210,8 @@ export class ProviderManager {
       }
 
       let tier = 'Tier 2: Secondary Cloud Failover';
-      if (p.name.includes('Gemini')) tier = 'Tier 1: Primary AI Engine';
+      if (p.name.includes('Progga')) tier = 'Tier 1: High-Speed Engine (DeepSeek v4)';
+      else if (p.name.includes('Gemini')) tier = 'Tier 1: Primary AI Engine';
       else if (p.name.includes('OpenRouter')) tier = 'Tier 2: Secondary Cloud Failover';
       else if (p.name.includes('Fallback')) tier = 'Tier 3: Offline Safe Guard';
 
@@ -224,11 +225,13 @@ export class ProviderManager {
 
       const activeModel = p.getLastSuccessfulModel 
         ? p.getLastSuccessfulModel() 
-        : (p.name.includes('Gemini') 
-          ? 'gemini-2.5-flash' 
-          : (p.name.includes('OpenRouter') 
-            ? 'openrouter/free' 
-            : 'Deterministic offline generator'));
+        : (p.name.includes('Progga')
+          ? 'deepseek-v4-flash-0731'
+          : (p.name.includes('Gemini') 
+            ? 'gemini-2.5-flash' 
+            : (p.name.includes('OpenRouter') 
+              ? 'openrouter/free' 
+              : 'Deterministic offline generator')));
       const cascadingModels = p.getAvailableModels ? p.getAvailableModels() : [];
 
       return {

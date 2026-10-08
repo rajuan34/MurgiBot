@@ -327,11 +327,13 @@ export function ProviderResilience({
                           <span className="font-medium text-sm text-neutral-200">{c.name}</span>
                         </div>
                         <span className="text-[10px] text-neutral-500 block">
-                          {c.name.includes('Gemini') 
-                            ? 'Primary Core: Lowest latency multi-model Gemini flash cascade' 
-                            : (c.name.includes('OpenRouter') 
-                              ? 'Cloud Failover: Multi-endpoint free & ultra-cheap failover' 
-                              : 'Safe Fallback: Deterministic Banglish offline safety net')}
+                          {c.name.includes('Progga')
+                            ? 'Progga Engine: Ultra-fast DeepSeek v4 Flash 0731 & high-throughput inference'
+                            : (c.name.includes('Gemini') 
+                              ? 'Primary Core: Lowest latency multi-model Gemini flash cascade' 
+                              : (c.name.includes('OpenRouter') 
+                                ? 'Cloud Failover: Multi-endpoint free & ultra-cheap failover' 
+                                : 'Safe Fallback: Deterministic Banglish offline safety net'))}
                         </span>
                       </div>
                     </div>
@@ -420,6 +422,7 @@ export function ProviderResilience({
                     </div>
 
                     <p className="text-[11px] text-neutral-400 pl-7">
+                      {p.name.includes('Progga') && 'Dedicated high-speed DeepSeek v4 Flash 0731 inference engine.'}
                       {p.name.includes('Gemini') && 'Primary lowest-latency model cascade with auto-fallback across 9 Gemini models on quota limit.'}
                       {p.name.includes('OpenRouter') && 'Secondary cloud failover with model cascade across free and ultra-cheap endpoints.'}
                       {p.name.includes('Fallback') && 'Zero-dependency deterministic Banglish generator with Sleep Mode guard after 2 consecutive triggers.'}
@@ -539,7 +542,7 @@ export function ProviderResilience({
                           </span>
                         </div>
                         <p className="text-[11px] text-neutral-400">
-                          {p.tier || (p.name.includes('Gemini') ? 'Tier 1: Primary AI' : (p.name.includes('OpenRouter') ? 'Tier 2: Failover' : 'Tier 3: Safe Fallback'))}
+                          {p.tier || (p.name.includes('Progga') ? 'Tier 1: DeepSeek v4 Engine' : (p.name.includes('Gemini') ? 'Tier 1: Primary AI' : (p.name.includes('OpenRouter') ? 'Tier 2: Failover' : 'Tier 3: Safe Fallback')))}
                         </p>
                       </div>
                     </div>

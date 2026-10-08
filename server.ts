@@ -13,6 +13,7 @@ import { BohurupiBrain } from './src/backend/core/BohurupiBrain';
 import { DiscordService } from './src/backend/discord/DiscordService';
 import { GeminiProvider } from './src/backend/providers/GeminiProvider';
 import { OpenRouterProvider } from './src/backend/providers/OpenRouterProvider';
+import { ProggaProvider } from './src/backend/providers/ProggaProvider';
 import 'dotenv/config';
 
 const app = express();
@@ -75,7 +76,10 @@ export const bohurupiBrain = new BohurupiBrain(
 // Initialize Discord Integration
 export const discordService = new DiscordService(bohurupiBrain, memoryEngine);
 
-// Register Real AI Providers (Google-Gemini first for lowest latency and highest reliability)
+// Register Real AI Providers (Progga and Gemini first for lowest latency and highest reliability)
+const proggaProvider = new ProggaProvider('Progga');
+providerManager.registerProvider(proggaProvider);
+
 const geminiProvider = new GeminiProvider();
 providerManager.registerProvider(geminiProvider);
 
@@ -146,6 +150,7 @@ app.get('/api/providers/settings', adminAuth, async (req, res) => {
     res.json({
       serverIp: cachedPublicIp.ipv4,
       serverIpv6: cachedPublicIp.ipv6,
+      hasProggaKey: !!(process.env.PROGGA_KEY || process.env.PROGGA_API_KEY),
       hasGeminiKey: !!process.env.GEMINI_API_KEY,
       hasOpenRouterKey: !!process.env.OPENROUTER_API_KEY,
       config: providerManager.getConfig()
@@ -330,12 +335,8 @@ async function startServer() {
 
   try {
     const savedConfig = await memoryEngine.getSystemConfig('provider_config');
-    if (savedConfig) {
-      // Filter out any stale agent router configs from memory
-      const filteredConfig = Array.isArray(savedConfig) 
-        ? savedConfig.filter((c: any) => c.name !== 'AgentRouter')
-        : savedConfig;
-      providerManager.setConfig(filteredConfig);
+    if (savedConfig && Array.isArray(savedConfig)) {
+      providerManager.setConfig(savedConfig);
     }
     await discordService.loadPersistedState();
   } catch(e) {
