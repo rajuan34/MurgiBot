@@ -20,7 +20,8 @@ import {
   Play, 
   Gauge, 
   Info,
-  ChevronRight
+  ChevronRight,
+  Sliders
 } from 'lucide-react';
 
 export function ProviderResilience({ 
@@ -32,46 +33,110 @@ export function ProviderResilience({
   fetchState: () => void; 
   getHeaders: () => Record<string, string>; 
 }) {
-  const [isEditing, setIsEditing] = useState(false);
   const [config, setConfig] = useState<{ name: string; enabled: boolean; priority: number }[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'cascade' | 'diagnostics'>('overview');
+  const [saveMessage, setSaveMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'cascade' | 'settings'>('overview');
   const [resettingCircuit, setResettingCircuit] = useState<Record<string, boolean>>({});
 
+  // Seed config from botState if config is empty
   useEffect(() => {
-    if (isEditing) {
-      fetch('/api/providers/config', {
-        headers: getHeaders()
+    if (config.length === 0 && botState?.providers && Array.isArray(botState.providers) && botState.providers.length > 0) {
+      const initial = botState.providers
+        .filter((p: any) => p.name !== 'AgentRouter')
+        .map((p: any, idx: number) => ({
+          name: p.name,
+          enabled: p.enabled !== false,
+          priority: p.priority !== undefined ? p.priority : idx
+        }));
+      initial.sort((a: any, b: any) => a.priority - b.priority);
+      setConfig(initial);
+    }
+  }, [botState?.providers, config.length]);
+
+  // Load backend provider settings and config on mount
+  useEffect(() => {
+    const headers = getHeaders ? getHeaders() : { 'Content-Type': 'application/json' };
+    fetch('/api/providers/settings', { headers })
+      .then(async res => {
+        if (!res.ok) return null;
+        return res.json();
       })
-      .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) {
-          const sorted = data.sort((a: any, b: any) => a.priority - b.priority);
-          setConfig(sorted);
-        } else if (data && Array.isArray(data.config)) {
-          const sorted = data.config.sort((a: any, b: any) => a.priority - b.priority);
-          setConfig(sorted);
+        if (data) {
+          if (Array.isArray(data.config) && data.config.length > 0) {
+            const sorted = data.config
+              .filter((c: any) => c.name !== 'AgentRouter')
+              .sort((a: any, b: any) => a.priority - b.priority);
+            setConfig(sorted);
+          }
         }
       })
       .catch(console.error);
-    }
-  }, [isEditing]);
+  }, []);
 
-  const saveConfig = async () => {
-    setIsSaving(true);
-    try {
-      const updatedConfig = config.map((c, i) => ({ ...c, priority: i }));
-      await fetch('/api/providers/config', {
-        method: 'POST',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ config: updatedConfig })
-      });
-      setIsEditing(false);
-      fetchState();
-    } catch (e) {
-      console.error(e);
+  // Also fetch config when switching to settings tab
+  useEffect(() => {
+    if (activeTab === 'settings') {
+      const headers = getHeaders ? getHeaders() : { 'Content-Type': 'application/json' };
+      fetch('/api/providers/config', { headers })
+        .then(async res => {
+          if (!res.ok) return null;
+          return res.json();
+        })
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            const sorted = data
+              .filter((c: any) => c.name !== 'AgentRouter')
+              .sort((a: any, b: any) => a.priority - b.priority);
+            setConfig(sorted);
+          } else if (data && Array.isArray(data.config) && data.config.length > 0) {
+            const sorted = data.config
+              .filter((c: any) => c.name !== 'AgentRouter')
+              .sort((a: any, b: any) => a.priority - b.priority);
+            setConfig(sorted);
+          }
+        })
+        .catch(console.error);
     }
-    setIsSaving(false);
+  }, [activeTab]);
+
+  const saveAllSettings = async () => {
+    setIsSaving(true);
+    setSaveMessage(null);
+    try {
+      const headers = getHeaders ? getHeaders() : { 'Content-Type': 'application/json' };
+      const updatedConfig = config.map((c, i) => ({ ...c, priority: i }));
+      
+      const payload = {
+        config: updatedConfig
+      };
+
+      const res = await fetch('/api/providers/settings', {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await res.json().catch(() => null);
+
+      if (res.ok && data?.success) {
+        if (Array.isArray(data.config)) {
+          setConfig(data.config.filter((c: any) => c.name !== 'AgentRouter').sort((a: any, b: any) => a.priority - b.priority));
+        }
+        setSaveMessage({ text: 'Provider priority settings saved successfully!', type: 'success' });
+        setTimeout(() => setSaveMessage(null), 4000);
+      } else {
+        const errMsg = data?.error || `HTTP ${res.status}: Failed to save`;
+        setSaveMessage({ text: `Save error: ${errMsg}`, type: 'error' });
+      }
+      fetchState();
+    } catch (e: any) {
+      console.error(e);
+      setSaveMessage({ text: `Error saving settings: ${e?.message || 'Network error'}`, type: 'error' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const moveUp = (index: number) => {
@@ -105,9 +170,10 @@ export function ProviderResilience({
   const handleResetCircuit = async (providerName: string) => {
     setResettingCircuit(prev => ({ ...prev, [providerName]: true }));
     try {
+      const headers = getHeaders ? getHeaders() : { 'Content-Type': 'application/json' };
       await fetch('/api/providers/reset-circuit', {
         method: 'POST',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+        headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ providerName })
       });
       fetchState();
@@ -143,145 +209,185 @@ export function ProviderResilience({
         </div>
 
         <div className="flex items-center gap-2">
-          {isEditing ? (
-            <div className="flex items-center gap-1.5 bg-neutral-950 border border-neutral-800 rounded-lg p-1">
-              <button 
-                onClick={() => setIsEditing(false)} 
-                className="px-2.5 py-1 text-xs text-neutral-400 hover:text-white rounded transition-colors flex items-center gap-1"
-                title="Cancel changes"
-              >
-                <X className="w-3.5 h-3.5" /> Cancel
-              </button>
-              <button 
-                onClick={saveConfig} 
-                disabled={isSaving} 
-                className="px-2.5 py-1 text-xs bg-emerald-600 hover:bg-emerald-500 text-white rounded font-medium transition-colors flex items-center gap-1 shadow-sm"
-                title="Save priority ordering"
-              >
-                {isSaving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />} Save
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1">
-              <button 
-                onClick={() => setIsEditing(true)} 
-                className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg transition-colors border border-neutral-800 text-xs flex items-center gap-1.5 px-2.5" 
-                title="Reorder priority and toggle providers"
-              >
-                <Settings className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Reorder</span>
-              </button>
-              <button 
-                onClick={fetchState} 
-                className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg transition-colors border border-neutral-800" 
-                title="Refresh live status"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
+          <button 
+            onClick={() => setActiveTab(activeTab === 'settings' ? 'overview' : 'settings')} 
+            className={`px-2.5 py-1 text-xs rounded-lg transition-colors border flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'settings'
+                ? 'bg-emerald-600 text-white border-emerald-500 font-semibold'
+                : 'text-neutral-300 hover:text-white bg-neutral-950 hover:bg-neutral-800 border-neutral-800'
+            }`}
+            title="Configure Provider Priorities, API Keys & Gateway settings"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span>Settings</span>
+          </button>
+          <button 
+            onClick={fetchState} 
+            className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg transition-colors border border-neutral-800" 
+            title="Refresh live telemetry"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
       {/* Tabs */}
-      {!isEditing && (
-        <div className="flex items-center gap-1 bg-neutral-950 p-1 rounded-xl border border-neutral-800 text-xs">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition-all ${
-              activeTab === 'overview'
-                ? 'bg-neutral-800 text-white shadow-sm'
-                : 'text-neutral-400 hover:text-neutral-200'
-            }`}
-          >
-            Tier Diagnostics
-          </button>
-          <button
-            onClick={() => setActiveTab('cascade')}
-            className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition-all ${
-              activeTab === 'cascade'
-                ? 'bg-neutral-800 text-white shadow-sm'
-                : 'text-neutral-400 hover:text-neutral-200'
-            }`}
-          >
-            Failover Flow
-          </button>
-        </div>
-      )}
+      <div className="flex items-center gap-1 bg-neutral-950 p-1 rounded-xl border border-neutral-800 text-xs">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition-all ${
+            activeTab === 'overview'
+              ? 'bg-neutral-800 text-white shadow-sm'
+              : 'text-neutral-400 hover:text-neutral-200'
+          }`}
+        >
+          Tier Diagnostics
+        </button>
+        <button
+          onClick={() => setActiveTab('cascade')}
+          className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition-all ${
+            activeTab === 'cascade'
+              ? 'bg-neutral-800 text-white shadow-sm'
+              : 'text-neutral-400 hover:text-neutral-200'
+          }`}
+        >
+          Failover Flow
+        </button>
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition-all flex items-center justify-center gap-1.5 ${
+            activeTab === 'settings'
+              ? 'bg-neutral-800 text-white shadow-sm'
+              : 'text-neutral-400 hover:text-neutral-200'
+          }`}
+        >
+          <Sliders className="w-3.5 h-3.5" />
+          Engine Settings
+        </button>
+      </div>
 
-      {/* Reorder / Edit Mode */}
-      {isEditing ? (
-        <div className="space-y-2">
-          <div className="text-xs text-neutral-400 bg-neutral-950 p-3 rounded-xl border border-neutral-800 flex items-start gap-2">
+      {/* TAB 1: Engine Settings Panel */}
+      {activeTab === 'settings' && (
+        <div className="space-y-4">
+          <div className="text-xs text-neutral-400 bg-neutral-950 p-3.5 rounded-xl border border-neutral-800 flex items-start gap-2.5">
             <Info className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-neutral-300">Priority Ordering & Failover Hierarchy</p>
-              <p className="text-[11px] text-neutral-400 mt-0.5">
-                The bot attempts providers from top to bottom. If a provider times out, hits rate-limit (429), or opens circuit breaker, traffic falls through to the next enabled tier.
+              <p className="font-semibold text-neutral-200">Resilience Engine & Failover Settings</p>
+              <p className="text-[11px] text-neutral-400 mt-0.5 leading-relaxed">
+                Configure provider priority ordering and active models. The bot cascades top-to-bottom upon timeout or rate limits (429).
               </p>
             </div>
           </div>
 
+          {/* Section 1: Provider Priority Reordering */}
           <div className="space-y-2">
-            {config.length === 0 ? (
-              <div className="text-xs text-neutral-500 py-4 text-center">Loading provider configuration...</div>
-            ) : (
-              config.map((c, i) => (
-                <div 
-                  key={c.name} 
-                  className={`flex items-center justify-between bg-neutral-950 p-3 rounded-xl border transition-all ${
-                    c.enabled ? 'border-neutral-800 hover:border-neutral-700' : 'border-neutral-900 opacity-50 bg-neutral-950/40'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-xs font-bold text-neutral-500 w-5">
-                      #{i + 1}
-                    </span>
-                    <div className="flex flex-col gap-0.5">
-                      <button 
-                        onClick={() => moveUp(i)} 
-                        disabled={i === 0} 
-                        className="text-neutral-500 hover:text-white disabled:opacity-20 p-0.5 hover:bg-neutral-800 rounded transition-colors"
-                        title="Move Up"
-                      >
-                        <ChevronUp className="w-3.5 h-3.5" />
-                      </button>
-                      <button 
-                        onClick={() => moveDown(i)} 
-                        disabled={i === config.length - 1} 
-                        className="text-neutral-500 hover:text-white disabled:opacity-20 p-0.5 hover:bg-neutral-800 rounded transition-colors"
-                        title="Move Down"
-                      >
-                        <ChevronDown className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    <div>
-                      <span className="font-medium text-sm text-neutral-200 block">{c.name}</span>
-                      <span className="text-[10px] text-neutral-500">
-                        {c.name.includes('Gemini') ? 'Tier 1 (Primary AI)' : (c.name.includes('OpenRouter') ? 'Tier 2 (Failover Cloud)' : 'Tier 3 (Safe Failsafe)')}
-                      </span>
-                    </div>
-                  </div>
+            <h3 className="text-xs font-bold text-neutral-300 uppercase tracking-wider flex items-center justify-between">
+              <span>Failover Hierarchy & Priority Reordering</span>
+              <span className="text-[10px] text-neutral-500 font-normal">Top to Bottom Execution</span>
+            </h3>
 
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => toggleEnable(i)} 
-                      className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all ${
-                        c.enabled 
-                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25' 
-                          : 'bg-neutral-900 text-neutral-500 border-neutral-800 hover:bg-neutral-850'
-                      }`}
-                    >
-                      {c.enabled ? 'Enabled' : 'Disabled'}
-                    </button>
-                  </div>
+            <div className="space-y-2">
+              {config.length === 0 ? (
+                <div className="text-xs text-neutral-500 py-4 text-center bg-neutral-950 rounded-xl border border-neutral-800">
+                  <RefreshCw className="w-4 h-4 animate-spin mx-auto mb-1 text-emerald-500" />
+                  Loading provider hierarchy...
                 </div>
-              ))
-            )}
+              ) : (
+                config.map((c, i) => (
+                  <div 
+                    key={c.name} 
+                    className={`flex items-center justify-between bg-neutral-950 p-3 rounded-xl border transition-all ${
+                      c.enabled ? 'border-neutral-800 hover:border-neutral-700' : 'border-neutral-900 opacity-50 bg-neutral-950/40'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-xs font-bold text-neutral-500 w-5">
+                        #{i + 1}
+                      </span>
+                      <div className="flex flex-col gap-0.5">
+                        <button 
+                          onClick={() => moveUp(i)} 
+                          disabled={i === 0} 
+                          className="text-neutral-500 hover:text-white disabled:opacity-20 p-0.5 hover:bg-neutral-800 rounded transition-colors cursor-pointer"
+                          title="Move Up"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button 
+                          onClick={() => moveDown(i)} 
+                          disabled={i === config.length - 1} 
+                          className="text-neutral-500 hover:text-white disabled:opacity-20 p-0.5 hover:bg-neutral-800 rounded transition-colors cursor-pointer"
+                          title="Move Down"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm text-neutral-200">{c.name}</span>
+                        </div>
+                        <span className="text-[10px] text-neutral-500 block">
+                          {c.name.includes('Gemini') 
+                            ? 'Primary Core: Lowest latency multi-model Gemini flash cascade' 
+                            : (c.name.includes('OpenRouter') 
+                              ? 'Cloud Failover: Multi-endpoint free & ultra-cheap failover' 
+                              : 'Safe Fallback: Deterministic Banglish offline safety net')}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => toggleEnable(i)} 
+                        className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all cursor-pointer ${
+                          c.enabled 
+                            ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25' 
+                            : 'bg-neutral-900 text-neutral-500 border-neutral-800 hover:bg-neutral-850'
+                        }`}
+                      >
+                        {c.enabled ? 'Enabled' : 'Disabled'}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Action Bar: Save All Settings */}
+          <div className="pt-2 flex items-center justify-between border-t border-neutral-800/80">
+            <div>
+              {saveMessage && (
+                <span className={`text-xs font-medium flex items-center gap-1.5 ${
+                  saveMessage.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+                }`}>
+                  {saveMessage.type === 'success' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                  {saveMessage.text}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setActiveTab('overview')} 
+                className="px-3 py-1.5 text-xs text-neutral-400 hover:text-white rounded-lg border border-neutral-800 transition-colors cursor-pointer"
+              >
+                Done
+              </button>
+              <button 
+                onClick={saveAllSettings} 
+                disabled={isSaving} 
+                className="px-4 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg font-medium transition-colors flex items-center gap-1.5 shadow-md shadow-emerald-950/50 cursor-pointer"
+              >
+                {isSaving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                <span>Save Priority Settings</span>
+              </button>
+            </div>
           </div>
         </div>
-      ) : activeTab === 'cascade' ? (
-        /* Visual Failover Flow Pipeline View */
+      )}
+
+      {/* TAB 2: Failover Flow Pipeline View */}
+      {activeTab === 'cascade' && (
         <div className="space-y-4">
           <div className="bg-neutral-950 p-4 rounded-xl border border-neutral-800 space-y-3">
             <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-2">
@@ -314,8 +420,8 @@ export function ProviderResilience({
                     </div>
 
                     <p className="text-[11px] text-neutral-400 pl-7">
-                      {p.name.includes('Gemini') && 'Primary lowest-latency model cascade with auto-fallback across 5 Gemini models on quota limit.'}
-                      {p.name.includes('OpenRouter') && 'Secondary cloud failover with model cascade across DeepSeek, Nemotron-3.5, Gemini 2.0 Flash, Llama 3.3, and Qwen.'}
+                      {p.name.includes('Gemini') && 'Primary lowest-latency model cascade with auto-fallback across 9 Gemini models on quota limit.'}
+                      {p.name.includes('OpenRouter') && 'Secondary cloud failover with model cascade across free and ultra-cheap endpoints.'}
                       {p.name.includes('Fallback') && 'Zero-dependency deterministic Banglish generator with Sleep Mode guard after 2 consecutive triggers.'}
                     </p>
 
@@ -390,8 +496,10 @@ export function ProviderResilience({
             </div>
           </div>
         </div>
-      ) : (
-        /* Detailed Tier Diagnostics Cards */
+      )}
+
+      {/* TAB 3: Tier Diagnostics Overview View */}
+      {activeTab === 'overview' && (
         <div className="space-y-3">
           {providers.length === 0 ? (
             <div className="text-sm text-neutral-500 py-6 text-center">Loading provider telemetry...</div>
@@ -437,7 +545,6 @@ export function ProviderResilience({
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                      {/* Circuit Breaker Status Pill */}
                       {p.circuitState === 'OPEN' ? (
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse">
                           Circuit Tripped

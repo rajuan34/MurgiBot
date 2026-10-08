@@ -82,6 +82,7 @@ export class DiscordService {
   private isPaused: boolean = false;
   private pausedAt: string | null = null;
   private pausedBy: string = 'Admin';
+  private lastConnectionError: string | null = null;
 
   constructor(private brain: BohurupiBrain, private memoryEngine?: MemoryEngine) {
     this.client = new Client({
@@ -875,15 +876,26 @@ export class DiscordService {
   }
 
   async start(token: string | undefined) {
-    if (!token) {
-      logger.warn('DISCORD_TOKEN is missing. Discord Integration is disabled.');
+    const cleanToken = token ? token.trim().replace(/^["']|["']$/g, '') : '';
+    if (!cleanToken) {
+      this.lastConnectionError = 'DISCORD_TOKEN is missing. Discord Integration is in standby.';
+      logger.warn('DISCORD_TOKEN is missing. Discord Integration is in standby.');
       return;
     }
     
     try {
-      await this.client.login(token);
+      this.lastConnectionError = null;
+      await this.client.login(cleanToken);
     } catch (error: any) {
-      logger.error('Failed to connect to Discord', { error: error?.message || String(error) });
+      const errMsg = error?.message || String(error);
+      this.lastConnectionError = errMsg;
+      if (errMsg.includes('An invalid token was provided')) {
+        logger.warn('Discord connection skipped: The provided DISCORD_TOKEN is invalid or has been reset in the Discord Developer Portal. Discord bot running in standby mode.');
+      } else if (errMsg.includes('Privileged') || errMsg.includes('disallowed intents')) {
+        logger.warn('Discord connection skipped: Privileged Gateway Intents (Message Content) must be enabled in the Discord Developer Portal.', { error: errMsg });
+      } else {
+        logger.warn('Discord connection attempt failed (operating in standby mode):', { error: errMsg });
+      }
     }
   }
 
@@ -985,6 +997,7 @@ export class DiscordService {
       isPaused: this.isPaused,
       pausedAt: this.pausedAt,
       pausedBy: this.pausedBy,
+      lastConnectionError: this.lastConnectionError,
       botTag: this.client.user?.tag || 'Not Logged In',
       allowedServers: serversInfo,
       allowedServer: serversInfo[0] || { id: SCHEDULED_SERVER_IDS[0], name: 'Bohurupi Main Guild' },

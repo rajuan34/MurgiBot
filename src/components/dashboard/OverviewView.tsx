@@ -313,6 +313,21 @@ export function OverviewView({
             </div>
 
             <div className="space-y-3.5">
+              {/* Token / Connection Status Notice */}
+              {!botState?.discord?.connected && botState?.discord?.lastConnectionError && (
+                <div className="bg-amber-950/20 border border-amber-800/40 rounded-lg p-3 text-xs text-amber-300 flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold block text-amber-200">Discord Token Notice</span>
+                    <span className="text-[11px] text-amber-300/90 block mt-0.5">
+                      {botState.discord.lastConnectionError.includes('invalid token')
+                        ? 'The provided DISCORD_TOKEN is invalid or expired (reset in Discord Developer Portal). The app is running smoothly in Web/Standby mode.'
+                        : botState.discord.lastConnectionError}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Dedicated Bot Pause / Resume Control Card */}
               <div className={`border rounded-lg p-3.5 flex items-center justify-between transition-colors ${
                 botState?.discord?.isPaused 

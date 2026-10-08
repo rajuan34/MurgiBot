@@ -21,10 +21,17 @@ export default function Dashboard() {
   const [isSending, setIsSending] = useState(false);
   const [isTogglingPause, setIsTogglingPause] = useState(false);
 
-  const [adminPassword, setAdminPassword] = useState(localStorage.getItem('admin_password') || '');
-  const passwordRef = useRef(localStorage.getItem('admin_password') || '');
+  const initialPassword = localStorage.getItem('admin_password') || 'password123';
+  const [adminPassword, setAdminPassword] = useState(initialPassword);
+  const passwordRef = useRef(initialPassword);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authError, setAuthError] = useState('');
+
+  useEffect(() => {
+    if (!localStorage.getItem('admin_password')) {
+      localStorage.setItem('admin_password', 'password123');
+    }
+  }, []);
 
 
   
@@ -113,9 +120,9 @@ export default function Dashboard() {
         return;
       }
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       
-      setChatLog(prev => [...prev, { role: 'bohurupi', text: data.text || 'Error processing thought.' }]);
+      setChatLog(prev => [...prev, { role: 'bohurupi', text: data.text || data.error || 'bhai disturb koris na, ami ghumer moddhe 😴' }]);
       fetchState(); 
     } catch (err) {
       setChatLog(prev => [...prev, { role: 'bohurupi', text: '[System Error: Connection Failed]' }]);

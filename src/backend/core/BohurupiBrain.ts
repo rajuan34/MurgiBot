@@ -355,7 +355,10 @@ ${relationshipDirective}
       });
 
       if (response.isIgnored || !response.text || response.text.trim().length === 0) {
-        logger.info('Bohurupi is in deep sleep mode (consecutive fallbacks > 2) and ignoring message.');
+        if (userId === 'web-admin-id' || userId === 'web-tester') {
+          return "bhai disturb koris na, ami ghumer moddhe 😴";
+        }
+        logger.info('Bohurupi is in sleep mode and ignoring message.');
         return "";
       }
 

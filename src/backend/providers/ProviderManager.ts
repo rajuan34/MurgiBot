@@ -95,6 +95,8 @@ export class ProviderManager {
 
   getConfig() {
     const registeredNames = new Set(this.providers.map(p => p.name));
+    let resultConfig: { name: string; enabled: boolean; priority: number }[] = [];
+
     if (this.activeConfig) {
       const normalizedConfig = this.activeConfig.map(c => {
         if (c.name === 'Google-Gemini-3.8-Flash' && registeredNames.has('Google-Gemini')) {
@@ -111,14 +113,30 @@ export class ProviderManager {
           enabled: true,
           priority: validActiveConfig.length + idx
         }));
-      return [...validActiveConfig, ...missingProviders];
+      resultConfig = [...validActiveConfig, ...missingProviders];
+      resultConfig.sort((a, b) => a.priority - b.priority);
+      return resultConfig.map((c, i) => ({ ...c, priority: i }));
     }
+
     // Default config based on registration order
-    return this.providers.map((p, i) => ({
+    resultConfig = this.providers.map((p, i) => ({
       name: p.name,
       enabled: true,
       priority: i
     }));
+
+    // Sort by priority first
+    resultConfig.sort((a, b) => a.priority - b.priority);
+
+    // Default ordering: Ensure Fallback-Simulated is always at the bottom of the failover chain
+    const curFbIdx = resultConfig.findIndex(c => c.name === 'Fallback-Simulated');
+    if (curFbIdx !== -1 && curFbIdx < resultConfig.length - 1) {
+      const [fbItem] = resultConfig.splice(curFbIdx, 1);
+      resultConfig.push(fbItem);
+    }
+
+    // Re-index priorities 0, 1, 2, ...
+    return resultConfig.map((c, i) => ({ ...c, priority: i }));
   }
 
   getActiveProviders() {
@@ -191,8 +209,9 @@ export class ProviderManager {
         circuitState = 'HALF_OPEN';
       }
 
-      let tier = 'Tier 2: Secondary Failover';
+      let tier = 'Tier 2: Secondary Cloud Failover';
       if (p.name.includes('Gemini')) tier = 'Tier 1: Primary AI Engine';
+      else if (p.name.includes('OpenRouter')) tier = 'Tier 2: Secondary Cloud Failover';
       else if (p.name.includes('Fallback')) tier = 'Tier 3: Offline Safe Guard';
 
       const avgLatencyMs = metrics.successfulRequests > 0 
@@ -203,7 +222,13 @@ export class ProviderManager {
         ? Math.round((metrics.successfulRequests / metrics.totalRequests) * 1000) / 10
         : (p.isHealthy() ? 100 : 0);
 
-      const activeModel = p.getLastSuccessfulModel ? p.getLastSuccessfulModel() : (p.name.includes('Gemini') ? 'gemini-3.1-flash-lite' : (p.name.includes('OpenRouter') ? 'deepseek/deepseek-chat' : 'Deterministic offline generator'));
+      const activeModel = p.getLastSuccessfulModel 
+        ? p.getLastSuccessfulModel() 
+        : (p.name.includes('Gemini') 
+          ? 'gemini-2.5-flash' 
+          : (p.name.includes('OpenRouter') 
+            ? 'openrouter/free' 
+            : 'Deterministic offline generator'));
       const cascadingModels = p.getAvailableModels ? p.getAvailableModels() : [];
 
       return {
@@ -233,6 +258,10 @@ export class ProviderManager {
   }
 
   resetCircuitBreaker(providerName: string): boolean {
+    const provider = this.providers.find(p => p.name === providerName);
+    if ((provider as any)?.resetAuthorization) {
+      (provider as any).resetAuthorization();
+    }
     if (this.circuitBreakerFailures.has(providerName)) {
       this.circuitBreakerFailures.set(providerName, 0);
       const metrics = this.getOrInitMetrics(providerName);
@@ -247,6 +276,10 @@ export class ProviderManager {
     const provider = this.providers.find(p => p.name === providerName);
     if (!provider) {
       return { success: false, latencyMs: 0, error: `Provider "${providerName}" not found` };
+    }
+
+    if ((provider as any)?.resetAuthorization) {
+      (provider as any).resetAuthorization();
     }
 
     if (!provider.isHealthy()) {
@@ -364,8 +397,12 @@ export class ProviderManager {
           this.consecutiveFallbackCount++;
           logger.warn(`Fallback-Simulated activated. Consecutive fallback count: ${this.consecutiveFallbackCount}`);
           if (this.consecutiveFallbackCount > 2) {
-            logger.info(`Bohurupi has gone to sleep due to >2 consecutive fallbacks. Ignoring message silently (sleep mode).`);
-            return { text: '', providerName: provider.name, isIgnored: true };
+            logger.info(`Bohurupi fallback limit reached. Using authentic sleep-mode response.`);
+            return { 
+              text: 'bhai disturb koris na, ami ghumer moddhe 😴', 
+              providerName: provider.name, 
+              isIgnored: false 
+            };
           }
         } else {
           this.consecutiveFallbackCount = 0;
@@ -383,13 +420,19 @@ export class ProviderManager {
         
         let status: 'error' | 'rate_limit' = 'error';
         if (errorMessage.includes('429') || errorMessage.includes('Quota exceeded')) {
-          logger.warn(`Provider ${provider.name} rate limited (429). Triggering failover.`);
+          logger.warn(`Provider ${provider.name} rate limited (429). Cascading to next fallback tier.`);
           status = 'rate_limit';
           metrics.rateLimitedRequests++;
+          this.circuitBreakerFailures.set(provider.name, failures + 1);
+        } else if (errorMessage.includes('401') || errorMessage.includes('Invalid API Key') || errorMessage.includes('Unauthorized')) {
+          logger.info(`Provider ${provider.name} requires key/IP authorization (401). Tripping circuit breaker and cascading to next tier.`);
+          this.circuitBreakerFailures.set(provider.name, this.MAX_FAILURES);
         } else if (errorMessage.includes('fetch failed') || errorMessage.includes('ECONNREFUSED')) {
-          logger.warn(`Provider ${provider.name} is unreachable. Triggering failover.`);
+          logger.warn(`Provider ${provider.name} is unreachable. Cascading to next fallback tier.`);
+          this.circuitBreakerFailures.set(provider.name, failures + 1);
         } else {
-          logger.error(`Provider ${provider.name} failed`, { error: errorMessage });
+          logger.warn(`Provider ${provider.name} failed (${errorMessage.slice(0, 100)}). Cascading to next fallback tier.`);
+          this.circuitBreakerFailures.set(provider.name, failures + 1);
         }
         
         metrics.failedRequests++;
@@ -399,17 +442,55 @@ export class ProviderManager {
         this.addApiLog({
           provider: provider.name,
           status,
-          latencyMs: Date.now() - start, // Time taken before failure
+          latencyMs: Date.now() - start,
           errorDetail: errorMessage
         });
-        // Increment failure count
-        this.circuitBreakerFailures.set(provider.name, failures + 1);
         
-        // Loop will continue to the next fallback provider seamlessly
+        // Loop continues to next provider in cascade
       }
     }
 
-    logger.error('CRITICAL: All cloud and local AI providers failed.');
-    throw new Error('All AI providers exhausted. Bohurupi is unable to process the thought.');
+    // Emergency Autonomous Failover:
+    // If all configured active providers failed, attempt an emergency call to any registered healthy provider
+    const emergencyProviders = this.providers.filter(p => 
+      p.isHealthy() && 
+      p.name !== 'Fallback-Simulated' &&
+      (this.circuitBreakerFailures.get(p.name) || 0) < this.MAX_FAILURES
+    );
+
+    for (const emergency of emergencyProviders) {
+      try {
+        logger.warn(`[Resilience Engine] Active cascade exhausted. Engaging emergency backup provider: ${emergency.name}`);
+        const emergencyText = await emergency.generate(request);
+        if (emergencyText && emergencyText.trim().length > 0) {
+          return { 
+            text: emergencyText.trim(), 
+            providerName: `${emergency.name} (Emergency Failover)`, 
+            isIgnored: false 
+          };
+        }
+      } catch (emErr: any) {
+        logger.error(`Emergency provider ${emergency.name} failed: ${emErr.message}`);
+      }
+    }
+
+    // Ultimate fallback safeguard: Always return a valid thought response instead of throwing
+    const simulated = this.providers.find(p => p.name === 'Fallback-Simulated');
+    if (simulated) {
+      try {
+        const text = await simulated.generate(request);
+        return { 
+          text: text || "bhai disturb koris na, ami ghumer moddhe 😴", 
+          providerName: 'Fallback-Simulated', 
+          isIgnored: false 
+        };
+      } catch {}
+    }
+
+    return { 
+      text: "bhai disturb koris na, ami ghumer moddhe 😴", 
+      providerName: 'Fallback-Simulated', 
+      isIgnored: false 
+    };
   }
 }
