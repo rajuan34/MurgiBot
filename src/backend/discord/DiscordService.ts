@@ -1001,10 +1001,13 @@ export class DiscordService {
 
       // Process via Brain
       try {
-        if ('sendTyping' in message.channel) {
-          await message.channel.sendTyping().catch((err) => {
-            logger.warn('Failed to send typing indicator in Discord channel', { error: err?.message || String(err) });
-          });
+        const perms = message.channel && 'guild' in message.channel && message.channel.guild ? message.channel.guild.members.me?.permissionsIn(message.channel as TextChannel) : null;
+        if (perms && (!perms.has('ViewChannel') || !perms.has('SendMessages'))) {
+          return;
+        }
+
+        if ('sendTyping' in message.channel && typeof message.channel.sendTyping === 'function') {
+          await message.channel.sendTyping().catch(() => {});
         }
         
         const response = await this.brain.processInteraction(message.author.id, cleanContent);
@@ -1020,9 +1023,11 @@ export class DiscordService {
               error: replyError?.message || String(replyError)
             });
             try {
-              if ('send' in message.channel) { await message.channel.send(sanitizedResponse); }
+              if ('send' in message.channel && typeof message.channel.send === 'function') { 
+                await message.channel.send(sanitizedResponse); 
+              }
             } catch (sendError: any) {
-              logger.error('Failed to send Discord message via fallback channel.send', {
+              logger.warn('Failed to send Discord message via fallback channel.send (Missing Permissions/Access)', {
                 error: sendError?.message || String(sendError)
               });
             }
