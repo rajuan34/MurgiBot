@@ -1,7 +1,7 @@
 import { Client, GatewayIntentBits, Events, Message, TextChannel, Options } from 'discord.js';
 import cron from 'node-cron';
 import { logger } from '../telemetry/logger';
-import { BohurupiBrain, UNCAL_USER_ID, generateDynamicUncalDefense } from '../core/BohurupiBrain';
+import { BohurupiBrain, UNCAL_USER_ID, generateDynamicUncalDefense, getDiverseDynamicReply } from '../core/BohurupiBrain';
 import { MemoryEngine } from '../memory/MemoryEngine';
 
 /**
@@ -302,54 +302,65 @@ export class DiscordService {
           await textChannel.sendTyping().catch(() => {});
         }
 
-        if (userMessages.length > 0) {
-          // Contextual reply to one of recent user messages
-          const selectedMessage: any = userMessages[Math.floor(Math.random() * Math.min(3, userMessages.length))];
-          const cleanContent = selectedMessage.content.replace(new RegExp(`<@!?${this.client.user?.id}>`, 'g'), '').trim();
-          
-          // Pass the user's message directly to the brain without conflicting [SYSTEM: ...] prompt tags
-          const response = await this.brain.processInteraction(selectedMessage.author.id, cleanContent || 'oi');
-
-          if (response && response.trim().length > 0 && !response.includes('*(Bohurupi')) {
-            const sanitized = response.length > 1950 ? response.substring(0, 1950) + '...' : response;
-            try {
-              await selectedMessage.reply(sanitized);
-            } catch (err) {
-              await textChannel.send(sanitized);
-            }
-            logger.info(`Scheduled auto-reply sent to user message in random channel #${textChannel.name} (${channelId})`);
-            postedResult = {
-              channelId,
-              channelName: textChannel.name,
-              status: 'replied_to_user',
-              messageId: selectedMessage.id,
-              text: sanitized
-            };
-            break; // Stop after successfully sending to 1 channel!
+        let response = '';
+        try {
+          if (userMessages.length > 0) {
+            const selectedMessage: any = userMessages[Math.floor(Math.random() * Math.min(3, userMessages.length))];
+            const cleanContent = selectedMessage.content.replace(new RegExp(`<@!?${this.client.user?.id}>`, 'g'), '').trim();
+            response = await this.brain.processInteraction(selectedMessage.author.id, cleanContent || 'oi');
+          } else {
+            const channelStarterPrompts = [
+              `Drop a spontaneous, sarcastic, and funny Banglish one-liner or conversation starter. Bohurupi is bored because chat is dead. Speak authentic Banglish in 1-2 sentences.`,
+              `Drop an absurd, funny Banglish hot-take in 1-2 short sentences.`,
+              `Mock the silence in the Discord server asking if everyone went to sleep. Short witty Banglish.`
+            ];
+            const prompt = channelStarterPrompts[Math.floor(Math.random() * channelStarterPrompts.length)];
+            response = await this.brain.processInteraction('scheduled-cron', prompt);
           }
-        } else {
-          // Channel is quiet: send a spontaneous proactive Banglish starter
-          const channelStarterPrompts = [
-            `Drop a spontaneous, sarcastic, and funny Banglish one-liner or conversation starter. Bohurupi is bored because chat is dead. Speak authentic Banglish in 1-2 sentences.`,
-            `Drop an absurd, funny Banglish hot-take in 1-2 short sentences.`,
-            `Mock the silence in the Discord server asking if everyone went to sleep. Short witty Banglish.`
-          ];
-          const prompt = channelStarterPrompts[Math.floor(Math.random() * channelStarterPrompts.length)];
-          const response = await this.brain.processInteraction('scheduled-cron', prompt);
-
-          if (response && response.trim().length > 0 && !response.includes('*(Bohurupi')) {
-            const sanitized = response.length > 1950 ? response.substring(0, 1950) + '...' : response;
-            await textChannel.send(sanitized);
-            logger.info(`Scheduled spontaneous message sent to random channel #${textChannel.name} (${channelId})`);
-            postedResult = {
-              channelId,
-              channelName: textChannel.name,
-              status: 'sent_spontaneous',
-              text: sanitized
-            };
-            break; // Stop after successfully sending to 1 channel!
-          }
+        } catch (aiErr) {
+          logger.warn('AI generation for scheduled auto-reply timed out or failed, using robust fallback.', { error: aiErr });
         }
+
+        if (!response || response.trim().length === 0 || response.includes('*(Bohurupi')) {
+          const fallbackStarters = [
+            "kire bhai, chat eto shanto keno? 💀",
+            "bhai keo ki ghumai gelo naki? 🥱",
+            "kono kotha nai, shudhu adda hobe ar biryani khawa hobe 😎",
+            "ayo, keo ki alive ase naki shobai busy? 🤣",
+            "bhai eto shanti keno server e? panga lagabo naki? 🥊"
+          ];
+          response = fallbackStarters[Math.floor(Math.random() * fallbackStarters.length)] || getDiverseDynamicReply('oi', 'SERVER_MEMBER');
+        }
+
+        let sentMsg: any = null;
+        const sanitized = response.length > 1950 ? response.substring(0, 1950) + '...' : response;
+        if (userMessages.length > 0) {
+          const selectedMessage: any = userMessages[0];
+          try {
+            sentMsg = await selectedMessage.reply(sanitized);
+          } catch (err) {
+            sentMsg = await textChannel.send(sanitized);
+          }
+          postedResult = {
+            channelId,
+            channelName: textChannel.name,
+            status: 'replied_to_user',
+            messageId: selectedMessage.id,
+            sentMessageId: sentMsg?.id,
+            text: sanitized
+          };
+        } else {
+          sentMsg = await textChannel.send(sanitized);
+          postedResult = {
+            channelId,
+            channelName: textChannel.name,
+            status: 'sent_spontaneous',
+            sentMessageId: sentMsg?.id,
+            text: sanitized
+          };
+        }
+        logger.info(`✅ [Discord Scheduled Post Success] Message ID [${sentMsg?.id || 'unknown'}] successfully posted to channel #${textChannel.name} (${channelId}) in guild [${textChannel.guild?.name || 'DM'}]. Text: "${sanitized}"`);
+        break; // Stop after successfully sending to 1 channel!
       } catch (err: any) {
         logger.error(`Failed scheduled post attempt in channel ${channelId}`, { error: err?.message || String(err) });
       }
