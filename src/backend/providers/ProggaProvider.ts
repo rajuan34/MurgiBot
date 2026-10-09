@@ -42,8 +42,16 @@ export class ProggaProvider implements AIProvider {
       throw new Error('PROGGA_KEY is missing. Please set PROGGA_KEY in your environment variables.');
     }
 
-    const systemPrompt = (request.systemInstruction || 'You are Bohurupi, a witty Discord bot who speaks authentic Banglish.') +
-      '\n\nCRITICAL INSTRUCTION: Output ONLY the direct conversational dialogue as Bohurupi in Banglish. NEVER output thinking steps, reasoning analysis, or phrases like "Here\'s a thinking process". Jump STRAIGHT into spoken dialogue.';
+    let systemPrompt = (request.systemInstruction || 'You are Bohurupi, a witty Discord bot who speaks authentic Banglish.').trim();
+    if (request.context && request.context.trim()) {
+      systemPrompt += `\n\n[USER CONTEXT & MEMORIES]\n${request.context.trim()}`;
+    }
+    systemPrompt += `\n\nCRITICAL CONVERSATION DIRECTIVES:
+- Output ONLY the direct conversational dialogue as Bohurupi in Banglish.
+- NEVER output thinking steps, reasoning analysis, or phrases like "Here's a thinking process".
+- NEVER echo or parrot the user's message back with a question mark (e.g. NEVER start with "ja ase dekhao?" or "chill mode?"). Jump straight into your real response.
+- NEVER repeat the same sentence patterns, jokes, or boilerplate phrases from recent messages. Every single reply MUST have fresh vocabulary, diverse humor, and authentic personality!
+- NEVER talk about internal personality modes or state names (do not say "chill mode", "chill vibe", "playful mode", etc.). Just act natural.`;
 
     const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
       { role: 'system', content: systemPrompt }
@@ -52,16 +60,20 @@ export class ProggaProvider implements AIProvider {
     if (request.history && request.history.length > 0) {
       for (const turn of request.history) {
         if (turn.content && turn.content.trim()) {
+          const content = turn.content.trim();
+          // Skip poisoned repetitive turns from history so model doesn't mimic them
+          if (turn.role === 'assistant' && /(?:shudhu chill vibe|chill mode nei|shudhu chill mode)/i.test(content)) {
+            continue;
+          }
           messages.push({
             role: turn.role === 'user' ? 'user' : 'assistant',
-            content: turn.content.trim()
+            content
           });
         }
       }
       messages.push({ role: 'user', content: request.prompt });
     } else {
-      const userPrompt = request.context ? `CONTEXT:\n${request.context}\n\nUSER PROMPT:\n${request.prompt}` : request.prompt;
-      messages.push({ role: 'user', content: userPrompt });
+      messages.push({ role: 'user', content: request.prompt });
     }
 
     // Build try order: lastSuccessfulModel first
@@ -93,8 +105,10 @@ export class ProggaProvider implements AIProvider {
           body: JSON.stringify({
             model,
             messages,
-            temperature: 0.75,
+            temperature: 0.85,
             top_p: 0.9,
+            frequency_penalty: 0.5,
+            presence_penalty: 0.5,
             max_tokens: 600
           }),
           signal: controller.signal

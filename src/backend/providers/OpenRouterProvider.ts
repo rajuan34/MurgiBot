@@ -48,8 +48,16 @@ export class OpenRouterProvider implements AIProvider {
       throw new Error('OPENROUTER_API_KEY is missing. Please set it in your environment variables.');
     }
 
-    const systemPrompt = (request.systemInstruction || 'You are Bohurupi, a witty Discord bot who speaks authentic Banglish.') +
-      '\n\nCRITICAL INSTRUCTION: Output ONLY the direct conversational dialogue as Bohurupi in Banglish. NEVER output thinking steps, reasoning analysis, or phrases like "Here\'s a thinking process". Jump STRAIGHT into spoken dialogue.';
+    let systemPrompt = (request.systemInstruction || 'You are Bohurupi, a witty Discord bot who speaks authentic Banglish.').trim();
+    if (request.context && request.context.trim()) {
+      systemPrompt += `\n\n[USER CONTEXT & MEMORIES]\n${request.context.trim()}`;
+    }
+    systemPrompt += `\n\nCRITICAL CONVERSATION DIRECTIVES:
+- Output ONLY the direct conversational dialogue as Bohurupi in Banglish.
+- NEVER output thinking steps, reasoning analysis, or phrases like "Here's a thinking process".
+- NEVER echo or parrot the user's message back with a question mark (e.g. NEVER start with "ja ase dekhao?" or "chill mode?").
+- NEVER repeat the same sentence patterns, jokes, or boilerplate phrases from recent messages. Keep every reply fresh and diverse!
+- NEVER talk about internal personality modes or state names.`;
     
     const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
       { role: 'system', content: systemPrompt }
@@ -58,16 +66,19 @@ export class OpenRouterProvider implements AIProvider {
     if (request.history && request.history.length > 0) {
       for (const turn of request.history) {
         if (turn.content && turn.content.trim()) {
+          const content = turn.content.trim();
+          if (turn.role === 'assistant' && /(?:shudhu chill vibe|chill mode nei|shudhu chill mode)/i.test(content)) {
+            continue;
+          }
           messages.push({
             role: turn.role === 'user' ? 'user' : 'assistant',
-            content: turn.content.trim()
+            content
           });
         }
       }
       messages.push({ role: 'user', content: request.prompt });
     } else {
-      const userPrompt = request.context ? `CONTEXT:\n${request.context}\n\nUSER PROMPT:\n${request.prompt}` : request.prompt;
-      messages.push({ role: 'user', content: userPrompt });
+      messages.push({ role: 'user', content: request.prompt });
     }
 
     // Build try order: lastSuccessfulModel first if present
@@ -120,8 +131,8 @@ export class OpenRouterProvider implements AIProvider {
             max_tokens: 350,
             temperature: temperature,
             top_p: top_p,
-            frequency_penalty: 0.15,
-            presence_penalty: 0.1,
+            frequency_penalty: 0.45,
+            presence_penalty: 0.45,
             stop: stopTokens,
             messages
           }),

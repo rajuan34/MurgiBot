@@ -26,7 +26,7 @@ export class MemoryEngine {
     this.initDatabase();
     
     // Auto-cleanup stale data every hour
-    setInterval(() => this.cleanupExpiredData(), 60 * 60 * 1000);
+    setInterval(() => this.cleanupExpiredData(), 60 * 60 * 1000).unref();
   }
 
   async getSystemConfig(key: string): Promise<any | null> {
@@ -222,12 +222,41 @@ export class MemoryEngine {
       items = this.fallbackShortTerm.get(userId) || [];
     }
 
-    return items
-      .filter(m => m.text && m.text.trim().length > 0)
-      .map(m => ({
+    const validItems = items
+      .filter(m => m.text && m.text.trim().length > 0);
+
+    // Prune command traces, poisoned repetitive texts, or sensitive data from conversation history
+    const cleanHistory: { role: 'user' | 'assistant'; content: string }[] = [];
+    for (const m of validItems) {
+      const text = m.text.trim();
+
+      // Skip internal command triggers or prompt injections from history
+      if (text.includes('User triggered command:') || /COMMAND:\s*!/i.test(text)) {
+        continue;
+      }
+
+      if (m.role === 'bohurupi') {
+        // Skip poisoned repeating clichés
+        if (/(?:shudhu chill vibe|chill mode nei|shudhu chill mode)/i.test(text)) {
+          continue;
+        }
+        // Skip assistant responses that leaked command names
+        if (/(?:^|\s)!(?:court|fight|biryani_roulette|roulette|bully|roast|expose|hype|iq|8ball|choose|commands|help)\b/i.test(text)) {
+          continue;
+        }
+        // Skip if identical to the previous assistant turn
+        const lastBotTurn = cleanHistory.slice().reverse().find(h => h.role === 'assistant');
+        if (lastBotTurn && lastBotTurn.content.toLowerCase() === text.toLowerCase()) {
+          continue;
+        }
+      }
+      cleanHistory.push({
         role: m.role === 'user' ? 'user' : 'assistant',
-        content: m.text.trim()
-      }));
+        content: text
+      });
+    }
+
+    return cleanHistory;
   }
 
   async addLongTermFact(userId: string, fact: string) {
