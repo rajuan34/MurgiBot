@@ -4,6 +4,8 @@
 
 Engineered with a unique **"lazy, sarcastic, Gen-Z Banglish"** persona, Bohurupi complains about being woken up, plays games, roasts users, and throws random tantrums. This repository includes both the **Discord Bot Backend (Node.js)** and a **Real-Time Admin Dashboard (React + Tailwind)**.
 
+📖 **Complete Production Documentation:** See the [`/docs`](./docs/README.md) directory for comprehensive, deep technical documentation covering every engine, function, security guard, AI provider, and deployment step.
+
 ---
 
 ## 🌟 What is Bohurupi?
