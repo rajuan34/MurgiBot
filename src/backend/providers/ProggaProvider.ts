@@ -1,5 +1,6 @@
 import { AIProvider, LLMRequest } from './ProviderManager';
 import { logger } from '../telemetry/logger';
+import { expenseTracker } from '../expenses/ExpenseTracker';
 
 /**
  * Progga AI Provider using DeepSeek v4 Flash (0731).
@@ -93,6 +94,8 @@ export class ProggaProvider implements AIProvider {
       const model = candidateModels[i];
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 12000);
+      const reqStart = Date.now();
+      let capturedRequestId = `req_progga_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
       try {
         const endpoint = `${this.baseUrl}/chat/completions`;
@@ -115,11 +118,38 @@ export class ProggaProvider implements AIProvider {
         });
 
         clearTimeout(timeoutId);
+        const latencyMs = Date.now() - reqStart;
+
+        const headerReqId = res.headers.get('x-request-id') || res.headers.get('request-id');
+        if (headerReqId) capturedRequestId = headerReqId;
 
         if (!res.ok) {
           const errText = await res.text().catch(() => '');
           const status = res.status;
-          
+
+          let errUsage: any = null;
+          let parsedErrId: string | null = null;
+          try {
+            const errJson = JSON.parse(errText);
+            if (errJson.id) parsedErrId = errJson.id;
+            if (errJson.usage) errUsage = errJson.usage;
+          } catch(e) {}
+
+          // Record failed request usage & accounting accurately
+          await expenseTracker.recordRequest({
+            requestId: parsedErrId || capturedRequestId,
+            model,
+            status: 'failure',
+            httpStatus: status,
+            latencyMs,
+            usage: errUsage,
+            errorCode: `HTTP_${status}`,
+            errorMessage: `HTTP ${status}: ${errText.slice(0, 200)}`,
+            metadata: {
+              prompt_length: request.prompt.length
+            }
+          }).catch(e => logger.warn('[Progga] Failed to record error expense', { error: String(e) }));
+
           if (status === 401 || status === 403) {
             throw new Error(`[Progga] Authorization failed on ${endpoint}: HTTP ${status}: Invalid API Key or Unauthorized (${errText.slice(0, 100)})`);
           }
@@ -131,7 +161,8 @@ export class ProggaProvider implements AIProvider {
           throw new Error(`[Progga] HTTP ${status} from ${endpoint} (model: ${model}): ${errText.slice(0, 150)}`);
         }
 
-        const data = await res.json();
+        const data: any = await res.json();
+        const finalReqId = data.id || capturedRequestId;
         let rawContent = data.choices?.[0]?.message?.content;
 
         if (typeof rawContent !== 'string' || !rawContent.trim()) {
@@ -140,6 +171,18 @@ export class ProggaProvider implements AIProvider {
           if (typeof reasoning === 'string' && reasoning.trim()) {
             rawContent = reasoning.trim();
           } else {
+            // Record failure for empty response
+            await expenseTracker.recordRequest({
+              requestId: finalReqId,
+              model: data.model || model,
+              status: 'failure',
+              httpStatus: res.status,
+              latencyMs,
+              usage: data.usage || null,
+              errorCode: 'EMPTY_RESPONSE',
+              errorMessage: `Empty response received from model ${model}`
+            }).catch(e => logger.warn('[Progga] Failed to record expense', { error: String(e) }));
+
             throw new Error(`[Progga] Empty response received from model ${model}`);
           }
         }
@@ -154,12 +197,46 @@ export class ProggaProvider implements AIProvider {
           clean = rawContent.replace(/<\/?think>/gi, '').trim();
         }
 
-        this.lastSuccessfulModel = model;
+        this.lastSuccessfulModel = data.model || model;
+
+        // Record successful request with full usage information & cost calculation
+        await expenseTracker.recordRequest({
+          requestId: finalReqId,
+          model: data.model || model,
+          status: 'success',
+          httpStatus: res.status,
+          latencyMs,
+          usage: data.usage || null,
+          metadata: {
+            prompt_length: request.prompt.length,
+            response_length: clean.length,
+            finish_reason: data.choices?.[0]?.finish_reason
+          }
+        }).catch(e => logger.warn('[Progga] Failed to record success expense', { error: String(e) }));
+
         return clean;
 
       } catch (err: any) {
         clearTimeout(timeoutId);
         lastError = err;
+        const latencyMs = Date.now() - reqStart;
+
+        // If the error was not already an HTTP response error recorded above (e.g. timeout or network disconnect)
+        if (!err.message?.includes('HTTP ')) {
+          await expenseTracker.recordRequest({
+            requestId: capturedRequestId,
+            model,
+            status: 'failure',
+            httpStatus: err.name === 'AbortError' ? 408 : 0,
+            latencyMs,
+            usage: null, // Network/Timeout error has no confirmed usage
+            errorCode: err.name === 'AbortError' ? 'TIMEOUT' : 'NETWORK_ERROR',
+            errorMessage: err.message || 'Request failed before provider response',
+            metadata: {
+              prompt_length: request.prompt.length
+            }
+          }).catch(e => logger.warn('[Progga] Failed to record network/abort error expense', { error: String(e) }));
+        }
 
         if (err.name === 'AbortError') {
           logger.warn(`[Progga] Request timeout on model ${model}`);

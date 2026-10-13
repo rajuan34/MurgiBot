@@ -1,0 +1,220 @@
+[
+  {
+    "id": "log_1791893268930_02f972333f",
+    "log_id": "log_1791893268930_02f972333f",
+    "timestamp": "2026-10-13T12:07:48.930Z",
+    "level": "warn",
+    "message": "Discord connection skipped: The provided DISCORD_TOKEN is invalid or has been reset in the Discord Developer Portal. Discord bot running in standby mode."
+  },
+  {
+    "id": "log_1791893268830_e3060ed940",
+    "log_id": "log_1791893268830_e3060ed940",
+    "timestamp": "2026-10-13T12:07:48.830Z",
+    "level": "info",
+    "message": "Render Keep-Alive active. Pinging: https://murgibot.onrender.com/api/health every 14 mins."
+  },
+  {
+    "id": "log_1791893268829_bcb96ff2d2",
+    "log_id": "log_1791893268829_bcb96ff2d2",
+    "timestamp": "2026-10-13T12:07:48.829Z",
+    "level": "info",
+    "message": "Bohurupi AI Core Engine running on port 3000"
+  },
+  {
+    "id": "log_1791893268587_f2902c6cc0",
+    "log_id": "log_1791893268587_f2902c6cc0",
+    "timestamp": "2026-10-13T12:07:48.586Z",
+    "level": "info",
+    "message": "DiscordService restored bot pause state: ACTIVE"
+  },
+  {
+    "id": "log_1791893268359_de57283b1e",
+    "log_id": "log_1791893268359_de57283b1e",
+    "timestamp": "2026-10-13T12:07:48.359Z",
+    "level": "info",
+    "message": "ProviderManager config updated."
+  },
+  {
+    "id": "log_1791893268130_6c6748f4d3",
+    "log_id": "log_1791893268130_6c6748f4d3",
+    "timestamp": "2026-10-13T12:07:48.130Z",
+    "level": "info",
+    "message": "[ProviderManager] Restored 1 historical API calls from PostgreSQL."
+  },
+  {
+    "id": "log_1791893267901_d18b171f0a",
+    "log_id": "log_1791893267901_d18b171f0a",
+    "timestamp": "2026-10-13T12:07:47.901Z",
+    "level": "info",
+    "message": "[Telemetry] Restored 17 historical logs from PostgreSQL persistent storage."
+  },
+  {
+    "id": "log_1791893267690_9dd81b920c",
+    "log_id": "log_1791893267690_9dd81b920c",
+    "timestamp": "2026-10-13T12:07:47.690Z",
+    "level": "info",
+    "message": "[ExpenseTracker] Initialized with PostgreSQL database storage."
+  },
+  {
+    "id": "log_1791893266987_93f310586b",
+    "log_id": "log_1791893266987_93f310586b",
+    "timestamp": "2026-10-13T12:07:46.987Z",
+    "level": "info",
+    "message": "Temporary Cache Database initialized successfully."
+  },
+  {
+    "id": "log_1791893265370_b9a60d1f62",
+    "log_id": "log_1791893265370_b9a60d1f62",
+    "timestamp": "2026-10-13T12:07:45.370Z",
+    "level": "info",
+    "message": "Registered AI Provider: Fallback-Simulated"
+  },
+  {
+    "id": "log_1791893265370_d0d553b73e",
+    "log_id": "log_1791893265370_d0d553b73e",
+    "timestamp": "2026-10-13T12:07:45.369Z",
+    "level": "info",
+    "message": "Registered AI Provider: Cloud-OpenRouter"
+  },
+  {
+    "id": "log_1791893265369_b245d4e3ef",
+    "log_id": "log_1791893265369_b245d4e3ef",
+    "timestamp": "2026-10-13T12:07:45.369Z",
+    "level": "info",
+    "message": "Registered AI Provider: Google-Gemini"
+  },
+  {
+    "id": "log_1791893265368_d00bf6b24d",
+    "log_id": "log_1791893265368_d00bf6b24d",
+    "timestamp": "2026-10-13T12:07:45.368Z",
+    "level": "info",
+    "message": "GeminiProvider initialized with cascading models: gemini-2.5-flash -> gemini-2.5-flash-lite -> gemini-2.0-flash -> gemini-2.0-flash-lite -> gemini-1.5-flash -> gemini-1.5-flash-8b -> gemini-3.1-flash-lite -> gemini-3.5-flash -> gemini-3.8-flash"
+  },
+  {
+    "id": "log_1791893265365_6125f74da2",
+    "log_id": "log_1791893265365_6125f74da2",
+    "timestamp": "2026-10-13T12:07:45.364Z",
+    "level": "info",
+    "message": "Registered AI Provider: Progga"
+  },
+  {
+    "id": "log_1791893245787_5ea2bf152d",
+    "log_id": "log_1791893245787_5ea2bf152d",
+    "timestamp": "2026-10-13T12:07:25.787Z",
+    "level": "info",
+    "message": "[Dashboard Access] Action Triggered | IP: 127.0.0.1 | Path: /api/providers/test",
+    "meta": {}
+  },
+  {
+    "id": "log_1791893240251_7a736834ec",
+    "log_id": "log_1791893240251_7a736834ec",
+    "timestamp": "2026-10-13T12:07:20.251Z",
+    "level": "info",
+    "message": "[Dashboard Access] Action Triggered | IP: 127.0.0.1 | Path: /api/providers/test",
+    "meta": {}
+  },
+  {
+    "id": "log_1791893204320_b9e9e3c231",
+    "log_id": "log_1791893204320_b9e9e3c231",
+    "timestamp": "2026-10-13T12:06:44.320Z",
+    "level": "warn",
+    "message": "Discord connection skipped: The provided DISCORD_TOKEN is invalid or has been reset in the Discord Developer Portal. Discord bot running in standby mode.",
+    "meta": {}
+  },
+  {
+    "id": "log_1791893203991_816ecc3ac5",
+    "log_id": "log_1791893203991_816ecc3ac5",
+    "timestamp": "2026-10-13T12:06:43.991Z",
+    "level": "info",
+    "message": "Bohurupi AI Core Engine running on port 3000",
+    "meta": {}
+  },
+  {
+    "id": "log_1791893203991_227e46ce83",
+    "log_id": "log_1791893203991_227e46ce83",
+    "timestamp": "2026-10-13T12:06:43.991Z",
+    "level": "info",
+    "message": "Render Keep-Alive active. Pinging: https://murgibot.onrender.com/api/health every 14 mins.",
+    "meta": {}
+  },
+  {
+    "id": "log_1791893203752_9961c13759",
+    "log_id": "log_1791893203752_9961c13759",
+    "timestamp": "2026-10-13T12:06:43.752Z",
+    "level": "info",
+    "message": "DiscordService restored bot pause state: ACTIVE",
+    "meta": {}
+  },
+  {
+    "id": "log_1791893203521_62cc402fd0",
+    "log_id": "log_1791893203521_62cc402fd0",
+    "timestamp": "2026-10-13T12:06:43.521Z",
+    "level": "info",
+    "message": "ProviderManager config updated.",
+    "meta": {}
+  },
+  {
+    "id": "log_1791893203061_531173ae5f",
+    "log_id": "log_1791893203061_531173ae5f",
+    "timestamp": "2026-10-13T12:06:43.060Z",
+    "level": "info",
+    "message": "[Telemetry] Restored 3 historical logs from PostgreSQL persistent storage.",
+    "meta": {}
+  },
+  {
+    "id": "log_1791893202713_e48e3c3c10",
+    "log_id": "log_1791893202713_e48e3c3c10",
+    "timestamp": "2026-10-13T12:06:42.712Z",
+    "level": "info",
+    "message": "[ExpenseTracker] Initialized with PostgreSQL database storage.",
+    "meta": {}
+  },
+  {
+    "id": "log_1791893202032_676663dda5",
+    "log_id": "log_1791893202032_676663dda5",
+    "timestamp": "2026-10-13T12:06:42.031Z",
+    "level": "info",
+    "message": "Temporary Cache Database initialized successfully.",
+    "meta": {}
+  },
+  {
+    "id": "log_1791893200399_bfb42d9fc6",
+    "log_id": "log_1791893200399_bfb42d9fc6",
+    "timestamp": "2026-10-13T12:06:40.399Z",
+    "level": "info",
+    "message": "Registered AI Provider: Fallback-Simulated",
+    "meta": {}
+  },
+  {
+    "id": "log_1791893200398_b9df7b19c4",
+    "log_id": "log_1791893200398_b9df7b19c4",
+    "timestamp": "2026-10-13T12:06:40.398Z",
+    "level": "info",
+    "message": "Registered AI Provider: Cloud-OpenRouter",
+    "meta": {}
+  },
+  {
+    "id": "log_1791893200397_f3e34105a8",
+    "log_id": "log_1791893200397_f3e34105a8",
+    "timestamp": "2026-10-13T12:06:40.397Z",
+    "level": "info",
+    "message": "GeminiProvider initialized with cascading models: gemini-2.5-flash -> gemini-2.5-flash-lite -> gemini-2.0-flash -> gemini-2.0-flash-lite -> gemini-1.5-flash -> gemini-1.5-flash-8b -> gemini-3.1-flash-lite -> gemini-3.5-flash -> gemini-3.8-flash",
+    "meta": {}
+  },
+  {
+    "id": "log_1791893200397_7cf30bbdfe",
+    "log_id": "log_1791893200397_7cf30bbdfe",
+    "timestamp": "2026-10-13T12:06:40.397Z",
+    "level": "info",
+    "message": "Registered AI Provider: Google-Gemini",
+    "meta": {}
+  },
+  {
+    "id": "log_1791893200393_ef4916889a",
+    "log_id": "log_1791893200393_ef4916889a",
+    "timestamp": "2026-10-13T12:06:40.392Z",
+    "level": "info",
+    "message": "Registered AI Provider: Progga",
+    "meta": {}
+  }
+]

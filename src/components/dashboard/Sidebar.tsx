@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Server, ListTree, Activity, AlertTriangle, Network, ShieldCheck, FileText, Settings, Rocket, Brain, X, LogOut } from 'lucide-react';
+import { LayoutDashboard, Server, ListTree, Activity, AlertTriangle, Network, ShieldCheck, FileText, Settings, Rocket, Brain, X, LogOut, Receipt } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
@@ -11,6 +11,7 @@ interface SidebarProps {
 export function Sidebar({ activeTab, setActiveTab, isMobileOpen = false, setIsMobileOpen }: SidebarProps) {
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'expenses', label: 'Expenses', icon: Receipt },
     { id: 'ai-engine', label: 'Bohurupi AI Core', icon: Brain },
     { id: 'resources', label: 'Resources', icon: Server },
     { id: 'tasks', label: 'Tasks & Workers', icon: ListTree },

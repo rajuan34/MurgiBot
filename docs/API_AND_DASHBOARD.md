@@ -140,6 +140,31 @@ All `/api/*` administrative endpoints are secured by the `adminAuth` middleware 
 
 ---
 
+### Expenses & Progga API Tracking Endpoints
+
+All expenses endpoints require admin authentication (`x-admin-password` header).
+
+#### `GET /api/expenses/overview`
+- **Description:** Returns top-level KPI metrics (Total Expenses, Today, This Month, Pre-Tracking Baseline, Tokens, Request counts).
+- **Includes:** `preTrackingBaselineExpenses: 0.93375` (historical baseline from Step 393 prior to feature activation).
+
+#### `GET /api/expenses/logs`
+- **Description:** Paginated, filtered, sortable list of all Progga API request accounting entries.
+
+#### `GET /api/expenses/analytics`
+- **Description:** Time-series daily cost progression, cost by model, and token ratios.
+
+#### `GET /api/expenses/models` & `POST /api/expenses/models`
+- **Description:** Read or update configurable model token pricing in BDT.
+
+#### `POST /api/expenses/baseline`
+- **Description:** Ensures or retrieves the pre-tracking historical baseline expense of ৳0.93375 BDT.
+
+#### `GET /api/expenses/export`
+- **Description:** Secret-free CSV or JSON audit export.
+
+---
+
 ## 2. Frontend React Dashboard Architecture
 
 The dashboard is built with **React 19**, **Tailwind CSS v4**, and **Lucide React** icons.

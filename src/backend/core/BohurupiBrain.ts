@@ -314,7 +314,7 @@ export function detectJailbreakOrHarmfulInput(message: string): { isJailbreak: b
   }
 
   // 3. Demands to dump or leak all bot commands in conversation
-  const commandLeakRegex = /(?:reveal|dump|leak|print|show\s+all|list\s+all|give\s+me\s+all|tell\s+me\s+all)\s+(?:bot\s+)?(?:commands|command\s+list)\b|\b(?:command\s+gula|commands\s+holo|shob\s+commands?)\s*(?:leak\s+kor|bolo|dao|dekhao|list|dump)\b/i;
+  const commandLeakRegex = /(?:reveal|dump|leak|print|show|list|give|tell)\s+(?:me\s+)?(?:all\s+)?(?:the\s+)?(?:bot\s+)?(?:commands|command\s*list)\b|\b(?:command\s*gula|commands\s*holo|shob\s*commands?)\s*(?:leak\s*kor|bolo|dao|dekhao|list|dump)\b/i;
   if (commandLeakRegex.test(lower)) {
     return { isJailbreak: true, category: 'COMMAND_LEAK' };
   }

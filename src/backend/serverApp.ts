@@ -3,7 +3,8 @@ import path from 'path';
 import cors from 'cors';
 import { createServer as createViteServer } from 'vite';
 import { getSystemMetrics, activeTasks } from './telemetry/systemMetrics';
-import { logger, logHistory } from './telemetry/logger';
+import { logger, logHistory, initLoggerPersistence } from './telemetry/logger';
+import { initDatabaseTables } from './db';
 
 import { ProviderManager } from './providers/ProviderManager';
 import { IdentityManager } from './identity/IdentityManager';
@@ -14,6 +15,7 @@ import { DiscordService } from './discord/DiscordService';
 import { GeminiProvider } from './providers/GeminiProvider';
 import { OpenRouterProvider } from './providers/OpenRouterProvider';
 import { ProggaProvider } from './providers/ProggaProvider';
+import { expenseTracker } from './expenses/ExpenseTracker';
 import 'dotenv/config';
 
 const app = express();
@@ -339,8 +341,233 @@ app.post(['/api/discord/toggle-pause', '/api/bot/toggle-pause'], adminAuth, asyn
   }
 });
 
+// ==========================================
+// Expenses & Progga API Usage Tracking Routes
+// ==========================================
+
+// 1. Overview KPIs
+app.get('/api/expenses/overview', adminAuth, (req, res) => {
+  try {
+    const preset = req.query.preset as any;
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
+    const overview = expenseTracker.getOverviewMetrics({ preset, startDate, endDate });
+    res.json(overview);
+  } catch (error: any) {
+    logger.error('Error fetching expenses overview', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 2. Request Logs
+app.get('/api/expenses/logs', adminAuth, (req, res) => {
+  try {
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = parseInt(req.query.limit as string, 10) || 25;
+    const search = req.query.search as string;
+    const model = req.query.model as string;
+    const provider = req.query.provider as string;
+    const status = req.query.status as any;
+    const usageAvailable = req.query.usageAvailable as any;
+    const preset = req.query.preset as any;
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
+    const sortBy = req.query.sortBy as any;
+    const sortOrder = req.query.sortOrder as any;
+
+    const logs = expenseTracker.getLogs({
+      page,
+      limit,
+      search,
+      model,
+      provider,
+      status,
+      usageAvailable,
+      range: { preset, startDate, endDate },
+      sortBy,
+      sortOrder
+    });
+    res.json(logs);
+  } catch (error: any) {
+    logger.error('Error fetching expenses logs', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 3. Analytics & Time Series
+app.get('/api/expenses/analytics', adminAuth, (req, res) => {
+  try {
+    const preset = req.query.preset as any;
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
+    const model = req.query.model as string;
+
+    const analytics = expenseTracker.getAnalytics({
+      range: { preset, startDate, endDate },
+      model
+    });
+    res.json(analytics);
+  } catch (error: any) {
+    logger.error('Error fetching expenses analytics', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 4. Model Pricing Management
+app.get('/api/expenses/models', adminAuth, (req, res) => {
+  try {
+    res.json({
+      models: expenseTracker.getAllModels(),
+      history: expenseTracker.getPricingHistory()
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/expenses/models', adminAuth, async (req, res) => {
+  try {
+    const { model, displayName, inputPricePerMillion, outputPricePerMillion, cachedInputPricePerMillion, enabled, isDefault, reason } = req.body;
+    if (!model) return res.status(400).json({ error: 'Model identifier is required.' });
+    if (isNaN(Number(inputPricePerMillion)) || isNaN(Number(outputPricePerMillion)) || isNaN(Number(cachedInputPricePerMillion))) {
+      return res.status(400).json({ error: 'Valid numeric prices per 1M tokens are required.' });
+    }
+
+    const updated = await expenseTracker.addOrUpdateModel({
+      model,
+      displayName,
+      inputPricePerMillion: Number(inputPricePerMillion),
+      outputPricePerMillion: Number(outputPricePerMillion),
+      cachedInputPricePerMillion: Number(cachedInputPricePerMillion),
+      enabled,
+      isDefault
+    }, 'Admin', reason);
+
+    res.json({ success: true, model: updated });
+  } catch (error: any) {
+    logger.error('Error saving model pricing', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/expenses/models/set-default', adminAuth, async (req, res) => {
+  try {
+    const { model } = req.body;
+    if (!model) return res.status(400).json({ error: 'Model identifier is required.' });
+    await expenseTracker.setDefaultModel(model, 'Admin');
+    res.json({ success: true, models: expenseTracker.getAllModels() });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 5. Explicit Historical Recalculation
+app.post('/api/expenses/recalculate', adminAuth, async (req, res) => {
+  try {
+    const { confirm, model } = req.body;
+    if (!confirm) {
+      return res.status(400).json({ error: 'Explicit admin confirmation (confirm: true) is required to recalculate historical expenses.' });
+    }
+    const result = await expenseTracker.recalculateHistoricalExpenses(model, 'Admin');
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 5b. Baseline Pre-Tracking Historical Expense
+app.post('/api/expenses/baseline', adminAuth, async (req, res) => {
+  try {
+    const record = await expenseTracker.ensurePreTrackingBaseline();
+    res.json({ success: true, record });
+  } catch (error: any) {
+    logger.error('Error ensuring baseline expense', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 6. Data Export (CSV / JSON)
+app.get('/api/expenses/export', adminAuth, (req, res) => {
+  try {
+    const format = (req.query.format === 'csv' ? 'csv' : 'json') as 'csv' | 'json';
+    const preset = req.query.preset as any;
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
+    const model = req.query.model as string;
+    const status = req.query.status as string;
+
+    const exportResult = expenseTracker.exportData(format, {
+      range: { preset, startDate, endDate },
+      model,
+      status
+    });
+
+    res.setHeader('Content-Type', exportResult.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${exportResult.filename}"`);
+    res.send(exportResult.data);
+  } catch (error: any) {
+    logger.error('Error exporting expenses data', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 7. API Configuration & Secret-Safe Status
+app.get('/api/expenses/config', adminAuth, (req, res) => {
+  try {
+    res.json(expenseTracker.getConfigSummary());
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 8. Safe Connection Test for Progga
+app.post('/api/expenses/test-progga', adminAuth, async (req, res) => {
+  try {
+    if (!proggaProvider.isHealthy()) {
+      return res.status(400).json({
+        success: false,
+        error: 'PROGGA_KEY is not configured in server environment. Please set PROGGA_KEY to enable inference.'
+      });
+    }
+
+    const testPrompt = req.body.prompt || 'Respond with "Progga connection OK" in Banglish.';
+    const start = Date.now();
+    const output = await proggaProvider.generate({
+      prompt: testPrompt,
+      systemInstruction: 'Respond in 1-2 words in Banglish.'
+    });
+    const latencyMs = Date.now() - start;
+
+    res.json({
+      success: true,
+      latencyMs,
+      output: output.slice(0, 150),
+      config: expenseTracker.getConfigSummary()
+    });
+  } catch (error: any) {
+    logger.error('Progga connection test failed', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      config: expenseTracker.getConfigSummary()
+    });
+  }
+});
+
 async function startServer() {
   try {
+    // 1. Ensure all persistent database tables exist across deployments
+    await initDatabaseTables();
+
+    // 2. Restore historical OpsCenter Telemetry logs (so no logs or details are lost on deployment)
+    await initLoggerPersistence();
+
+    // 3. Restore historical AI Provider API call history
+    await providerManager.initPersistence();
+
+    // 4. Ensure expense tracker storage & pre-tracking baseline
+    await expenseTracker.initStorage();
+
     const savedConfig = await memoryEngine.getSystemConfig('provider_config');
     if (savedConfig && Array.isArray(savedConfig)) {
       providerManager.setConfig(savedConfig);

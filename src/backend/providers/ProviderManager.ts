@@ -1,11 +1,18 @@
 import { logger } from '../telemetry/logger';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { getDbPool } from '../db';
 
 export interface APICallLog {
+  id?: string;
+  call_id?: string;
   timestamp: string;
   provider: string;
   status: 'success' | 'error' | 'rate_limit';
   latencyMs: number;
   errorDetail?: string;
+  metadata?: any;
 }
 
 export interface LLMRequest {
@@ -67,6 +74,63 @@ export interface DetailedProviderStatus {
 export class ProviderManager {
   private apiCallHistory: APICallLog[] = [];
   private consecutiveFallbackCount = 0;
+  private readonly CALL_LOGS_FILE = path.join(process.cwd(), 'data', 'api_calls.json');
+  private fileSaveTimeout: NodeJS.Timeout | null = null;
+
+  /**
+   * Restores API call history from PostgreSQL and file backup so that across
+   * deployments and restarts, all API performance records and error logs are retained.
+   */
+  async initPersistence(): Promise<void> {
+    let loadedFromDb = false;
+    const pool = getDbPool();
+
+    if (pool) {
+      try {
+        const client = await pool.connect();
+        try {
+          const res = await client.query(`
+            SELECT call_id, timestamp, provider, status, latency_ms, error_detail, metadata
+            FROM bohurupi_api_call_logs
+            ORDER BY timestamp DESC
+            LIMIT 500
+          `);
+
+          if (res.rows.length > 0) {
+            this.apiCallHistory = res.rows.map(row => ({
+              id: row.call_id,
+              call_id: row.call_id,
+              timestamp: new Date(row.timestamp).toISOString(),
+              provider: row.provider,
+              status: row.status as any,
+              latencyMs: Number(row.latency_ms),
+              errorDetail: row.error_detail || undefined,
+              metadata: row.metadata || undefined
+            }));
+            loadedFromDb = true;
+            logger.info(`[ProviderManager] Restored ${this.apiCallHistory.length} historical API calls from PostgreSQL.`);
+          }
+        } finally {
+          client.release();
+        }
+      } catch (e) {
+        logger.warn('[ProviderManager] Could not load API calls from DB, checking file backup', { error: String(e) });
+      }
+    }
+
+    if (!loadedFromDb) {
+      try {
+        const data = await fs.readFile(this.CALL_LOGS_FILE, 'utf-8');
+        const fileLogs = JSON.parse(data);
+        if (Array.isArray(fileLogs)) {
+          this.apiCallHistory = fileLogs;
+          logger.info(`[ProviderManager] Restored ${fileLogs.length} API call logs from file.`);
+        }
+      } catch (e) {
+        // File does not exist yet
+      }
+    }
+  }
 
   getConsecutiveFallbackCount(): number {
     return this.consecutiveFallbackCount;
@@ -80,9 +144,50 @@ export class ProviderManager {
     return this.apiCallHistory;
   }
 
-  private addApiLog(log: Omit<APICallLog, 'timestamp'>) {
-    this.apiCallHistory.unshift({ ...log, timestamp: new Date().toISOString() });
-    if (this.apiCallHistory.length > 100) this.apiCallHistory.pop();
+  public addApiLog(log: Omit<APICallLog, 'timestamp'>) {
+    const callId = `call_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    const timestamp = new Date().toISOString();
+    const entry: APICallLog = {
+      id: callId,
+      call_id: callId,
+      ...log,
+      timestamp
+    };
+
+    this.apiCallHistory.unshift(entry);
+    if (this.apiCallHistory.length > 500) this.apiCallHistory.pop();
+
+    // Async persist to PostgreSQL
+    const pool = getDbPool();
+    if (pool) {
+      pool.query(`
+        INSERT INTO bohurupi_api_call_logs (call_id, timestamp, provider, status, latency_ms, error_detail, metadata, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ON CONFLICT (call_id) DO NOTHING
+      `, [
+        callId,
+        timestamp,
+        entry.provider,
+        entry.status,
+        Math.round(entry.latencyMs || 0),
+        entry.errorDetail || null,
+        JSON.stringify(entry.metadata || {}),
+        Date.now()
+      ]).catch(e => {
+        // Ignore background insert error
+      });
+    }
+
+    // Debounced file backup
+    if (!this.fileSaveTimeout) {
+      this.fileSaveTimeout = setTimeout(async () => {
+        this.fileSaveTimeout = null;
+        try {
+          await fs.mkdir(path.dirname(this.CALL_LOGS_FILE), { recursive: true });
+          await fs.writeFile(this.CALL_LOGS_FILE, JSON.stringify(this.apiCallHistory.slice(0, 300), null, 2), 'utf-8');
+        } catch (e) {}
+      }, 2000);
+    }
   }
 
   
@@ -414,6 +519,12 @@ export class ProviderManager {
         logger.info(`Generation successful via ${provider.name}`, { 
           latency_ms: latency, 
           token_estimate: Math.ceil(text.length / 4) // Rough estimation
+        });
+        
+        this.addApiLog({
+          provider: provider.name,
+          status: 'success',
+          latencyMs: latency
         });
         
         return { text, providerName: provider.name, isIgnored: false };
