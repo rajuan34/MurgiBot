@@ -14,6 +14,8 @@ const scrubPII = winston.format((info) => {
     // Scrub bearer tokens and API keys
     msg = msg.replace(/Bearer\s+[a-zA-Z0-9_\-.]+/gi, 'Bearer [REDACTED]');
     msg = msg.replace(/(?:key|token|password|secret)=[^&\s]+/gi, '$1=[REDACTED]');
+    // Scrub Discord custom emoji IDs
+    msg = msg.replace(/<a?:([a-zA-Z0-9_~]+):([0-9]+)>/g, ':$1:');
     info.message = msg;
   }
   return info;
@@ -109,6 +111,22 @@ const memoryTransport = new winston.transports.Stream({
         } else {
           metaObj = { ...restMeta };
         }
+        
+        // Recursively sanitize all metadata strings to remove Discord emoji IDs
+        const sanitizeString = (str: string) => str.replace(/<a?:([a-zA-Z0-9_~]+):([0-9]+)>/g, ':$1:');
+        const sanitizeObject = (obj: any): any => {
+          if (typeof obj === 'string') return sanitizeString(obj);
+          if (Array.isArray(obj)) return obj.map(sanitizeObject);
+          if (typeof obj === 'object' && obj !== null) {
+            const newObj: any = {};
+            for (const key in obj) {
+              newObj[key] = sanitizeObject(obj[key]);
+            }
+            return newObj;
+          }
+          return obj;
+        };
+        metaObj = sanitizeObject(metaObj);
 
         const logId = `log_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
         const entry: LogEntry = {
@@ -246,4 +264,52 @@ export async function initLoggerPersistence(): Promise<void> {
   // Flush any startup logs that arrived before persistence initialized
   flushQueueToDb();
   queueFileBackup();
+  
+  // Clean up any historical logs containing raw discord emoji filenames
+  await sanitizeExistingLogs();
 }
+
+export async function sanitizeExistingLogs(): Promise<void> {
+  const pool = getDbPool();
+  if (!pool) return;
+
+  try {
+    const client = await pool.connect();
+    try {
+      const res = await client.query(`
+        SELECT id, meta 
+        FROM bohurupi_telemetry_logs 
+        WHERE meta::text LIKE '%pepehang%' OR meta::text LIKE '%pepedown%' OR meta::text LIKE '%pepesad%' OR meta::text LIKE '%pepecry%'
+      `);
+
+      for (const row of res.rows) {
+        const sanitizeString = (str: string) => str.replace(/<a?:([a-zA-Z0-9_~]+):([0-9]+)>/g, ':$1:');
+        const sanitizeObject = (obj: any): any => {
+          if (typeof obj === 'string') return sanitizeString(obj);
+          if (Array.isArray(obj)) return obj.map(sanitizeObject);
+          if (typeof obj === 'object' && obj !== null) {
+            const newObj: any = {};
+            for (const key in obj) {
+              newObj[key] = sanitizeObject(obj[key]);
+            }
+            return newObj;
+          }
+          return obj;
+        };
+        const sanitizedMeta = sanitizeObject(row.meta);
+        await client.query(
+          'UPDATE bohurupi_telemetry_logs SET meta = $1 WHERE id = $2',
+          [JSON.stringify(sanitizedMeta), row.id]
+        );
+      }
+      if (res.rows.length > 0) {
+        logger.info(`[Telemetry] Sanitized ${res.rows.length} historical logs.`);
+      }
+    } finally {
+      client.release();
+    }
+  } catch (e) {
+    logger.error('[Telemetry] Failed to sanitize existing logs', { error: String(e) });
+  }
+}
+

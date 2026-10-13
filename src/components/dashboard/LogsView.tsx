@@ -1,5 +1,68 @@
 import React, { useState, useMemo } from 'react';
-import { Terminal, Search, Filter, Download, Pause, Play, MessageSquare, Bot, Sparkles, User, CornerDownRight, Hash } from 'lucide-react';
+import { Terminal, Search, Filter, Download, Pause, Play, MessageSquare, Bot, Sparkles, User, CornerDownRight, Hash, Image } from 'lucide-react';
+
+/**
+ * Parses and formats Discord custom emojis (<:name:id>, <a:name:id>)
+ * into rendered images and formatted badges rather than raw ID strings.
+ */
+export function DiscordFormattedContent({ text, className = '' }: { text: string; className?: string }) {
+  if (!text) return null;
+
+  const emojiRegex = /<a?:([a-zA-Z0-9_~]+):([0-9]+)>/g;
+  if (!emojiRegex.test(text)) {
+    return <span className={className}>{text}</span>;
+  }
+
+  emojiRegex.lastIndex = 0;
+  const elements: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = emojiRegex.exec(text)) !== null) {
+    const [fullMatch, rawName, emojiId] = match;
+    const startIndex = match.index;
+
+    if (startIndex > lastIndex) {
+      elements.push(
+        <span key={`txt-${lastIndex}`}>{text.substring(lastIndex, startIndex)}</span>
+      );
+    }
+
+    const cleanName = rawName.replace(/^[0-9]+/, '');
+    const isAnimated = fullMatch.startsWith('<a:');
+    const ext = isAnimated ? 'gif' : 'png';
+    const cdnUrl = `https://cdn.discordapp.com/emojis/${emojiId}.${ext}?size=48&quality=lossless`;
+
+    elements.push(
+      <span
+        key={`emoji-${startIndex}`}
+        className="inline-flex items-center gap-1.5 align-middle mx-1 px-1.5 py-0.5 rounded-md bg-neutral-800/90 border border-neutral-700/70 text-xs font-mono text-neutral-200 shadow-sm"
+        title={`:${cleanName}:`}
+      >
+        <img
+          src={cdnUrl}
+          alt={`:${cleanName}:`}
+          className="inline-block w-5 h-5 object-contain"
+          loading="lazy"
+          onError={(e) => {
+            (e.target as HTMLElement).style.display = 'none';
+          }}
+        />
+        <span className="text-[11px] text-neutral-300 font-medium">:{cleanName}:</span>
+      </span>
+    );
+
+    lastIndex = startIndex + fullMatch.length;
+  }
+
+  if (lastIndex < text.length) {
+    elements.push(
+      <span key={`txt-${lastIndex}`}>{text.substring(lastIndex)}</span>
+    );
+  }
+
+  return <span className={className}>{elements}</span>;
+}
 
 export function LogsView({ serverLogs, isConnected }: { serverLogs: any[], isConnected: boolean }) {
   const [isPaused, setIsPaused] = useState(false);
@@ -171,7 +234,7 @@ export function LogsView({ serverLogs, isConnected }: { serverLogs: any[], isCon
                   </div>
                   <div className="text-neutral-100 bg-neutral-900/80 p-2.5 rounded border border-neutral-800/80 text-[13px] font-sans">
                     <span className="text-neutral-400 text-xs font-mono mr-2">📥 Incoming Message:</span>
-                    <span className="font-medium text-white">{incomingMsg || log.message}</span>
+                    <DiscordFormattedContent text={incomingMsg || log.message} className="font-medium text-white" />
                   </div>
                 </div>
               );
@@ -202,7 +265,7 @@ export function LogsView({ serverLogs, isConnected }: { serverLogs: any[], isCon
                   </div>
                   <div className="text-emerald-200 bg-neutral-900/80 p-2.5 rounded border border-neutral-800/80 text-[13px] font-sans leading-relaxed">
                     <span className="text-neutral-400 text-xs font-mono mr-2">📤 Sent to Discord:</span>
-                    <span className="text-emerald-100">{replyText || log.message}</span>
+                    <DiscordFormattedContent text={replyText || log.message} className="text-emerald-100" />
                   </div>
                 </div>
               );
@@ -256,7 +319,7 @@ export function LogsView({ serverLogs, isConnected }: { serverLogs: any[], isCon
                   [{log.level.toUpperCase()}]
                 </span>
                 <span className="text-neutral-300 break-all flex-1">
-                  {log.message}
+                  <DiscordFormattedContent text={log.message} />
                   {log.meta && Object.keys(log.meta).length > 0 && !isDiscordMention && !isDiscordReply && (
                     <span className="text-neutral-500 ml-2 block sm:inline mt-1 sm:mt-0 font-mono text-[11px]">
                       {JSON.stringify(log.meta)}

@@ -35,10 +35,10 @@ export class EmotionEngine {
     } else if (/(why|how|what|explain|tell|who|kivabe|keno|koi|👀|🤔|🤨|🧐)/.test(text)) {
       nextState = 'Curious';
       matchedTrigger = true;
-    } else if (/(sleep|tired|night|boring|yawn|bed|ghum|klanto|😴|🥱|💤)/.test(text)) {
+    } else if (/(sleep|tired|exhaust|night|boring|yawn|bed|ghum|klanto|😴|🥱|💤)/.test(text)) {
       nextState = 'Sleepy';
       matchedTrigger = true;
-    } else if (/(sad|help|depressed|hurt|broken|please|kanna|kosto|😭|😢|🥺|💔)/.test(text)) {
+    } else if (/(sad|help|depressed|pepehang|hang|kms|hopeless|hurt|broken|please|kanna|kosto|😭|😢|🥺|💔)/.test(text)) {
       nextState = 'Supportive'; 
       matchedTrigger = true;
     } else if (/(smart|wise|advice|life|universe|think|gyan|bujhsi|🗿|🍷)/.test(text)) {

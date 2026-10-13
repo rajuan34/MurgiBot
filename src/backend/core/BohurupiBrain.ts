@@ -19,50 +19,121 @@ export function isCreator(userId: string): boolean {
 }
 
 /**
+ * Maps Discord custom emoji names to rich semantic emotions and standard Unicode emojis.
+ * Prevents the LLM from seeing or echoing raw emoji code strings like "pepehang" or "tired".
+ */
+export function translateDiscordEmojiToSemantic(rawName: string): { emoji: string; emotion: string } {
+  const clean = rawName.replace(/^[0-9]+/, '').toLowerCase();
+
+  // Depressed / Suicide meme / Hanging / Giving up / Dead inside
+  if (/pepehang|hang|noose|rope|suicide|kms|depress|hopeless|givingup|done_with_life|depressed/i.test(clean)) {
+    return { emoji: '😭 💀', emotion: 'feeling overwhelmed, hopeless, depressed, or done with life meme' };
+  }
+  // Tired / Exhausted / Sleepy / Drained / Klanto
+  if (/tired|exhaust|sleep|yawn|drained|klanto|bed|passout|faint|boring/i.test(clean)) {
+    return { emoji: '🥱 😴', emotion: 'feeling exhausted, tired, low energy, or sleepy' };
+  }
+  // Panicked / Shocked / Scared
+  if (/panik|panic|scared|fear|shock|screaming|shook|anxious/i.test(clean)) {
+    return { emoji: '😱 😨', emotion: 'panicking, shocked, or terrified' };
+  }
+  // Dead / Skull / Died / Ded
+  if (/skull|dead|ded|rip|coffin|grave|skeleton/i.test(clean)) {
+    return { emoji: '💀 ☠️', emotion: 'dead from laughter or shock' };
+  }
+  // Sobbing / Crying / Sad / Tears / Pepe sad
+  if (/sob|cry|sad|tears|pepesad|pepecry|heartbroken|broken|kanna|kosto/i.test(clean)) {
+    return { emoji: '😭 😢', emotion: 'crying or deeply sad' };
+  }
+  // Laughing / LMAO / KEKW / ROFL / Joy
+  if (/laugh|lol|lmao|rofl|kek|kekw|pepelaugh|joy|haha|hilarious/i.test(clean)) {
+    return { emoji: '🤣 😂', emotion: 'laughing hysterically' };
+  }
+  // Unamused / Annoyed / Meh / Side-eye / Bruh / Bored
+  if (/unamused|annoyed|side_eye|meh|bruh|bored|facepalm|disappointed/i.test(clean)) {
+    return { emoji: '😑 🤦‍♂️', emotion: 'unamused, annoyed, or facepalming' };
+  }
+  // Nervous / Sweating / MonkaS
+  if (/monka|sweat|nervous|worry|shivering/i.test(clean)) {
+    return { emoji: '😰 😬', emotion: 'nervous or anxious sweating' };
+  }
+  // Hype / Pog / Fire / Lit / Let's go
+  if (/pog|poggers|hype|fire|lit|letsgo|celebrate|party/i.test(clean)) {
+    return { emoji: '🔥 🎉', emotion: 'super hyped and excited' };
+  }
+  // Clown / Foolish
+  if (/clown|honk|fool/i.test(clean)) {
+    return { emoji: '🤡', emotion: 'acting like a clown or foolish' };
+  }
+  // Chad / GigaChad / Sigma / Moai / Based
+  if (/chad|gigachad|sigma|moai|moyai|based/i.test(clean)) {
+    return { emoji: '🗿 😎', emotion: 'confident, chad, or unbothered' };
+  }
+  // Suspicious / Thinking / Rock eyebrow / Sus
+  if (/sus|think|eyebrow|rock|hmm|detective|curious/i.test(clean)) {
+    return { emoji: '🤨 👀', emotion: 'suspicious, skeptical, or curious' };
+  }
+  // Angry / Rage / Mad
+  if (/rage|angry|mad|furious|gussa/i.test(clean)) {
+    return { emoji: '😡 🤬', emotion: 'angry or enraged' };
+  }
+  // Love / Heart / Wholesome / Hug
+  if (/love|heart|wholesome|hug|kiss|cute/i.test(clean)) {
+    return { emoji: '❤️ 🥰', emotion: 'affectionate, loving, or wholesome' };
+  }
+  // Salute / Respect / o7
+  if (/salute|o7|respect/i.test(clean)) {
+    return { emoji: '🫡', emotion: 'giving respectful salute' };
+  }
+
+  // Default fallback: return clean label without numeric prefix
+  return { emoji: '👀', emotion: clean };
+}
+
+/**
  * Normalizes user messages that contain Discord custom emojis (<:name:id>, <a:name:id>)
  * or unicode emojis, translating them into rich semantic context so the LLM understands
- * what the user is expressing without getting confused by raw Discord tokens.
+ * what the user is expressing without getting confused by raw Discord tokens or echoing filenames.
  */
-export function normalizeIncomingEmojis(message: string): { normalizedText: string; isEmojiOnly: boolean } {
+export function normalizeIncomingEmojis(message: string): { normalizedText: string; isEmojiOnly: boolean; emotionHint?: string } {
   let text = (message || '').trim();
   if (!text) return { normalizedText: 'oi', isEmojiOnly: false };
 
   const customEmojiRegex = /<a?:([a-zA-Z0-9_~]+):([0-9]+)>/g;
-  const detectedCustomEmojis: string[] = [];
+  const detectedCustomEmojis: { raw: string; clean: string; emoji: string; emotion: string }[] = [];
 
   // Replace custom emoji tokens with friendly descriptors
   let replaced = text.replace(customEmojiRegex, (match, name) => {
-    const cleanName = name.replace(/^[0-9]+/, ''); // e.g. 420802panikemoji -> panikemoji
-    detectedCustomEmojis.push(cleanName || name);
-    return `:${cleanName || name}:`;
-  });
+    const cleanName = name.replace(/^[0-9]+/, '');
+    const semantic = translateDiscordEmojiToSemantic(cleanName);
+    detectedCustomEmojis.push({ raw: name, clean: cleanName, emoji: semantic.emoji, emotion: semantic.emotion });
+    return ` ${semantic.emoji} `;
+  }).replace(/\s+/g, ' ').trim();
 
-  const remainingNonEmoji = replaced.replace(/:[a-zA-Z0-9_~]+:/g, '').replace(/[\p{Emoji}\s]/gu, '').trim();
+  const remainingNonEmoji = replaced.replace(/[\p{Emoji}\s]/gu, '').trim();
   const isEmojiOnly = remainingNonEmoji.length === 0;
 
-  // If user sent ONLY an emoji expression (e.g., panicked emoji or 😑 or 💀)
+  // If user sent ONLY emoji expressions (e.g. <:304977pepehang:1494330926899925042>)
   if (isEmojiOnly) {
-    let emojiDescription = replaced;
     if (detectedCustomEmojis.length > 0) {
-      emojiDescription = detectedCustomEmojis.map(name => {
-        const lower = name.toLowerCase();
-        if (/panik|panic|scared|fear|shock/i.test(lower)) return '😱';
-        if (/skull|dead|ded/i.test(lower)) return '💀';
-        if (/sob|cry|sad/i.test(lower)) return '😭';
-        if (/laugh|lol|lmao|rofl/i.test(lower)) return '🤣';
-        if (/unamused|annoyed|side_eye|meh/i.test(lower)) return '😑';
-        return `:${name}:`;
-      }).join(' ');
+      const emojiIcons = detectedCustomEmojis.map(d => d.emoji).join(' ');
+      const emotions = detectedCustomEmojis.map(d => d.emotion).join(', ');
+      return {
+        normalizedText: `${emojiIcons} [Reaction: User is expressing ${emotions}]`,
+        isEmojiOnly: true,
+        emotionHint: emotions
+      };
     }
     return {
-      normalizedText: emojiDescription || 'oi',
+      normalizedText: replaced || 'oi',
       isEmojiOnly: true
     };
   }
 
   return {
     normalizedText: replaced,
-    isEmojiOnly: false
+    isEmojiOnly: false,
+    emotionHint: detectedCustomEmojis.length > 0 ? detectedCustomEmojis.map(d => d.emotion).join(', ') : undefined
   };
 }
 
@@ -538,21 +609,18 @@ export function sanitizeOutgoingText(rawText: string, userRole: string, userProm
 
   // Map known custom emoji fragments to standard Unicode emojis
   cleanText = cleanText.replace(/`?\\?<a?:([a-zA-Z0-9_~]+)(?::[0-9]*)?>?`?/gi, (match, name) => {
-    const lower = name.toLowerCase();
-    if (/panik|panic|scared|fear|shock/i.test(lower)) return '😱';
-    if (/skull|dead|ded/i.test(lower)) return '💀';
-    if (/sob|cry|sad/i.test(lower)) return '😭';
-    if (/lol|lmao|rofl|laugh|joy/i.test(lower)) return '🤣';
-    if (/unamused|annoyed|side_eye/i.test(lower)) return '😑';
-    if (/clown/i.test(lower)) return '🤡';
-    if (/fire/i.test(lower)) return '🔥';
-    if (/moyai|moai|chad/i.test(lower)) return '🗿';
-    if (/eyes|sus/i.test(lower)) return '👀';
-    if (/think/i.test(lower)) return '🤔';
-    if (/salute/i.test(lower)) return '🫡';
-    if (/heart|love/i.test(lower)) return '❤️';
-    return ''; // Remove unrecognized custom tags so broken code isn't shown
+    const semantic = translateDiscordEmojiToSemantic(name);
+    return semantic.emoji.startsWith('[') ? '' : semantic.emoji;
   });
+
+  // Strip or translate custom emoji tokens like :pepehang: or :tired:
+  cleanText = cleanText.replace(/:([a-zA-Z0-9_~]{2,30}):/g, (match, name) => {
+    const semantic = translateDiscordEmojiToSemantic(name);
+    return semantic.emoji.startsWith('[') ? '' : semantic.emoji;
+  });
+
+  // Scrub any raw custom emoji filenames that might be parroted by LLM (e.g., "pepehang er vibe")
+  cleanText = cleanText.replace(/\b(?:pepehang|pepedown|pepesad|pepecry)\s*(?:er\s*vibe)?\b/gi, 'pera');
 
   // Remove any remaining stray unclosed `<:...` or `<a:...` tags
   cleanText = cleanText.replace(/<a?:[^>\n]+>?/g, '').trim();
@@ -805,6 +873,7 @@ ${confidentialityAndPrivacyDirective}
 - NEVER parrot or echo the user's message back with a question mark (e.g. NEVER start with "ja ase dekhao?" or "chill mode?").
 - NEVER repeat previous phrases, boilerplate jokes, or sentence formulas. Every reply must be fresh, dynamic, and unpredictable!
 - NEVER talk about your personality mode (do not say "chill mode", "playful mode", etc.). Just talk naturally.
+- When user sends emojis/reactions (e.g. 😭, 💀, 🥱, sad or exhausted memes): Respond naturally to their mood or emotion. NEVER echo or say raw emoji filenames like "pepehang", "pepehang er vibe", or ":pepehang:".
 - Length: 1-2 sentences maximum in authentic Banglish.
 - Emoji rule: standard Unicode only (e.g. 💀, 😭, 🤣, 😱, 🗿, 🤡, 👀, 😑, 🥱).
 `.trim();
