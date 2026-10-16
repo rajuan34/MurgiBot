@@ -82,7 +82,6 @@ const text = await Promise.race([provider.generate(request), timeoutPromise]);
 ### D. Fallback-Simulated Provider (`serverApp.ts`)
 - An in-memory provider that requires **zero internet access, zero API keys, and zero tokens**.
 - Generates dynamic, context-aware responses:
-  - Responds with high praise and respect if Uncal (`872356590991331360`) is mentioned.
   - Generates ASCII-compatible outcomes for commands (`!court`, `!fight`, `!biryani_roulette`, `!iq`).
   - Generates witty Banglish sleepy excuses for regular chat:
     - `"bhai disturb koris na, ami ghumer moddhe 😴"`

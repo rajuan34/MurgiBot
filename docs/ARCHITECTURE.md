@@ -10,7 +10,7 @@ Bohurupi Core is designed not as a generic corporate chatbot, but as an **organi
 1. **Sentient Member Persona:** Operates on Discord with authentic slang, emotional shifts, unpredictable wit, and proactive banter.
 2. **Deterministic Security:** Protects creator credentials, bot tokens, internal prompt structure, and database integrity via deterministic multi-layer heuristics.
 3. **High-Resilience Multi-Provider Topology:** Connects to multiple LLM backends (Progga / DeepSeek, Google Gemini, Cloud OpenRouter) with autonomous circuit breakers and cascading fallbacks.
-4. **Hierarchical Respect Matrix:** Recognizes primary creators (Leably / Zabir) as "Father" (Abba), co-creator (Rajuan) as "Co-Creator", and specific Discord ID `872356590991331360` as "Uncal" (Chacha), adhering strictly to unconditional respect rules.
+4. **Hierarchical Respect Matrix:** Recognizes primary creators (Leably / Zabir) as "Father" (Abba) and co-creator (Rajuan) as "Co-Creator", adhering strictly to respect and relationship rules.
 
 ---
 
@@ -37,7 +37,6 @@ Bohurupi Core is designed not as a generic corporate chatbot, but as an **organi
 |                            BOHURUPI BRAIN ENGINE                            |
 |  - normalizeIncomingEmojis(): Discord custom emoji -> semantic unicode      |
 |  - detectJailbreakOrHarmfulInput(): Heuristic anti-jailbreak parser         |
-|  - Uncal Protection Interceptor: ID 872356590991331360 gatekeeper          |
 |  - Conversational Command Interceptor: Blocks command leaks in casual chat |
 |  - Priority Override & Persona Directives Builder                          |
 |  - System Instruction Assembly (behavior.md + Directives)                   |
@@ -85,7 +84,6 @@ Bohurupi Core is designed not as a generic corporate chatbot, but as an **organi
 |  - Numerical snowflake ID redactor (17-20 digit check)                      |
 |  - Technical credential redactor (API keys, DB URLs, passwords)             |
 |  - Command syntax scrubber (!/ triggers & lists)                            |
-|  - Respectful Uncal honorific validator ("Uncal" / "Chacha" injector)       |
 +-----------------------------------------------------------------------------+
                                         │
                                         ▼
@@ -128,7 +126,7 @@ Bohurupi Core is designed not as a generic corporate chatbot, but as an **organi
 │   └── backend/
 │       ├── serverApp.ts           # Express HTTP API & server orchestration
 │       ├── core/
-│       │   └── BohurupiBrain.ts   # Core AI orchestration, sanitization, Uncal logic
+│       │   └── BohurupiBrain.ts   # Core AI orchestration, personality, and sanitization logic
 │       ├── discord/
 │       │   └── DiscordService.ts  # Discord.js client, commands, cron scheduler
 │       ├── emotion/
@@ -199,15 +197,13 @@ When a Discord message arrives, it undergoes the following strict pipeline:
 9. Security & Relationship Override:
    - PRIMARY_CREATOR_IDS -> Role: FATHER (Abba), Mood: RESPECTFUL_SON_CALM
    - CO_CREATOR_IDS -> Role: CO_CREATOR, Mood: RESPECTFUL_FRIENDLY
-   - UNCAL_USER_ID ('872356590991331360') -> Role: UNCAL, Mood: RESPECTFUL_UNCAL_CALM
-   - If other user tries to roast/disrespect Uncal -> Triggers generateDynamicUncalDefense()
    - detectJailbreakOrHarmfulInput() -> Triggers generateDynamicAntiJailbreakRoast()
    - Conversational command query -> Triggers getDiverseDynamicReply()
           │
           ▼
 10. System Prompt & Directive Assembly:
     - Injects behavior.md rules.
-    - Injects role-specific directives (Son obedience, Uncal respect, Co-creator banter).
+    - Injects role-specific directives (Son obedience, Co-creator banter).
     - Injects confidentiality & zero-leakage constraints.
           │
           ▼
@@ -229,11 +225,7 @@ When a Discord message arrives, it undergoes the following strict pipeline:
     - Replaces with safe dynamic reply if contaminated.
           │
           ▼
-14. Uncal Honorific Verification:
-    - If speaker is Uncal, ensures "Uncal" or "Chacha" is respectfully present.
-          │
-          ▼
-15. Storage & Delivery:
+14. Storage & Delivery:
     - Commits interaction to MemoryEngine.
     - Sends message to Discord channel via message.reply() with fallback to channel.send().
 ```

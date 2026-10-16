@@ -74,42 +74,35 @@ To avoid unhandled exceptions and log pollution like `{"error":"Missing Permissi
 
 Bohurupi features interactive, roleplaying ASCII-framed commands:
 
-| Command | Target Logic | Output Format | Uncal (`872356590991331360`) Behavior |
+| Command | Target Logic | Output Format | Description |
 | :--- | :--- | :--- | :--- |
-| `!help` / `!commands` | Author | ASCII Menu Table | Standard display (adds respectful greeting if invoked by Uncal). |
-| `!court [@user]` | `@user` or Author | ASCII Supreme Court Frame (Judge, Crime, Dialogue, Jury, Verdict, Penalty) | **Case Dismissed!** Verdict: 100% INNOCENT - Supreme Respect! Penalty: None. |
-| `!fight [@user]` | `@user` or Author | ASCII Street Fight Frame (HP bars, Knockout Move, Trash Talk) | **Match Cancelled!** Bohurupi refuses to fight Uncal, offers supreme salam 🫡. |
-| `!biryani_roulette [@user]` | `@user` or Author | ASCII Slot Roulette Frame (Dish, Rating, Kitchen Notes, Mockery) | **Royal VIP Platter!** 10/10 rating served with supreme respect. |
-| `!iq [@user]` | `@user` or Author | ASCII Brain Scanner Frame (Fake IQ score, Diagnosis, Roast) | **300+ IQ Genius!** Diagnosis: Supreme Genius & Respected Uncal 👑. |
-| `!roast` / `!bully [@user]` | `@user` or Author | Savage Banglish roast | **Refused!** Dynamically refuses: *"Nah bro, that's my Uncal! Show some respect 🫡"*. |
-| `!expose [@user]` | `@user` or Author | Fake leaked secret / search history | Generates legendary wholesome heroic story about Uncal. |
-| `!hype [@user]` | `@user` or Author | Deity-level supreme hype | Treats Uncal as an absolute elder legend with supreme respect. |
-| `!agree [@user]` | `@user` or Author | Aggressive agreement | Aggressively affirms Uncal's words as absolute golden truth. |
-| `!predict [@user]` | `@user` or Author | 10-year future prediction | Predicts glorious, highly prosperous future for Uncal. |
-| `!lore [@user]` | `@user` or Author | Fake origin lore | Tells epic origin story celebrating Uncal. |
-| `!flirt [@user]` | `@user` or Author | Pick-up line / compliment | Generates wholesome elder-respecting compliment. |
-| `!advice [query]` | Query author | Sarcastic toxic desi life advice | Polite, respectful, and genuinely helpful advice for Uncal. |
-| `!truth [@user]` | `@user` or Author | Awkward spicy truth question | Wholesome, respectful, and fun truth question for Uncal. |
-| `!dare [@user]` | `@user` or Author | Chaotic Discord dare | Polite, respectful dare (e.g., bless the server). |
-| `!horoscope [@user]`| `@user` or Author | Absurd astrology prediction | Blessed, wonderful, prosperous daily horoscope. |
-| `!biryani_war` | Whole chat | Local food debate starter | N/A (Chat event). |
-| `!nasta_check` | Whole chat | Strict desi guardian snack check | N/A (Chat event). |
-| `!roast_chat` | Whole chat | Roasts server vibe and silence | N/A (Chat event). |
+| `!help` / `!commands` | Author | ASCII Menu Table | Displays commands catalog and bot features. |
+| `!court [@user]` | `@user` or Author | ASCII Supreme Court Frame (Judge, Crime, Dialogue, Jury, Verdict, Penalty) | Humorous mock courtroom trial with dynamic judge verdict and penalty. |
+| `!fight [@user]` | `@user` or Author | ASCII Street Fight Frame (HP bars, Knockout Move, Trash Talk) | 8-bit turn-based brawl between bot and target. |
+| `!biryani_roulette [@user]` | `@user` or Author | ASCII Slot Roulette Frame (Dish, Rating, Kitchen Notes, Mockery) | Randomized chaotic restaurant food critique. |
+| `!iq [@user]` | `@user` or Author | ASCII Brain Scanner Frame (Fake IQ score, Diagnosis, Roast) | Brain scanner with ridiculous diagnostic roast. |
+| `!roast` / `!bully [@user]` | `@user` or Author | Savage Banglish roast | Unhinged, witty desi roast tailored to the user. |
+| `!expose [@user]` | `@user` or Author | Fake leaked secret / search history | Absurd fabricated browser history or secret. |
+| `!hype [@user]` | `@user` or Author | Deity-level supreme hype | Over-the-top, god-tier praise and hype. |
+| `!agree [@user]` | `@user` or Author | Aggressive agreement | Aggressively affirms whatever the user said. |
+| `!predict [@user]` | `@user` or Author | 10-year future prediction | Predicts ridiculous, unpredictable future life. |
+| `!lore [@user]` | `@user` or Author | Fake origin lore | Dramatic anime/mythological origin backstory. |
+| `!flirt [@user]` | `@user` or Author | Pick-up line / compliment | Cheesy desi pick-up line. |
+| `!advice [query]` | Query author | Sarcastic toxic desi life advice | Brutally honest and sarcastic desi life guidance. |
+| `!truth [@user]` | `@user` or Author | Awkward spicy truth question | Embarrassing and awkward truth question. |
+| `!dare [@user]` | `@user` or Author | Chaotic Discord dare | Chaotic server dare or challenge. |
+| `!horoscope [@user]`| `@user` or Author | Absurd astrology prediction | Absurd astrological destiny reading. |
+| `!biryani_war` | Whole chat | Local food debate starter | Ignites fierce debate between Kacchi vs Tehari vs Morog Polao. |
+| `!nasta_check` | Whole chat | Strict desi guardian snack check | Desi parent afternoon nasta evaluation. |
+| `!roast_chat` | Whole chat | Roasts server vibe and silence | Roasts dead chat energy with fierce mockery. |
 
 ---
 
 ## 5. Slash Commands (`Events.InteractionCreate`)
 
 Bohurupi handles modern Discord slash interactions (`/`):
-- **Uncal Check on Slash Commands:**
-  ```typescript
-  if (targetUserId === UNCAL_USER_ID && ['bully', 'roast', 'fight', 'court', 'iq', 'biryani_roulette'].includes(cmdName)) {
-    const defense = generateDynamicUncalDefense(interaction.user.displayName || interaction.user.username);
-    await interaction.reply({ content: defense });
-    return;
-  }
-  ```
-- **Uncal Author Support:** If Uncal executes a slash command, the bot acknowledges him respectfully as "Uncal" or "Chacha".
+- Translates slash command options and parameters into the corresponding backend command handler.
+- Deploys ASCII-styled structured responses with dynamic generation.
 
 ---
 

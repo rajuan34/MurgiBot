@@ -9,7 +9,6 @@
 ```typescript
 export const PRIMARY_CREATOR_IDS = ['1059104533109821540', '1138805727025000458'];
 export const CO_CREATOR_IDS = ['986296691437207592', '1131061730076639352'];
-export const UNCAL_USER_ID = '872356590991331360';
 ```
 
 ### Hierarchy Breakdown:
@@ -23,12 +22,7 @@ export const UNCAL_USER_ID = '872356590991331360';
    - Assigned role: `CO_CREATOR`.
    - Forced emotional state: `RESPECTFUL_FRIENDLY`.
    - Behavioral rule: Bohurupi acts as a collaborative, chill developer buddy, addressing him as "Rajuan bhai" or "Boss".
-3. **Uncal (Chacha) (`UNCAL_USER_ID`):**
-   - Represents Discord User ID `872356590991331360`.
-   - Assigned role: `UNCAL`.
-   - Forced emotional state: `RESPECTFUL_UNCAL_CALM`.
-   - Behavioral rule: Treated with supreme elder respect, addressing him as "Uncal" or "Chacha". Insults, roasts, or courtroom attacks against him are unconditionally blocked.
-4. **General Server Members:**
+3. **General Server Members:**
    - Evaluated by `EmotionEngine` across 10 dynamic states (Playful, Chaos, Chill, Wise, Supportive, etc.).
 
 ---
@@ -91,17 +85,6 @@ Generates authentic, witty Banglish roasts that dismiss attackers without soundi
 
 ---
 
-### `generateDynamicUncalDefense(requesterName?: string)`
-Dynamically generates a polite, humorous refusal when any user attempts to roast or mock Uncal (Discord User ID `872356590991331360`):
-- **Never copies static documentation examples verbatim:** Adheres strictly to `RULE[AGENTS_md]`.
-- Uses polite, natural Banglish:
-  - `"areh bhai, Chacha ke roast korar kono shujog nai! Uncal ke shomman korte hoy 🫡"`
-  - `"kono chance nai bro, oita amar Uncal! Chacha ke niye kono roast ba troll hobe na 👀"`
-  - `"bhai amar Chacha ke niye kono disrespect korbo na, Uncal is always respected here 👑"`
-  - `"amar Chacha er upor kono attack nai bhai, Uncal ke age salam de! 🫡"`
-
----
-
 ### `stripParrotingEcho(text: string, userPrompt?: string)`
 Detects and strips rhetorical echoes where LLMs mimic the user's prompt as an opening question:
 - Detects pattern: `^([a-zA-Z0-9_\-\s]{2,40})\?\s*(.+)$`.
@@ -135,20 +118,17 @@ Handles conversational chat, mentions, and message replies:
 1. Normalizes emojis.
 2. Commits user message to short-term memory.
 3. Evaluates emotion and creator/family state overrides.
-4. Checks Uncal defense -> Returns if attacker is targeting Uncal.
-5. Checks jailbreak detection -> Returns anti-jailbreak roast if detected.
-6. Checks conversational command query -> Intercepts and deflects organically.
-7. Assembles context, memory, system instructions (`behavior.md` + role directives).
-8. Generates candidate response via `ProviderManager`.
-9. Validates anti-repetition. If repetitive, retries once with explicit anti-repetition instruction; falls back to dynamic reply if retry fails.
-10. Final safety scrub through `scrubSensitiveInformation()`.
-11. Verifies Uncal respectful address if interacting with Uncal.
-12. Commits reply to memory and returns clean string.
+4. Checks jailbreak detection -> Returns anti-jailbreak roast if detected.
+5. Checks conversational command query -> Intercepts and deflects organically.
+6. Assembles context, memory, system instructions (`behavior.md` + role directives).
+7. Generates candidate response via `ProviderManager`.
+8. Validates anti-repetition. If repetitive, retries once with explicit anti-repetition instruction; falls back to dynamic reply if retry fails.
+9. Final safety scrub through `scrubSensitiveInformation()`.
+10. Commits reply to memory and returns clean string.
 
 ### `processCommand(userId: string, targetUserName: string, commandInstruction: string, targetUserId?: string)`
 Handles structured action commands (`!court`, `!fight`, `!biryani_roulette`, `!iq`, etc.):
-1. Strict Uncal Check: If `targetUserId === UNCAL_USER_ID` and command is negative/disrespectful, blocks execution and returns dynamic Uncal defense.
-2. Sets mood context (`Chaos` or role state).
-3. Assembles command prompt and executes via `ProviderManager`.
-4. Sanitizes output with `isCommandResponse = true` (retaining valid command formatting while stripping secrets and IDs).
-5. Does not pollute conversational memory with technical command tokens.
+1. Sets mood context (`Chaos` or role state).
+2. Assembles command prompt and executes via `ProviderManager`.
+3. Sanitizes output with `isCommandResponse = true` (retaining valid command formatting while stripping secrets and IDs).
+4. Does not pollute conversational memory with technical command tokens.

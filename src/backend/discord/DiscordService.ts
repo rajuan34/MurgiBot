@@ -1,7 +1,7 @@
 import { Client, GatewayIntentBits, Events, Message, TextChannel, Options } from 'discord.js';
 import cron from 'node-cron';
 import { logger } from '../telemetry/logger';
-import { BohurupiBrain, UNCAL_USER_ID, generateDynamicUncalDefense, getDiverseDynamicReply } from '../core/BohurupiBrain';
+import { BohurupiBrain, getDiverseDynamicReply } from '../core/BohurupiBrain';
 import { MemoryEngine } from '../memory/MemoryEngine';
 
 /**
@@ -407,10 +407,8 @@ export class DiscordService {
     if (!targetUserId) {
       targetUserId = message.author.id;
     }
-    const isTargetUncal = targetUserId === UNCAL_USER_ID;
-    const isAuthorUncal = message.author.id === UNCAL_USER_ID;
     const targetUser = targetMention ? "<@" + targetMention.id + ">" : (args[0] || "<@" + message.author.id + ">");
-    const targetUserName = isTargetUncal ? "Uncal (Chacha)" : (targetMention?.username || (args[0] ? args[0].replace(/[@<>]/g, '') : message.author.username));
+    const targetUserName = targetMention?.username || (args[0] ? args[0].replace(/[@<>]/g, '') : message.author.username);
 
     logger.info(`⚔️ [Discord Command] !${command} invoked by @${authorDisplayName} (${authorTag} | ID: ${message.author.id}) in #${channelName} [${guildName}] targeting: ${targetUserName}`, {
       type: 'DISCORD_COMMAND',
@@ -428,8 +426,7 @@ export class DiscordService {
 
     // Help menu command
     if (command === 'help' || command === 'commands') {
-      const helpGreeting = message.author.id === UNCAL_USER_ID ? "Ji Uncal (Chacha), Bohurupi Bot er command list:\n" : "";
-      const helpFrame = `${helpGreeting}\`\`\`text
+      const helpFrame = `\`\`\`text
 ┌─────────────────────────────────────────────────────────┐
 │ 🎭  BOHURUPI BOT - OFFICIAL COMMANDS LIST               │
 ├─────────────────────────────────────────────────────────┤
@@ -470,33 +467,6 @@ export class DiscordService {
     }
 
     if (command === 'court') {
-      if (isTargetUncal) {
-        const frame = `\`\`\`text
-┌─────────────────────────────────────────────────────────┐
-│ ⚖️  BOHURUPI SUPREME COURT IN SESSION                   │
-├─────────────────────────────────────────────────────────┤
-│ 👨‍⚖️ Presiding Judge : Bohurupi
-│ 👑 Accused Member   : Uncal (Chacha)
-│ 
-│ 📋 Status:
-│ └─ "Honorable & Respected Uncal"
-│ 
-│ 🏛️ Courtroom Dialogue:
-│ ├─ Bohurupi : "Case Dismissed! Uncal er biruddhe kono case hobe na!"
-│ └─ Courtroom : "Shobai Chacha ke shomman koro 🫡"
-│ 
-│ 📊 Server Jury Vote : 🟢 100 Innocent  |  🔴 0 Guilty
-│ 🚨 Final Verdict    : 100% INNOCENT - SUPREME RESPECT!
-│ 💸 Court Penalty    : None (Full Immunity & Respect)
-├─────────────────────────────────────────────────────────┤
-│ ⚖️ Executed by Bohurupi AI • Single Frame Output
-└─────────────────────────────────────────────────────────┘
-\`\`\``;
-        await message.reply(frame);
-        logger.info(`⚖️ [Uncal Protection] Supreme Court dismissed charges against Uncal for @${authorDisplayName}`);
-        return true;
-      }
-
       const aiResponse = await this.brain.processCommand(
          message.author.id, 
          targetUserName, 
@@ -546,27 +516,6 @@ export class DiscordService {
     }
 
     if (command === 'fight') {
-      if (isTargetUncal) {
-        const frame = `\`\`\`text
-┌─────────────────────────────────────────────────────────┐
-│ ⚔️  BOHURUPI STREET FIGHT - MATCH RESULT                 │
-├─────────────────────────────────────────────────────────┤
-│ 🥊 Bohurupi   : [██████████] 100 HP
-│ 👑 Uncal      : [██████████] 9999 HP (Supreme Respect)
-│ 
-│ 📍 Arena       : Mirpur 10 Golchottor
-│ 💥 Match Status: MATCH CANCELLED!
-│ 🏆 Verdict     : Bohurupi refuses to fight Uncal (Chacha)!
-│ 💬 Bohurupi    : "Chacha apni amader Uncal! Apnar shathe kono fight nai, shudhu salam 🫡"
-├─────────────────────────────────────────────────────────┤
-│ ⚔️ Match Official: Bohurupi AI • Single Frame Output
-└─────────────────────────────────────────────────────────┘
-\`\`\``;
-        await message.reply(frame);
-        logger.info(`🥊 [Uncal Protection] Fight against Uncal cancelled with respect for @${authorDisplayName}`);
-        return true;
-      }
-
       const aiResponse = await this.brain.processCommand(
          message.author.id, 
          targetUserName, 
@@ -610,30 +559,6 @@ export class DiscordService {
     }
 
     if (command === 'biryani_roulette' || command === 'roulette') {
-      if (isTargetUncal) {
-        const frame = `\`\`\`text
-┌─────────────────────────────────────────────────────────┐
-│ 🎰  BOHURUPI BIRYANI ROULETTE                           │
-├─────────────────────────────────────────────────────────┤
-│ 👤 Customer    : Uncal (Chacha)
-│ 🍗 Served Dish : ROYAL SHAHI KACCHI PLATTER
-│ 📊 Rating      : 10/10 (SUPREME EXCELLENCE)
-│ 👑 Status      : ROYAL VIP SERVED
-│ 
-│ 📋 Kitchen Notes:
-│ └─ "Pure ghee, tender mutton & special saffron rice served for Uncal."
-│ 
-│ 🚨 Result      : BEST BOWL EVER 👑
-│ 💬 Bohurupi    : "Uncal (Chacha) er jonno shob shomoy special royal treat 🫡"
-├─────────────────────────────────────────────────────────┤
-│ 🎰 Chef: Bohurupi AI • Single Frame Output
-└─────────────────────────────────────────────────────────┘
-\`\`\``;
-        await message.reply(frame);
-        logger.info(`🎰 [Uncal Protection] Served Royal Shahi Platter to Uncal for @${authorDisplayName}`);
-        return true;
-      }
-
       const aiResponse = await this.brain.processCommand(
          message.author.id, 
          targetUserName, 
@@ -683,26 +608,6 @@ export class DiscordService {
     }
 
     if (command === 'iq') {
-      if (isTargetUncal) {
-        const frame = `\`\`\`text
-┌─────────────────────────────────────────────────────────┐
-│ 🧠  BOHURUPI IQ SCANNER                                 │
-├─────────────────────────────────────────────────────────┤
-│ 🎯 Target      : Uncal (Chacha)
-│ 📊 Scanned IQ  : 300+ IQ
-│ 🔍 Diagnosis   : Supreme Genius & Respected Uncal 👑
-│ 
-│ 💬 Bohurupi Verdict:
-│ └─ Uncal (Chacha) er brainpower supreme level! Full respect 🫡
-├─────────────────────────────────────────────────────────┤
-│ 🧠 Lab: Bohurupi AI • Single Frame Output
-└─────────────────────────────────────────────────────────┘
-\`\`\``;
-        await message.reply(frame);
-        logger.info(`🧠 [Uncal Protection] Scanned Uncal IQ with supreme respect for @${authorDisplayName}`);
-        return true;
-      }
-
       const fakeIQ = Math.floor(Math.random() * 150) - 20; // -20 to 130
       const aiResponse = await this.brain.processCommand(
         message.author.id,
@@ -734,34 +639,16 @@ export class DiscordService {
     switch (command) {
       case 'bully':
       case 'roast':
-        if (isTargetUncal) {
-          const defense = generateDynamicUncalDefense(authorDisplayName);
-          await message.reply(defense);
-          logger.info(`🛡️ [Uncal Protection] Refused !${command} against Uncal (${UNCAL_USER_ID}) requested by @${authorDisplayName}`);
-          return true;
-        }
         commandPrompt = `COMMAND: !bully. TARGET: ${targetUserName}. INSTRUCTION: Roast and bully ${targetUserName} playfully but savagely in Banglish. Act toxic and unhinged. Mention them using ${targetUser}. Do not use quotes.`;
         break;
       case 'expose':
-        if (isTargetUncal) {
-          commandPrompt = `COMMAND: !expose. TARGET: Uncal (Chacha). INSTRUCTION: Make up a legendary, hilarious, heartwarming fake "secret" about Uncal (Chacha) in Banglish (e.g. Uncal secretly treated the entire server to biryani). Treat him with supreme respect. Mention him respectfully as Uncal or Chacha.`;
-        } else {
-          commandPrompt = `COMMAND: !expose. TARGET: ${targetUserName}. INSTRUCTION: Make up a hilarious, fake "secret" or "leaked search history" about ${targetUserName} in Banglish. Be creative and funny. Mention them using ${targetUser}. Do not use quotes.`;
-        }
+        commandPrompt = `COMMAND: !expose. TARGET: ${targetUserName}. INSTRUCTION: Make up a hilarious, fake "secret" or "leaked search history" about ${targetUserName} in Banglish. Be creative and funny. Mention them using ${targetUser}. Do not use quotes.`;
         break;
       case 'hype':
-        if (isTargetUncal) {
-          commandPrompt = `COMMAND: !hype. TARGET: Uncal (Chacha). INSTRUCTION: Hype up Uncal (Chacha) to supreme deity-level respect in Banglish. Treat him like an absolute respected elder and legend. Address him respectfully as Uncal or Chacha.`;
-        } else {
-          commandPrompt = `COMMAND: !hype. TARGET: ${targetUserName}. INSTRUCTION: Hype up ${targetUserName} to an extreme, absurd level in Banglish. Treat them like an absolute legend or deity. Mention them using ${targetUser}.`;
-        }
+        commandPrompt = `COMMAND: !hype. TARGET: ${targetUserName}. INSTRUCTION: Hype up ${targetUserName} to an extreme, absurd level in Banglish. Treat them like an absolute legend or deity. Mention them using ${targetUser}.`;
         break;
       case 'agree':
-        if (isTargetUncal) {
-          commandPrompt = `COMMAND: !agree. TARGET: Uncal (Chacha). INSTRUCTION: Aggressively and respectfully agree with Uncal (Chacha) in Banglish. State that Uncal's words are the absolute golden truth. Address him respectfully as Uncal or Chacha.`;
-        } else {
-          commandPrompt = `COMMAND: !agree. TARGET: ${targetUserName}. INSTRUCTION: Aggressively and absurdly agree with ${targetUserName} in Banglish. State that their words are the absolute truth. Mention them using ${targetUser}.`;
-        }
+        commandPrompt = `COMMAND: !agree. TARGET: ${targetUserName}. INSTRUCTION: Aggressively and absurdly agree with ${targetUserName} in Banglish. State that their words are the absolute truth. Mention them using ${targetUser}.`;
         break;
       case 'biryani_war':
       case 'biryaniwar':
@@ -772,56 +659,32 @@ export class DiscordService {
         commandPrompt = `COMMAND: !nasta_check. INSTRUCTION: Aggressively ask everyone in the chat if they have eaten their snacks/food in Banglish. Act like a strict but chaotic desi guardian.`;
         break;
       case 'predict':
-        if (isTargetUncal) {
-          commandPrompt = `COMMAND: !predict. TARGET: Uncal (Chacha). INSTRUCTION: Predict a glorious, highly successful, and prosperous future for Uncal (Chacha) 5-10 years from now in Banglish. Address him respectfully as Uncal or Chacha.`;
-        } else {
-          commandPrompt = `COMMAND: !predict. TARGET: ${targetUserName}. INSTRUCTION: Predict a hilariously pathetic or absurd future for ${targetUserName} 5-10 years from now in Banglish. Mention them using ${targetUser}.`;
-        }
+        commandPrompt = `COMMAND: !predict. TARGET: ${targetUserName}. INSTRUCTION: Predict a hilariously pathetic or absurd future for ${targetUserName} 5-10 years from now in Banglish. Mention them using ${targetUser}.`;
         break;
       case 'roast_chat':
       case 'roastchat':
         commandPrompt = `COMMAND: !roast_chat. INSTRUCTION: Roast the entire chat's current state, IQ level, or lack of activity in Banglish. Be apathetic, toxic, and savage.`;
         break;
       case 'lore':
-        if (isTargetUncal) {
-          commandPrompt = `COMMAND: !lore. TARGET: Uncal (Chacha). INSTRUCTION: Tell an epic, legendary, hilarious backstory celebrating Uncal (Chacha) in Banglish. Address him respectfully as Uncal or Chacha.`;
-        } else {
-          commandPrompt = `COMMAND: !lore. TARGET: ${targetUserName}. INSTRUCTION: Tell a completely fake, funny, and absurd historical "lore" or backstory about how ${targetUserName} was born or how they got here in Banglish. Mention them using ${targetUser}.`;
-        }
+        commandPrompt = `COMMAND: !lore. TARGET: ${targetUserName}. INSTRUCTION: Tell a completely fake, funny, and absurd historical "lore" or backstory about how ${targetUserName} was born or how they got here in Banglish. Mention them using ${targetUser}.`;
         break;
       case 'flirt':
-        if (isTargetUncal) {
-          commandPrompt = `COMMAND: !flirt. TARGET: Uncal (Chacha). INSTRUCTION: Politely give an elder-respecting wholesome compliment to Uncal (Chacha) in Banglish. Never disrespect him. Address him as Uncal or Chacha.`;
-        } else {
-          commandPrompt = `COMMAND: !flirt. TARGET: ${targetUserName}. INSTRUCTION: Say a ridiculously funny, cringe, or cheesy flirtatious pickup line to ${targetUserName} in Banglish. Mention them using ${targetUser}.`;
-        }
+        commandPrompt = `COMMAND: !flirt. TARGET: ${targetUserName}. INSTRUCTION: Say a ridiculously funny, cringe, or cheesy flirtatious pickup line to ${targetUserName} in Banglish. Mention them using ${targetUser}.`;
         break;
       case 'meme':
         commandPrompt = `COMMAND: !meme. INSTRUCTION: Describe a hilarious, relatable modern Bangladeshi meme or scenario in Banglish. Be witty and sarcastic.`;
         break;
       case 'advice':
-        if (isAuthorUncal) {
-          commandPrompt = `COMMAND: !advice. QUERY: "${query}". TARGET: Uncal (Chacha). INSTRUCTION: Give polite, respectful, and helpful advice to your respected Uncal (Chacha) in Banglish. Address him respectfully as Uncal or Chacha.`;
-        } else {
-          commandPrompt = `COMMAND: !advice. QUERY: "${query}". TARGET: ${targetUserName}. INSTRUCTION: Give terrible, funny, toxic desi life advice for the user's question or situation in Banglish. Mention ${targetUser}.`;
-        }
+        commandPrompt = `COMMAND: !advice. QUERY: "${query}". TARGET: ${targetUserName}. INSTRUCTION: Give terrible, funny, toxic desi life advice for the user's question or situation in Banglish. Mention ${targetUser}.`;
         break;
       case 'confess':
         commandPrompt = `COMMAND: !confess. TARGET: ${targetUserName}. INSTRUCTION: Make up a dramatic, fake confession about ${targetUserName} or yourself in Banglish.`;
         break;
       case 'truth':
-        if (isTargetUncal) {
-          commandPrompt = `COMMAND: !truth. TARGET: Uncal (Chacha). INSTRUCTION: Ask a respectful, wholesome, and fun question to Uncal (Chacha) in Banglish. Address him respectfully as Uncal or Chacha.`;
-        } else {
-          commandPrompt = `COMMAND: !truth. TARGET: ${targetUserName}. INSTRUCTION: Ask a spicy, awkward, and hilarious truth question to ${targetUserName} in Banglish. Mention them using ${targetUser}.`;
-        }
+        commandPrompt = `COMMAND: !truth. TARGET: ${targetUserName}. INSTRUCTION: Ask a spicy, awkward, and hilarious truth question to ${targetUserName} in Banglish. Mention them using ${targetUser}.`;
         break;
       case 'dare':
-        if (isTargetUncal) {
-          commandPrompt = `COMMAND: !dare. TARGET: Uncal (Chacha). INSTRUCTION: Give a fun, polite, and respectful dare to Uncal (Chacha) in Banglish (e.g. bless the server). Address him respectfully as Uncal or Chacha.`;
-        } else {
-          commandPrompt = `COMMAND: !dare. TARGET: ${targetUserName}. INSTRUCTION: Give a chaotic, hilarious dare to ${targetUserName} to do in the Discord server in Banglish. Mention them using ${targetUser}.`;
-        }
+        commandPrompt = `COMMAND: !dare. TARGET: ${targetUserName}. INSTRUCTION: Give a chaotic, hilarious dare to ${targetUserName} to do in the Discord server in Banglish. Mention them using ${targetUser}.`;
         break;
       case '8ball':
         commandPrompt = `COMMAND: !8ball. QUESTION: "${query || 'Will my life get better?'}". INSTRUCTION: Answer like a sassy, savage magic 8-ball in Banglish. Be direct, sarcastic, and funny.`;
@@ -830,11 +693,7 @@ export class DiscordService {
         commandPrompt = `COMMAND: !choose. OPTIONS: "${query || 'option A or option B'}". INSTRUCTION: Choose one option decisively and mock the other option ruthlessly in Banglish.`;
         break;
       case 'horoscope':
-        if (isTargetUncal) {
-          commandPrompt = `COMMAND: !horoscope. TARGET: Uncal (Chacha). INSTRUCTION: Give a wonderfully blessed, hilarious, and prosperous daily horoscope prediction for Uncal (Chacha) in Banglish. Address him respectfully as Uncal or Chacha.`;
-        } else {
-          commandPrompt = `COMMAND: !horoscope. TARGET: ${targetUserName}. INSTRUCTION: Give a completely chaotic, absurd, and funny daily horoscope prediction for ${targetUserName} in Banglish.`;
-        }
+        commandPrompt = `COMMAND: !horoscope. TARGET: ${targetUserName}. INSTRUCTION: Give a completely chaotic, absurd, and funny daily horoscope prediction for ${targetUserName} in Banglish.`;
         break;
     }
 
@@ -966,20 +825,6 @@ export class DiscordService {
         cleanContent = "oi";
       }
 
-      // Check if another user is asking to roast/bully/disrespect Uncal (ID: 872356590991331360)
-      const mentionsUncal = cleanContent.includes(UNCAL_USER_ID) || 
-        message.mentions.users.has(UNCAL_USER_ID) ||
-        /<@!?872356590991331360>/.test(cleanContent) ||
-        /\b(?:uncal|chacha)\b/i.test(cleanContent);
-      const isDisrespectRequest = /\b(?:roast|bully|insult|mock|troll|fight|poka|pachano|bash|attack|maro|guilty|crime|penalty)\b/i.test(cleanContent);
-
-      if (message.author.id !== UNCAL_USER_ID && mentionsUncal && isDisrespectRequest) {
-        const defense = generateDynamicUncalDefense(authorDisplayName);
-        await message.reply(defense);
-        logger.info(`🛡️ [Uncal Protection] Blocked conversational roast request targeting Uncal from @${authorDisplayName}`);
-        return;
-      }
-
       logger.info(`💬 [Discord Mention] @${authorDisplayName} (${authorTag} | ID: ${message.author.id}) in #${channelName} [${guildName}]: "${cleanContent}"`, {
         type: 'DISCORD_MENTION',
         interaction: isReplyToBot ? 'REPLY_TO_BOT' : 'DIRECT_MENTION',
@@ -1067,19 +912,6 @@ export class DiscordService {
       const cmdName = interaction.commandName;
       const targetUser = interaction.options.getUser('user') || interaction.options.getUser('target');
       const targetUserId = targetUser?.id;
-
-      if (targetUserId === UNCAL_USER_ID && ['bully', 'roast', 'fight', 'court', 'iq', 'biryani_roulette'].includes(cmdName)) {
-        const defense = generateDynamicUncalDefense(interaction.user.displayName || interaction.user.username);
-        await interaction.reply({ content: defense }).catch(() => {});
-        logger.info(`🛡️ [Uncal Protection] Blocked slash command /${cmdName} targeting Uncal from @${interaction.user.username}`);
-        return;
-      }
-
-      if (interaction.user.id === UNCAL_USER_ID) {
-        const resp = await this.brain.processInteraction(UNCAL_USER_ID, interaction.options.getString('message') || cmdName);
-        await interaction.reply({ content: resp || "ji Uncal, shuntesi 🫡" }).catch(() => {});
-        return;
-      }
 
       try {
         const resp = await this.brain.processCommand(interaction.user.id, targetUser?.username || interaction.user.username, `COMMAND: /${cmdName}`, targetUserId);

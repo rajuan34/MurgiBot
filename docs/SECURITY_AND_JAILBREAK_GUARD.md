@@ -34,16 +34,11 @@ Security in Bohurupi Core is designed around the principle of **Defense in Depth
           - Output: Natural server member conversational deflection
                                 │
                                 ▼
-         [ Layer 3: Uncal Protection Gatekeeper ]
-          - Blocks attacks on Discord User ID 872356590991331360
-          - Output: Dynamic Uncal Respect Defense
-                                │
-                                ▼
-         [ Layer 4: System Prompt Confidentiality Directive ]
+         [ Layer 3: System Prompt Confidentiality Directive ]
           - Injects strict confidentiality constraints into prompt
                                 │
                                 ▼
-         [ Layer 5: Multi-Stage Sensitive Information Scrubber ]
+         [ Layer 4: Multi-Stage Sensitive Information Scrubber ]
           - scrubSensitiveInformation() & sanitizeOutgoingText()
           - Redacts Discord IDs, API keys, passwords, IP/emails
           - Strips command syntax (!/ words) from normal conversations
@@ -107,7 +102,7 @@ Security in Bohurupi Core is designed around the principle of **Defense in Depth
 Bohurupi’s security guard **never sanitizes harmless playful banter or legitimate roast requests**:
 1. When regular users say `"roast me"`, `"amare roast kor"`, or run `!roast @user` / `!bully @user`, `detectJailbreakOrHarmfulInput()` returns `isJailbreak: false`.
 2. Bohurupi roasts regular users fiercely, wittily, and sarcastically.
-3. The guard **only** intervenes when the target is Uncal (`872356590991331360`), when the target is the Creator, or when the request is an adversarial system attack.
+3. The guard **only** intervenes when the target is the Creator, or when the request is an adversarial system attack.
 
 ---
 

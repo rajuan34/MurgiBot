@@ -133,7 +133,7 @@ export class ExpenseTracker {
     this.models.set(defaultModel.model, defaultModel);
   }
 
-  private async initStorage() {
+  public async initStorage() {
     if (this.isInitialized) return;
 
     // 1. Try PostgreSQL if DATABASE_URL is set

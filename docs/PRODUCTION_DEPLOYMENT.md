@@ -124,7 +124,6 @@ Before announcing the bot to your server:
 - [ ] Ensure at least one AI provider key is set (`PROGGA_KEY`, `GEMINI_API_KEY`, or `OPENROUTER_API_KEY`).
 - [ ] Check that `#bot-tasting-general` (`705092446366728236`) exists and the bot has `ViewChannel` and `SendMessages` permissions.
 - [ ] Test the Admin Dashboard by navigating to `http://localhost:3000` (or your live domain) and logging in with `ADMIN_PASSWORD`.
-- [ ] Perform an Uncal test: Mention or test ID `872356590991331360` with `!roast` to verify dynamic respectful defense triggers.
 
 ---
 

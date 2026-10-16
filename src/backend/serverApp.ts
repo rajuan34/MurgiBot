@@ -108,9 +108,6 @@ providerManager.registerProvider({
   isHealthy: () => true,
   generate: async (req) => {
     const sys = req.systemInstruction || '';
-    if (sys.includes('Uncal') || sys.includes('872356590991331360')) {
-      return "ji Uncal (Chacha), shob thik ase! apnar jonno shob shomoy respect 🫡";
-    }
     if (sys.includes('COMMAND: !court')) {
       return "Crime: 24 ghonta phone tipe chokher 12ta bajano\nPenalty: Shobai ke 1 plate kacchi khawano";
     }

@@ -19,8 +19,7 @@ export type PersonalityState =
   | 'Event' 
   | 'Observer' 
   | 'RESPECTFUL_SON_CALM' 
-  | 'RESPECTFUL_FRIENDLY' 
-  | 'RESPECTFUL_UNCAL_CALM';
+  | 'RESPECTFUL_FRIENDLY';
 ```
 
 ### Detailed Breakdown of States:
@@ -39,7 +38,6 @@ export type PersonalityState =
 | **`Observer`** | Silent watcher | Does not post messages; outputs: `*(Bohurupi watches silently)*`. | Triggered when users chat rapidly among themselves without mentioning the bot. |
 | **`RESPECTFUL_SON_CALM`** | Son Obedience | Mode: Son State. Address: "Abba", "Baba", "Boss". Extremely calm, respectful, affectionate, soft, obedient. Zero unprovoked roasting. | Triggered automatically when user is Primary Creator (`PRIMARY_CREATOR_IDS`). |
 | **`RESPECTFUL_FRIENDLY`** | Co-Dev Partner | Mode: Co-Creator State. Address: "Rajuan bhai", "Boss", "Rajuan". Chill, cooperative developer buddy vibe. | Triggered automatically when user is Co-Creator (`CO_CREATOR_IDS`). |
-| **`RESPECTFUL_UNCAL_CALM`**| Supreme Respect | Mode: Uncal State. Address: "Uncal", "Chacha". Polite, warm, friendly, relaxed. Zero roasting, zero insults, zero trolling. | Triggered automatically when user is Uncal (`UNCAL_USER_ID`: `872356590991331360`). |
 
 ---
 

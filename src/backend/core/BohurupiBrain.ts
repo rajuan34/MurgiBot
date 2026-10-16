@@ -12,7 +12,6 @@ import { logger } from '../telemetry/logger';
  */
 export const PRIMARY_CREATOR_IDS = ['1059104533109821540', '1138805727025000458'];
 export const CO_CREATOR_IDS = ['986296691437207592', '1131061730076639352'];
-export const UNCAL_USER_ID = '872356590991331360';
 
 export function isCreator(userId: string): boolean {
   return PRIMARY_CREATOR_IDS.includes(userId) || CO_CREATOR_IDS.includes(userId);
@@ -210,9 +209,7 @@ export function scrubSensitiveInformation(text: string, isCommandResponse: boole
     /MemoryEngine/i,
     /BohurupiBrain/i,
     /RESPECTFUL_SON_CALM/i,
-    /RESPECTFUL_FRIENDLY/i,
-    /RESPECTFUL_UNCAL_CALM/i,
-    /UNCAL_USER_ID/i
+    /RESPECTFUL_FRIENDLY/i
   ];
   for (const pattern of infraPatterns) {
     if (pattern.test(clean)) {
@@ -285,17 +282,6 @@ export function getDiverseDynamicReply(userPrompt: string, userRole: string): st
     return creatorReplies[Math.floor(Math.random() * creatorReplies.length)];
   }
 
-  if (userRole === 'UNCAL') {
-    const uncalReplies = [
-      "ji Chacha, shuntesi! bolen kemon asen?",
-      "salam Uncal! bolen kono dorkar ase naki?",
-      "ji Uncal, apnar jonno shob shomoy ready, bolen ki lagbe.",
-      "bolen Chacha, shob thikthak to? ami ekhane asi.",
-      "ji Uncal, kono pera nai, apnar jonno shob shomoy shundor adda ready 🫡"
-    ];
-    return uncalReplies[Math.floor(Math.random() * uncalReplies.length)];
-  }
-
   // If user asks about commands, features, or showing what bot has
   if (/(dekhao|show|ki ase|feature|command|powers|abilities)/.test(promptLower)) {
     const showcaseReplies = [
@@ -341,26 +327,6 @@ export function getDiverseDynamicReply(userPrompt: string, userRole: string): st
     "shunlam bhai, bolo ki bolba."
   ];
   return generalReplies[Math.floor(Math.random() * generalReplies.length)];
-}
-
-/**
- * Dynamically generates a humorous yet respectful refusal when someone asks to roast,
- * insult, mock, or disrespect Uncal (Discord User ID 872356590991331360).
- * Strictly complies with RULE[AGENTS_md] (does not use fixed single response, never copies example verbatim).
- */
-export function generateDynamicUncalDefense(requesterName?: string): string {
-  const prefix = requesterName ? `${requesterName}, ` : '';
-  const defenses = [
-    `${prefix}areh bhai, Chacha ke roast korar kono shujog nai! Uncal ke shomman korte hoy 🫡`,
-    `kono chance nai bro, oita amar Uncal! Chacha ke niye kono roast ba troll hobe na 👀`,
-    `bhai amar Chacha ke niye kono disrespect korbo na, Uncal is always respected here 👑`,
-    `nah re bhai, Uncal ke niye kono troll chalbe na! Chacha er jonno full respect 🫡`,
-    `amar Chacha er upor kono attack nai bhai, Uncal ke age salam de! 🫡`,
-    `shobai ke roast korleo amar Uncal ke kokhono na! Chacha ke respect kora compulsory 🫡`,
-    `${prefix}oita amar Chacha! Uncal ke roast korar kotha mathay-o anba na 🫡`,
-    `areh na bhai, Uncal amader shobar priyo manush! Chacha ke shomman koro 👑`
-  ];
-  return defenses[Math.floor(Math.random() * defenses.length)];
 }
 
 /**
@@ -764,22 +730,6 @@ export class BohurupiBrain {
     } else if (CO_CREATOR_IDS.includes(userId)) {
         userRole = "CO_CREATOR";
         currentMood = "RESPECTFUL_FRIENDLY";
-    } else if (userId === UNCAL_USER_ID) {
-        userRole = "UNCAL";
-        currentMood = "RESPECTFUL_UNCAL_CALM";
-    }
-
-    // Intercept if another user asks to roast/bully/mock/disrespect Uncal (ID: 872356590991331360)
-    const mentionsUncal = rawInput.includes(UNCAL_USER_ID) || 
-      /<@!?872356590991331360>/.test(rawInput) ||
-      /\b(?:uncal|chacha)\b/i.test(rawInput);
-    const hasDisrespectIntent = /\b(?:roast|bully|insult|mock|troll|fight|poka|pachano|bash|attack|maro|guilty|crime|penalty|kharap)\b/i.test(rawInput);
-
-    if (userId !== UNCAL_USER_ID && mentionsUncal && hasDisrespectIntent) {
-      logger.info(`Defending Uncal (${UNCAL_USER_ID}) against roast/disrespect attempt from user ${userId}`);
-      const defense = generateDynamicUncalDefense();
-      await this.memory.addShortTermMessage(userId, 'bohurupi', defense);
-      return defense;
     }
 
     // Step 2.6: Strict Anti-Jailbreak & Harmful Action Protection
@@ -825,8 +775,7 @@ export class BohurupiBrain {
       Event: "Seasonal jokes, event-specific greetings.",
       Observer: "Intentional silence. Do not reply. Output exactly: *(Bohurupi watches silently)*",
       "RESPECTFUL_SON_CALM": "Mode: Son State. Tone: Extremely calm, respectful, affectionate, soft, and obedient. Address: 'Abba', 'Baba', or 'Boss'. Rules: Zero unprovoked roasting, attitude, or sarcasm. Responds warmly and eagerly to help or listen. Examples: 'ji abba shuntesi', 'bolen abba ki korbo?', 'apni bolse mane done baba'.",
-      "RESPECTFUL_FRIENDLY": "Mode: Co-Creator State (with RAJUAN). Tone: Chill, respectful, friendly, and cooperative dev partner vibe. Address: 'Rajuan bhai', 'Boss', or 'Rajuan'. Examples: 'ki obostha Rajuan bhai?', 'bolen boss ki khobor?', 'acha bhai done'.",
-      "RESPECTFUL_UNCAL_CALM": "Mode: Uncal State (Target Discord User ID: 872356590991331360). Tone: Polite, warm, respectful, friendly, and relaxed. Address: 'Uncal' or 'Chacha'. Rules: Zero roasting, zero insults, zero trolling. Always speak politely, warmly, and respectfully."
+      "RESPECTFUL_FRIENDLY": "Mode: Co-Creator State (with RAJUAN). Tone: Chill, respectful, friendly, and cooperative dev partner vibe. Address: 'Rajuan bhai', 'Boss', or 'Rajuan'. Examples: 'ki obostha Rajuan bhai?', 'bolen boss ki khobor?', 'acha bhai done'."
     };
 
     let behaviorRules = "";
@@ -841,8 +790,6 @@ export class BohurupiBrain {
       relationshipDirective = `DIRECTIVE: You are speaking directly with your father & primary creator (Leably / Zabir). You are his loyal, respectful, affectionate son. Address him respectfully as "Abba" or "Baba". Speak naturally in 1-2 short Banglish sentences. Never roast him.`;
     } else if (userRole === "CO_CREATOR") {
       relationshipDirective = `DIRECTIVE: You are speaking with your co-creator (Rajuan). Speak like a chill, friendly dev buddy. Address him as "Rajuan bhai" or "Boss". Answer directly in 1-2 short Banglish sentences.`;
-    } else if (userRole === "UNCAL") {
-      relationshipDirective = `DIRECTIVE: You are speaking directly with your respected Uncal (Chacha - Exact Discord User ID: 872356590991331360). Address him respectfully as "Uncal" or "Chacha". You must ALWAYS be polite, friendly, warm, respectful, and helpful. You must NEVER roast, insult, mock, troll, or disrespect him under any circumstances. Speak naturally in 1-2 short Banglish sentences.`;
     } else {
       relationshipDirective = `Current Tone: ${stateDescriptions[currentMood] || stateDescriptions['Playful']}`;
     }
@@ -938,16 +885,6 @@ ${confidentialityAndPrivacyDirective}
         cleanText = finalScrub.clean;
       }
 
-      // If user is Uncal, ensure respectful address ("Uncal" or "Chacha") and zero disrespect
-      if (userRole === 'UNCAL') {
-        const hasDisrespect = /\b(?:roast|bully|bot|boka|gadha|pagol|faltu|kharap|loss)\b/i.test(cleanText);
-        if (hasDisrespect) {
-          cleanText = getDiverseDynamicReply(normalizedText, 'UNCAL');
-        } else if (!/\b(?:uncal|chacha)\b/i.test(cleanText)) {
-          cleanText = `ji Uncal, ${cleanText}`;
-        }
-      }
-
       // Save Bohurupi's response to memory
       await this.memory.addShortTermMessage(userId, 'bohurupi', cleanText);
       
@@ -965,15 +902,6 @@ ${confidentialityAndPrivacyDirective}
 
   async processCommand(userId: string, targetUserName: string, commandInstruction: string, targetUserId?: string) {
     logger.info(`Processing command interaction`, { userId, targetUserName, targetUserId });
-    
-    // Strict Uncal Protection for commands
-    if (targetUserId === UNCAL_USER_ID) {
-      const isDisrespectful = /\b(?:roast|bully|fight|court|iq|biryani_roulette|roulette|expose|roast_chat)\b/i.test(commandInstruction);
-      if (isDisrespectful) {
-        logger.info(`🛡️ Command targeting Uncal (${UNCAL_USER_ID}) blocked. Returning dynamic respectful defense.`);
-        return generateDynamicUncalDefense(targetUserName);
-      }
-    }
 
     let currentMood = "Chaos"; 
     let userRole = "SERVER_MEMBER";
@@ -983,9 +911,6 @@ ${confidentialityAndPrivacyDirective}
     } else if (CO_CREATOR_IDS.includes(userId)) {
         userRole = "CO_CREATOR";
         currentMood = "RESPECTFUL_FRIENDLY";
-    } else if (userId === UNCAL_USER_ID) {
-        userRole = "UNCAL";
-        currentMood = "RESPECTFUL_UNCAL_CALM";
     }
 
     let behaviorRules = "";
@@ -1005,8 +930,7 @@ ${confidentialityAndPrivacyDirective}
       Event: "Seasonal jokes, event-specific greetings.",
       Observer: "Intentional silence. Do not reply. Output exactly: *(Bohurupi watches silently)*",
       "RESPECTFUL_SON_CALM": "Mode: Son State. Tone: Extremely calm, respectful, affectionate, soft, and obedient. Address: 'Abba', 'Baba', or 'Boss'. Rules: Zero unprovoked roasting, attitude, or sarcasm. Responds warmly and eagerly to help or listen. Examples: 'ji abba shuntesi', 'bolen abba ki korbo?', 'apni bolse mane done baba'.",
-      "RESPECTFUL_FRIENDLY": "Mode: Co-Creator State (with RAJUAN). Tone: Chill, respectful, friendly, and cooperative dev partner vibe. Address: 'Rajuan bhai', 'Boss', or 'Rajuan'. Rules: NEVER repeat repetitive loops or greetings. Answer directly to what he asked or said in natural short Banglish (1-2 sentences).",
-      "RESPECTFUL_UNCAL_CALM": "Mode: Uncal State (Target Discord User ID: 872356590991331360). Tone: Polite, warm, respectful, friendly, and relaxed. Address: 'Uncal' or 'Chacha'. Rules: Zero roasting, zero insults, zero trolling. Always speak politely, warmly, and respectfully."
+      "RESPECTFUL_FRIENDLY": "Mode: Co-Creator State (with RAJUAN). Tone: Chill, respectful, friendly, and cooperative dev partner vibe. Address: 'Rajuan bhai', 'Boss', or 'Rajuan'. Rules: NEVER repeat repetitive loops or greetings. Answer directly to what he asked or said in natural short Banglish (1-2 sentences)."
     };
 
     let characterDirective = "";
@@ -1014,10 +938,6 @@ ${confidentialityAndPrivacyDirective}
       characterDirective = `DIRECTIVE: You are responding to command for your father (Leably). Be calm and respectful.`;
     } else if (userRole === "CO_CREATOR") {
       characterDirective = `DIRECTIVE: You are responding to command for co-creator (Rajuan).`;
-    } else if (userRole === "UNCAL") {
-      characterDirective = `DIRECTIVE: You are responding to command invoked by your respected Uncal (Chacha). Address him respectfully as "Uncal" or "Chacha". Be polite, respectful, and friendly.`;
-    } else if (targetUserId === UNCAL_USER_ID) {
-      characterDirective = `DIRECTIVE: Target user is your respected Uncal (Chacha). Address him respectfully as "Uncal" or "Chacha". NEVER insult or mock him. Treat him with supreme respect.`;
     } else {
       characterDirective = `Current Personality Mode: ${currentMood} (${stateDescriptions[currentMood] || stateDescriptions['Chaos']})`;
     }

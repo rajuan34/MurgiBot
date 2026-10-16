@@ -1,6 +1,6 @@
 import { logger } from '../telemetry/logger';
 
-export type PersonalityState = 'Playful' | 'Chill' | 'Wise' | 'Chaos' | 'Curious' | 'Supportive' | 'Competitive' | 'Sleepy' | 'Event' | 'Observer' | 'RESPECTFUL_SON_CALM' | 'RESPECTFUL_FRIENDLY' | 'RESPECTFUL_UNCAL_CALM';
+export type PersonalityState = 'Playful' | 'Chill' | 'Wise' | 'Chaos' | 'Curious' | 'Supportive' | 'Competitive' | 'Sleepy' | 'Event' | 'Observer' | 'RESPECTFUL_SON_CALM' | 'RESPECTFUL_FRIENDLY';
 
 export class EmotionEngine {
   private currentState: PersonalityState = 'Playful';
