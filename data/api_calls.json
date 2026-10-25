@@ -1,0 +1,1769 @@
+[
+  {
+    "id": "call_1792897753062_1c7ff69d",
+    "call_id": "call_1792897753062_1c7ff69d",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6712,
+    "timestamp": "2026-10-25T03:09:13.062Z"
+  },
+  {
+    "id": "call_1792897513638_05c383a6",
+    "call_id": "call_1792897513638_05c383a6",
+    "timestamp": "2026-10-25T03:05:13.638Z",
+    "provider": "Progga",
+    "status": "error",
+    "latencyMs": 1734,
+    "errorDetail": "[Progga] Authorization failed on https://api.progga.app/v1/chat/completions: HTTP 401: Invalid API Key or Unauthorized ({\"error\":{\"message\":\"Invalid bearer token.\",\"type\":\"authentication_error\",\"param\":null,\"code\":\"inval)",
+    "metadata": {}
+  },
+  {
+    "id": "call_1792897506438_badb21d4",
+    "call_id": "call_1792897506438_badb21d4",
+    "timestamp": "2026-10-25T03:05:06.438Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 2981,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792860439927_168e7ea6",
+    "call_id": "call_1792860439927_168e7ea6",
+    "timestamp": "2026-10-24T16:47:19.927Z",
+    "provider": "Progga",
+    "status": "error",
+    "latencyMs": 3597,
+    "errorDetail": "[Progga] Authorization failed on https://api.progga.app/v1/chat/completions: HTTP 403: Invalid API Key or Unauthorized ({\"error\":{\"message\":\"service failure: upstream request failed\",\"type\":\"provider_error\",\"param\":null,)",
+    "metadata": {}
+  },
+  {
+    "id": "call_1792860397122_e1c1e1d2",
+    "call_id": "call_1792860397122_e1c1e1d2",
+    "timestamp": "2026-10-24T16:46:37.122Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 7701,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792860122885_2837eaf5",
+    "call_id": "call_1792860122885_2837eaf5",
+    "timestamp": "2026-10-24T16:42:02.885Z",
+    "provider": "Cloud-OpenRouter",
+    "status": "success",
+    "latencyMs": 3709,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792860119173_29470973",
+    "call_id": "call_1792860119173_29470973",
+    "timestamp": "2026-10-24T16:41:59.173Z",
+    "provider": "Google-Gemini",
+    "status": "error",
+    "latencyMs": 18000,
+    "errorDetail": "Timeout: Provider Google-Gemini exceeded 18000ms limit",
+    "metadata": {}
+  },
+  {
+    "id": "call_1792860088533_2a1696b8",
+    "call_id": "call_1792860088533_2a1696b8",
+    "timestamp": "2026-10-24T16:41:28.534Z",
+    "provider": "Cloud-OpenRouter",
+    "status": "success",
+    "latencyMs": 3070,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792860085463_391f33f3",
+    "call_id": "call_1792860085463_391f33f3",
+    "timestamp": "2026-10-24T16:41:25.463Z",
+    "provider": "Progga",
+    "status": "error",
+    "latencyMs": 3621,
+    "errorDetail": "[Progga] Authorization failed on https://api.progga.app/v1/chat/completions: HTTP 403: Invalid API Key or Unauthorized ({\"error\":{\"message\":\"service failure: upstream request failed\",\"type\":\"provider_error\",\"param\":null,)",
+    "metadata": {}
+  },
+  {
+    "id": "call_1792860081842_5bddbf5f",
+    "call_id": "call_1792860081842_5bddbf5f",
+    "timestamp": "2026-10-24T16:41:21.842Z",
+    "provider": "Google-Gemini",
+    "status": "error",
+    "latencyMs": 18001,
+    "errorDetail": "Timeout: Provider Google-Gemini exceeded 18000ms limit",
+    "metadata": {}
+  },
+  {
+    "id": "call_1792859970841_737cd34e",
+    "call_id": "call_1792859970841_737cd34e",
+    "timestamp": "2026-10-24T16:39:30.841Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 5447,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792739670689_0a2f8896",
+    "call_id": "call_1792739670689_0a2f8896",
+    "timestamp": "2026-10-23T07:14:30.689Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1189,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792739577966_3a342014",
+    "call_id": "call_1792739577966_3a342014",
+    "timestamp": "2026-10-23T07:12:57.966Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1237,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792690923296_a1052885",
+    "call_id": "call_1792690923296_a1052885",
+    "timestamp": "2026-10-22T17:42:03.296Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1153,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792687210861_84a43934",
+    "call_id": "call_1792687210861_84a43934",
+    "timestamp": "2026-10-22T16:40:10.861Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1264,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792687121149_7b917a05",
+    "call_id": "call_1792687121149_7b917a05",
+    "timestamp": "2026-10-22T16:38:41.149Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1291,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792686602165_ee868c6d",
+    "call_id": "call_1792686602165_ee868c6d",
+    "timestamp": "2026-10-22T16:30:02.165Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1240,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792678601395_9f9e98ad",
+    "call_id": "call_1792678601395_9f9e98ad",
+    "timestamp": "2026-10-22T14:16:41.395Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1145,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792678528641_8fa6c67d",
+    "call_id": "call_1792678528641_8fa6c67d",
+    "timestamp": "2026-10-22T14:15:28.641Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1097,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792678497729_304f592a",
+    "call_id": "call_1792678497729_304f592a",
+    "timestamp": "2026-10-22T14:14:57.730Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 11900,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792661404936_b56905c2",
+    "call_id": "call_1792661404936_b56905c2",
+    "timestamp": "2026-10-22T09:30:04.936Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 4188,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792605542866_77dd60d6",
+    "call_id": "call_1792605542866_77dd60d6",
+    "timestamp": "2026-10-21T17:59:02.866Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 9887,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792605532979_d0b95fad",
+    "call_id": "call_1792605532979_d0b95fad",
+    "timestamp": "2026-10-21T17:58:52.979Z",
+    "provider": "Google-Gemini",
+    "status": "error",
+    "latencyMs": 2097,
+    "errorDetail": "All Google-Gemini cascading models failed. Last error: {\"error\":{\"code\":503,\"message\":\"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\"status\":\"UNAVAILABLE\"}}",
+    "metadata": {}
+  },
+  {
+    "id": "call_1792600214587_2554a766",
+    "call_id": "call_1792600214587_2554a766",
+    "timestamp": "2026-10-21T16:30:14.587Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 10013,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792600204574_968e5c08",
+    "call_id": "call_1792600204574_968e5c08",
+    "timestamp": "2026-10-21T16:30:04.574Z",
+    "provider": "Google-Gemini",
+    "status": "error",
+    "latencyMs": 3274,
+    "errorDetail": "All Google-Gemini cascading models failed. Last error: {\"error\":{\"code\":503,\"message\":\"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\"status\":\"UNAVAILABLE\"}}",
+    "metadata": {}
+  },
+  {
+    "id": "call_1792575791878_631b585b",
+    "call_id": "call_1792575791878_631b585b",
+    "timestamp": "2026-10-21T09:43:11.878Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1776,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792575013433_dc2aba11",
+    "call_id": "call_1792575013433_dc2aba11",
+    "timestamp": "2026-10-21T09:30:13.433Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 12192,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792519181911_cd9cb174",
+    "call_id": "call_1792519181911_cd9cb174",
+    "timestamp": "2026-10-20T17:59:41.911Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 5404,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792519085400_b2988477",
+    "call_id": "call_1792519085400_b2988477",
+    "timestamp": "2026-10-20T17:58:05.400Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 4967,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792519005643_651f274c",
+    "call_id": "call_1792519005643_651f274c",
+    "timestamp": "2026-10-20T17:56:45.643Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 2216,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792513803662_ac4e3e30",
+    "call_id": "call_1792513803662_ac4e3e30",
+    "timestamp": "2026-10-20T16:30:03.662Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1508,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792488618231_c9e92c32",
+    "call_id": "call_1792488618231_c9e92c32",
+    "timestamp": "2026-10-20T09:30:18.231Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 4555,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792488613674_6f57f857",
+    "call_id": "call_1792488613674_6f57f857",
+    "timestamp": "2026-10-20T09:30:13.674Z",
+    "provider": "Progga",
+    "status": "error",
+    "latencyMs": 12497,
+    "errorDetail": "This operation was aborted",
+    "metadata": {}
+  },
+  {
+    "id": "call_1792427411473_a8f5a576",
+    "call_id": "call_1792427411473_a8f5a576",
+    "timestamp": "2026-10-19T16:30:11.473Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 10277,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792427225281_b411ce7b",
+    "call_id": "call_1792427225281_b411ce7b",
+    "timestamp": "2026-10-19T16:27:05.281Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 7829,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792427159366_628c0c89",
+    "call_id": "call_1792427159366_628c0c89",
+    "timestamp": "2026-10-19T16:25:59.366Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 8117,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792427125215_2333aa8b",
+    "call_id": "call_1792427125215_2333aa8b",
+    "timestamp": "2026-10-19T16:25:25.215Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 7519,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792425498674_9bcc3c38",
+    "call_id": "call_1792425498674_9bcc3c38",
+    "timestamp": "2026-10-19T15:58:18.674Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6667,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792425416119_dbb93eee",
+    "call_id": "call_1792425416119_dbb93eee",
+    "timestamp": "2026-10-19T15:56:56.119Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 4530,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792425410675_b4bdf055",
+    "call_id": "call_1792425410675_b4bdf055",
+    "timestamp": "2026-10-19T15:56:50.675Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 5884,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792425361872_9a937bcf",
+    "call_id": "call_1792425361872_9a937bcf",
+    "timestamp": "2026-10-19T15:56:01.872Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 8016,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792425316300_a7aa5b14",
+    "call_id": "call_1792425316300_a7aa5b14",
+    "timestamp": "2026-10-19T15:55:16.300Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6751,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792402210274_de6abdcf",
+    "call_id": "call_1792402210274_de6abdcf",
+    "timestamp": "2026-10-19T09:30:10.274Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 8670,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792341041897_21f0fb9e",
+    "call_id": "call_1792341041897_21f0fb9e",
+    "timestamp": "2026-10-18T16:30:41.897Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 761,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792341032770_b9cc3832",
+    "call_id": "call_1792341032770_b9cc3832",
+    "timestamp": "2026-10-18T16:30:32.770Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 804,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792341010301_766e2e07",
+    "call_id": "call_1792341010301_766e2e07",
+    "timestamp": "2026-10-18T16:30:10.301Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 9068,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792316525492_2b5703ae",
+    "call_id": "call_1792316525492_2b5703ae",
+    "timestamp": "2026-10-18T09:42:05.492Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 995,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792316503978_16995726",
+    "call_id": "call_1792316503978_16995726",
+    "timestamp": "2026-10-18T09:41:43.978Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 797,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792316348508_1c27a3bf",
+    "call_id": "call_1792316348508_1c27a3bf",
+    "timestamp": "2026-10-18T09:39:08.508Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1318,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792315802965_79eca7b0",
+    "call_id": "call_1792315802965_79eca7b0",
+    "timestamp": "2026-10-18T09:30:02.965Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1686,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792315749066_f4dc3b6a",
+    "call_id": "call_1792315749066_f4dc3b6a",
+    "timestamp": "2026-10-18T09:29:09.066Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1006,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792315736380_dbcf29bd",
+    "call_id": "call_1792315736380_dbcf29bd",
+    "timestamp": "2026-10-18T09:28:56.380Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 4263,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792313814059_4340108e",
+    "call_id": "call_1792313814059_4340108e",
+    "timestamp": "2026-10-18T08:56:54.059Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1132,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792313801469_c1519c72",
+    "call_id": "call_1792313801469_c1519c72",
+    "timestamp": "2026-10-18T08:56:41.469Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1880,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792313793039_60253774",
+    "call_id": "call_1792313793039_60253774",
+    "timestamp": "2026-10-18T08:56:33.039Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 6312,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792313778724_74bda987",
+    "call_id": "call_1792313778724_74bda987",
+    "timestamp": "2026-10-18T08:56:18.724Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1609,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792313770985_7b64e59b",
+    "call_id": "call_1792313770985_7b64e59b",
+    "timestamp": "2026-10-18T08:56:10.985Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1496,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792313760310_b5477dc6",
+    "call_id": "call_1792313760310_b5477dc6",
+    "timestamp": "2026-10-18T08:56:00.310Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1222,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792313751424_89bea8e8",
+    "call_id": "call_1792313751424_89bea8e8",
+    "timestamp": "2026-10-18T08:55:51.424Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1427,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792313745140_5d709f1e",
+    "call_id": "call_1792313745140_5d709f1e",
+    "timestamp": "2026-10-18T08:55:45.140Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 12346,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792313725923_4b6d6ab3",
+    "call_id": "call_1792313725923_4b6d6ab3",
+    "timestamp": "2026-10-18T08:55:25.923Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 826,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792313715917_c1d711a7",
+    "call_id": "call_1792313715917_c1d711a7",
+    "timestamp": "2026-10-18T08:55:15.917Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 999,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792312312234_9ca35f76",
+    "call_id": "call_1792312312234_9ca35f76",
+    "timestamp": "2026-10-18T08:31:52.234Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1707,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792312288819_3c7978d5",
+    "call_id": "call_1792312288819_3c7978d5",
+    "timestamp": "2026-10-18T08:31:28.819Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 967,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792255010986_71b591d8",
+    "call_id": "call_1792255010986_71b591d8",
+    "timestamp": "2026-10-17T16:36:50.986Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 861,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792254601979_2a1464a3",
+    "call_id": "call_1792254601979_2a1464a3",
+    "timestamp": "2026-10-17T16:30:01.979Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1211,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792245698316_91044d3e",
+    "call_id": "call_1792245698316_91044d3e",
+    "timestamp": "2026-10-17T14:01:38.316Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 887,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792245664215_aa5a0214",
+    "call_id": "call_1792245664215_aa5a0214",
+    "timestamp": "2026-10-17T14:01:04.215Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 960,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792245638126_9f72bb6b",
+    "call_id": "call_1792245638126_9f72bb6b",
+    "timestamp": "2026-10-17T14:00:38.126Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 710,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792245597491_39efc7bd",
+    "call_id": "call_1792245597491_39efc7bd",
+    "timestamp": "2026-10-17T13:59:57.491Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 854,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792245561202_d7b3c399",
+    "call_id": "call_1792245561202_d7b3c399",
+    "timestamp": "2026-10-17T13:59:21.202Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 984,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792245521189_65b6950f",
+    "call_id": "call_1792245521189_65b6950f",
+    "timestamp": "2026-10-17T13:58:41.189Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 805,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243693456_20ba6a7d",
+    "call_id": "call_1792243693456_20ba6a7d",
+    "timestamp": "2026-10-17T13:28:13.456Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1360,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243631136_7f31f892",
+    "call_id": "call_1792243631136_7f31f892",
+    "timestamp": "2026-10-17T13:27:11.136Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1091,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243611254_ac6d69bf",
+    "call_id": "call_1792243611254_ac6d69bf",
+    "timestamp": "2026-10-17T13:26:51.254Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1324,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243606926_834364f9",
+    "call_id": "call_1792243606926_834364f9",
+    "timestamp": "2026-10-17T13:26:46.926Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1278,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243592339_50092452",
+    "call_id": "call_1792243592339_50092452",
+    "timestamp": "2026-10-17T13:26:32.339Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1353,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243573151_151a6519",
+    "call_id": "call_1792243573151_151a6519",
+    "timestamp": "2026-10-17T13:26:13.151Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 996,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243555743_fc87f964",
+    "call_id": "call_1792243555743_fc87f964",
+    "timestamp": "2026-10-17T13:25:55.743Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 3175,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243525928_c2f163ee",
+    "call_id": "call_1792243525928_c2f163ee",
+    "timestamp": "2026-10-17T13:25:25.928Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 13979,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243482611_06148b31",
+    "call_id": "call_1792243482611_06148b31",
+    "timestamp": "2026-10-17T13:24:42.611Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1776,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243473452_a87c2b6a",
+    "call_id": "call_1792243473452_a87c2b6a",
+    "timestamp": "2026-10-17T13:24:33.452Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1855,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243471845_98f642f4",
+    "call_id": "call_1792243471845_98f642f4",
+    "timestamp": "2026-10-17T13:24:31.845Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1738,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243457669_1f311b0b",
+    "call_id": "call_1792243457669_1f311b0b",
+    "timestamp": "2026-10-17T13:24:17.669Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 796,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243429815_d7b9dd30",
+    "call_id": "call_1792243429815_d7b9dd30",
+    "timestamp": "2026-10-17T13:23:49.815Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1737,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243428077_e1dfaa4a",
+    "call_id": "call_1792243428077_e1dfaa4a",
+    "timestamp": "2026-10-17T13:23:48.077Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1375,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243365766_ae220c68",
+    "call_id": "call_1792243365766_ae220c68",
+    "timestamp": "2026-10-17T13:22:45.766Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 576,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243362963_4d37c95b",
+    "call_id": "call_1792243362963_4d37c95b",
+    "timestamp": "2026-10-17T13:22:42.963Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1433,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243322882_bb87fbff",
+    "call_id": "call_1792243322882_bb87fbff",
+    "timestamp": "2026-10-17T13:22:02.882Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 620,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243297763_69f4f7cd",
+    "call_id": "call_1792243297763_69f4f7cd",
+    "timestamp": "2026-10-17T13:21:37.763Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 889,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243281017_5d518052",
+    "call_id": "call_1792243281017_5d518052",
+    "timestamp": "2026-10-17T13:21:21.017Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 719,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243280298_6e8da684",
+    "call_id": "call_1792243280298_6e8da684",
+    "timestamp": "2026-10-17T13:21:20.298Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 850,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243248804_9ff9bae6",
+    "call_id": "call_1792243248804_9ff9bae6",
+    "timestamp": "2026-10-17T13:20:48.804Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 805,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243229295_e7085242",
+    "call_id": "call_1792243229295_e7085242",
+    "timestamp": "2026-10-17T13:20:29.295Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 738,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243187656_bab7ec63",
+    "call_id": "call_1792243187656_bab7ec63",
+    "timestamp": "2026-10-17T13:19:47.656Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 791,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243129877_a15c81bb",
+    "call_id": "call_1792243129877_a15c81bb",
+    "timestamp": "2026-10-17T13:18:49.877Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 638,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243116934_a75b73a8",
+    "call_id": "call_1792243116934_a75b73a8",
+    "timestamp": "2026-10-17T13:18:36.934Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 4124,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243108108_b5c6aba2",
+    "call_id": "call_1792243108108_b5c6aba2",
+    "timestamp": "2026-10-17T13:18:28.108Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1101,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243100910_77cfc54b",
+    "call_id": "call_1792243100910_77cfc54b",
+    "timestamp": "2026-10-17T13:18:20.910Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1148,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792243086008_07066e6b",
+    "call_id": "call_1792243086008_07066e6b",
+    "timestamp": "2026-10-17T13:18:06.008Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1487,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792242987878_f987df41",
+    "call_id": "call_1792242987878_f987df41",
+    "timestamp": "2026-10-17T13:16:27.878Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1343,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792242966619_43e569c9",
+    "call_id": "call_1792242966619_43e569c9",
+    "timestamp": "2026-10-17T13:16:06.619Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 2547,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792242925228_48622027",
+    "call_id": "call_1792242925228_48622027",
+    "timestamp": "2026-10-17T13:15:25.228Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1047,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792242898914_2699e8b8",
+    "call_id": "call_1792242898914_2699e8b8",
+    "timestamp": "2026-10-17T13:14:58.914Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1003,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792242764850_84fe9dc4",
+    "call_id": "call_1792242764850_84fe9dc4",
+    "timestamp": "2026-10-17T13:12:44.850Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1386,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792242719932_a4f8d80d",
+    "call_id": "call_1792242719932_a4f8d80d",
+    "timestamp": "2026-10-17T13:11:59.932Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1286,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792242701349_06754cf7",
+    "call_id": "call_1792242701349_06754cf7",
+    "timestamp": "2026-10-17T13:11:41.349Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1374,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792242681820_0dee6ead",
+    "call_id": "call_1792242681820_0dee6ead",
+    "timestamp": "2026-10-17T13:11:21.820Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1975,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792242640039_2e5864cd",
+    "call_id": "call_1792242640039_2e5864cd",
+    "timestamp": "2026-10-17T13:10:40.039Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1616,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792229403441_c7bebf87",
+    "call_id": "call_1792229403441_c7bebf87",
+    "timestamp": "2026-10-17T09:30:03.441Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 2349,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792172921092_6f3b61d1",
+    "call_id": "call_1792172921092_6f3b61d1",
+    "timestamp": "2026-10-16T17:48:41.092Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1914,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792172889540_f70c4384",
+    "call_id": "call_1792172889540_f70c4384",
+    "timestamp": "2026-10-16T17:48:09.540Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1153,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792172445772_b420daf9",
+    "call_id": "call_1792172445772_b420daf9",
+    "timestamp": "2026-10-16T17:40:45.772Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6768,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792172439004_cbd28456",
+    "call_id": "call_1792172439004_cbd28456",
+    "timestamp": "2026-10-16T17:40:39.004Z",
+    "provider": "Google-Gemini",
+    "status": "error",
+    "latencyMs": 2185,
+    "errorDetail": "All Google-Gemini cascading models failed. Last error: {\"error\":{\"code\":503,\"message\":\"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\"status\":\"UNAVAILABLE\"}}",
+    "metadata": {}
+  },
+  {
+    "id": "call_1792168202963_47930a55",
+    "call_id": "call_1792168202963_47930a55",
+    "timestamp": "2026-10-16T16:30:02.963Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1102,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792143181510_a05e0dad",
+    "call_id": "call_1792143181510_a05e0dad",
+    "timestamp": "2026-10-16T09:33:01.510Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 2101,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792143156699_2bc7a47c",
+    "call_id": "call_1792143156699_2bc7a47c",
+    "timestamp": "2026-10-16T09:32:36.699Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1896,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792143129298_6ba7875c",
+    "call_id": "call_1792143129298_6ba7875c",
+    "timestamp": "2026-10-16T09:32:09.298Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1520,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792143077038_23d87bee",
+    "call_id": "call_1792143077038_23d87bee",
+    "timestamp": "2026-10-16T09:31:17.038Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 2138,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792143002609_8e700272",
+    "call_id": "call_1792143002609_8e700272",
+    "timestamp": "2026-10-16T09:30:02.609Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1385,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792137649338_56cec924",
+    "call_id": "call_1792137649338_56cec924",
+    "timestamp": "2026-10-16T08:00:49.338Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1314,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792137611492_01210127",
+    "call_id": "call_1792137611492_01210127",
+    "timestamp": "2026-10-16T08:00:11.492Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1271,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792137596641_3d2ba9b7",
+    "call_id": "call_1792137596641_3d2ba9b7",
+    "timestamp": "2026-10-16T07:59:56.641Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1260,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792132080344_03ebc1b6",
+    "call_id": "call_1792132080344_03ebc1b6",
+    "timestamp": "2026-10-16T06:28:00.344Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 2045,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792131820689_3fc1f63f",
+    "call_id": "call_1792131820689_3fc1f63f",
+    "timestamp": "2026-10-16T06:23:40.690Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1809,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792131682809_eddc1acc",
+    "call_id": "call_1792131682809_eddc1acc",
+    "timestamp": "2026-10-16T06:21:22.809Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1312,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792131672932_31c34b2f",
+    "call_id": "call_1792131672932_31c34b2f",
+    "timestamp": "2026-10-16T06:21:12.932Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1892,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792131654522_2b087157",
+    "call_id": "call_1792131654522_2b087157",
+    "timestamp": "2026-10-16T06:20:54.522Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 2899,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792131653182_04304b7b",
+    "call_id": "call_1792131653182_04304b7b",
+    "timestamp": "2026-10-16T06:20:53.182Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 3010,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792131638767_fd6a05d7",
+    "call_id": "call_1792131638767_fd6a05d7",
+    "timestamp": "2026-10-16T06:20:38.767Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 8985,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792131629781_bda2f3d4",
+    "call_id": "call_1792131629781_bda2f3d4",
+    "timestamp": "2026-10-16T06:20:29.781Z",
+    "provider": "Google-Gemini",
+    "status": "error",
+    "latencyMs": 4367,
+    "errorDetail": "All Google-Gemini cascading models failed. Last error: {\"error\":{\"code\":503,\"message\":\"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\"status\":\"UNAVAILABLE\"}}",
+    "metadata": {}
+  },
+  {
+    "id": "call_1792131608030_141dceb2",
+    "call_id": "call_1792131608030_141dceb2",
+    "timestamp": "2026-10-16T06:20:08.030Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1224,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792131593749_d9396065",
+    "call_id": "call_1792131593749_d9396065",
+    "timestamp": "2026-10-16T06:19:53.749Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1434,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792131568686_97fe911c",
+    "call_id": "call_1792131568686_97fe911c",
+    "timestamp": "2026-10-16T06:19:28.686Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 3426,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792131366354_cf4ae215",
+    "call_id": "call_1792131366354_cf4ae215",
+    "timestamp": "2026-10-16T06:16:06.354Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6906,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792131312821_af0fb014",
+    "call_id": "call_1792131312821_af0fb014",
+    "timestamp": "2026-10-16T06:15:12.821Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6243,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792081811531_a1de8058",
+    "call_id": "call_1792081811531_a1de8058",
+    "timestamp": "2026-10-15T16:30:11.531Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 9578,
+    "metadata": {}
+  },
+  {
+    "id": "call_1792056607212_7603f23d",
+    "call_id": "call_1792056607212_7603f23d",
+    "timestamp": "2026-10-15T09:30:07.212Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6436,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791995850631_03f910b8",
+    "call_id": "call_1791995850631_03f910b8",
+    "timestamp": "2026-10-14T16:37:30.631Z",
+    "provider": "Cloud-OpenRouter",
+    "status": "success",
+    "latencyMs": 5051,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791995845580_35700a18",
+    "call_id": "call_1791995845580_35700a18",
+    "timestamp": "2026-10-14T16:37:25.580Z",
+    "provider": "Progga",
+    "status": "error",
+    "latencyMs": 12412,
+    "errorDetail": "This operation was aborted",
+    "metadata": {}
+  },
+  {
+    "id": "call_1791995759337_fc4d1f90",
+    "call_id": "call_1791995759337_fc4d1f90",
+    "timestamp": "2026-10-14T16:35:59.337Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6373,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791995736179_54897075",
+    "call_id": "call_1791995736179_54897075",
+    "timestamp": "2026-10-14T16:35:36.179Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6949,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791995717886_61fce7af",
+    "call_id": "call_1791995717886_61fce7af",
+    "timestamp": "2026-10-14T16:35:17.886Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 5584,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791995415936_a75f91e9",
+    "call_id": "call_1791995415936_a75f91e9",
+    "timestamp": "2026-10-14T16:30:15.936Z",
+    "provider": "Cloud-OpenRouter",
+    "status": "success",
+    "latencyMs": 1216,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791995414719_9a8188d4",
+    "call_id": "call_1791995414719_9a8188d4",
+    "timestamp": "2026-10-14T16:30:14.719Z",
+    "provider": "Progga",
+    "status": "error",
+    "latencyMs": 12496,
+    "errorDetail": "This operation was aborted",
+    "metadata": {}
+  },
+  {
+    "id": "call_1791982924719_6943d964",
+    "call_id": "call_1791982924719_6943d964",
+    "timestamp": "2026-10-14T13:02:04.719Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 8650,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791982664826_1b10155e",
+    "call_id": "call_1791982664826_1b10155e",
+    "timestamp": "2026-10-14T12:57:44.826Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 7088,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979927967_cb73b578",
+    "call_id": "call_1791979927967_cb73b578",
+    "timestamp": "2026-10-14T12:12:07.967Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6346,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979901624_e7495025",
+    "call_id": "call_1791979901624_e7495025",
+    "timestamp": "2026-10-14T12:11:41.624Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6358,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979881671_ab8fb1e9",
+    "call_id": "call_1791979881671_ab8fb1e9",
+    "timestamp": "2026-10-14T12:11:21.671Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 3820,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979877850_be83b8f7",
+    "call_id": "call_1791979877850_be83b8f7",
+    "timestamp": "2026-10-14T12:11:17.850Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6152,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979857584_13a0af7a",
+    "call_id": "call_1791979857584_13a0af7a",
+    "timestamp": "2026-10-14T12:10:57.584Z",
+    "provider": "Cloud-OpenRouter",
+    "status": "success",
+    "latencyMs": 1764,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979855820_0d185301",
+    "call_id": "call_1791979855820_0d185301",
+    "timestamp": "2026-10-14T12:10:55.820Z",
+    "provider": "Progga",
+    "status": "error",
+    "latencyMs": 11355,
+    "errorDetail": "[Progga] Empty response received from model deepseek-v4-flash-0731",
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979828194_aed539d1",
+    "call_id": "call_1791979828194_aed539d1",
+    "timestamp": "2026-10-14T12:10:28.194Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 8037,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979820156_3d62234a",
+    "call_id": "call_1791979820156_3d62234a",
+    "timestamp": "2026-10-14T12:10:20.156Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6094,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979802297_fd2f9760",
+    "call_id": "call_1791979802297_fd2f9760",
+    "timestamp": "2026-10-14T12:10:02.297Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 7230,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979774434_35ca2680",
+    "call_id": "call_1791979774434_35ca2680",
+    "timestamp": "2026-10-14T12:09:34.434Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 7952,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979354767_33aee301",
+    "call_id": "call_1791979354767_33aee301",
+    "timestamp": "2026-10-14T12:02:34.767Z",
+    "provider": "Cloud-OpenRouter",
+    "status": "success",
+    "latencyMs": 1328,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979353439_ab2c43bc",
+    "call_id": "call_1791979353439_ab2c43bc",
+    "timestamp": "2026-10-14T12:02:33.439Z",
+    "provider": "Progga",
+    "status": "rate_limit",
+    "latencyMs": 3992,
+    "errorDetail": "[Progga] Rate limited (429) on model deepseek-v4-flash-0731: {\"error\":{\"message\":\"service failure: upstream request failed\",\"type\":\"provider_error\",\"param\":null,",
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979318543_b5258ba9",
+    "call_id": "call_1791979318543_b5258ba9",
+    "timestamp": "2026-10-14T12:01:58.543Z",
+    "provider": "Cloud-OpenRouter",
+    "status": "success",
+    "latencyMs": 9079,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979309462_5a0d9d44",
+    "call_id": "call_1791979309462_5a0d9d44",
+    "timestamp": "2026-10-14T12:01:49.462Z",
+    "provider": "Progga",
+    "status": "error",
+    "latencyMs": 12664,
+    "errorDetail": "This operation was aborted",
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979279860_76aab151",
+    "call_id": "call_1791979279860_76aab151",
+    "timestamp": "2026-10-14T12:01:19.860Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 7921,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979232589_a9cc527c",
+    "call_id": "call_1791979232589_a9cc527c",
+    "timestamp": "2026-10-14T12:00:32.589Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6811,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791979188211_dca00e63",
+    "call_id": "call_1791979188211_dca00e63",
+    "timestamp": "2026-10-14T11:59:48.211Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 12183,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791974257762_60e51f85",
+    "call_id": "call_1791974257762_60e51f85",
+    "timestamp": "2026-10-14T10:37:37.762Z",
+    "provider": "Cloud-OpenRouter",
+    "status": "success",
+    "latencyMs": 4431,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791974253331_d2ea2933",
+    "call_id": "call_1791974253331_d2ea2933",
+    "timestamp": "2026-10-14T10:37:33.331Z",
+    "provider": "Progga",
+    "status": "error",
+    "latencyMs": 10946,
+    "errorDetail": "fetch failed",
+    "metadata": {}
+  },
+  {
+    "id": "call_1791973973489_06a9eaa9",
+    "call_id": "call_1791973973489_06a9eaa9",
+    "timestamp": "2026-10-14T10:32:53.489Z",
+    "provider": "Cloud-OpenRouter",
+    "status": "error",
+    "latencyMs": 9363,
+    "errorDetail": "All OpenRouter cascading models failed. Last error: HTTP 402: {\"error\":{\"message\":\"This request requires more credits, or fewer max_tokens. You requested up to 350 tokens, but can only afford 13. To increase, visit https://openrouter.ai/settings/credits and upgrade to a paid account\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openrouter.ai/settings/credits, or lower max_tokens / prompt size to fit your remaining balance.\",\"provider_name\":null,\"previous_errors\":[{\"code\":402,\"message\":\"This request requires more credits, or fewer max_tokens. You requested up to 350 tokens, but can only afford 15. To increase, visit https://openrouter.ai/settings/credits and upgrade to a paid account\"}]}},\"user_id\":\"user_3BhaekZWU1t8vfR0HZSOxDeAf9G\"}",
+    "metadata": {}
+  },
+  {
+    "id": "call_1791973973489_25a0f838",
+    "call_id": "call_1791973973489_25a0f838",
+    "timestamp": "2026-10-14T10:32:53.489Z",
+    "provider": "Fallback-Simulated",
+    "status": "success",
+    "latencyMs": 0,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791973964125_a2f9fa3f",
+    "call_id": "call_1791973964125_a2f9fa3f",
+    "timestamp": "2026-10-14T10:32:44.125Z",
+    "provider": "Progga",
+    "status": "error",
+    "latencyMs": 12590,
+    "errorDetail": "This operation was aborted",
+    "metadata": {}
+  },
+  {
+    "id": "call_1791970209021_cf0f5c61",
+    "call_id": "call_1791970209021_cf0f5c61",
+    "timestamp": "2026-10-14T09:30:09.021Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 7661,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791912412884_cdca1bbc",
+    "call_id": "call_1791912412884_cdca1bbc",
+    "timestamp": "2026-10-13T17:26:52.884Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6108,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791912363871_547892b9",
+    "call_id": "call_1791912363871_547892b9",
+    "timestamp": "2026-10-13T17:26:03.871Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6303,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791912357568_cdaa43eb",
+    "call_id": "call_1791912357568_cdaa43eb",
+    "timestamp": "2026-10-13T17:25:57.568Z",
+    "provider": "Google-Gemini",
+    "status": "error",
+    "latencyMs": 13695,
+    "errorDetail": "All Google-Gemini cascading models failed. Last error: {\"error\":{\"code\":503,\"message\":\"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\"status\":\"UNAVAILABLE\"}}",
+    "metadata": {}
+  },
+  {
+    "id": "call_1791912294895_34830687",
+    "call_id": "call_1791912294895_34830687",
+    "timestamp": "2026-10-13T17:24:54.895Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 8389,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791912286504_df3564f2",
+    "call_id": "call_1791912286504_df3564f2",
+    "timestamp": "2026-10-13T17:24:46.504Z",
+    "provider": "Google-Gemini",
+    "status": "error",
+    "latencyMs": 17417,
+    "errorDetail": "All Google-Gemini cascading models failed. Last error: Gemini request for model [gemini-3.8-flash] timed out after 10000ms",
+    "metadata": {}
+  },
+  {
+    "id": "call_1791912235828_f63eb240",
+    "call_id": "call_1791912235828_f63eb240",
+    "timestamp": "2026-10-13T17:23:55.828Z",
+    "provider": "Cloud-OpenRouter",
+    "status": "success",
+    "latencyMs": 4866,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791912230961_cf3f9bb8",
+    "call_id": "call_1791912230961_cf3f9bb8",
+    "timestamp": "2026-10-13T17:23:50.961Z",
+    "provider": "Progga",
+    "status": "error",
+    "latencyMs": 11974,
+    "errorDetail": "[Progga] Empty response received from model deepseek-v4-flash-0731",
+    "metadata": {}
+  },
+  {
+    "id": "call_1791912218987_5bfbc7e0",
+    "call_id": "call_1791912218987_5bfbc7e0",
+    "timestamp": "2026-10-13T17:23:38.987Z",
+    "provider": "Google-Gemini",
+    "status": "error",
+    "latencyMs": 18002,
+    "errorDetail": "Timeout: Provider Google-Gemini exceeded 18000ms limit",
+    "metadata": {}
+  },
+  {
+    "id": "call_1791909686303_4acac112",
+    "call_id": "call_1791909686303_4acac112",
+    "timestamp": "2026-10-13T16:41:26.303Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 3098,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791909002130_519ddc66",
+    "call_id": "call_1791909002130_519ddc66",
+    "timestamp": "2026-10-13T16:30:02.130Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 933,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791904480467_13a40c56",
+    "call_id": "call_1791904480467_13a40c56",
+    "timestamp": "2026-10-13T15:14:40.467Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1774,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791904422710_f4bd4a98",
+    "call_id": "call_1791904422710_f4bd4a98",
+    "timestamp": "2026-10-13T15:13:42.710Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1476,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791904405532_886213b7",
+    "call_id": "call_1791904405532_886213b7",
+    "timestamp": "2026-10-13T15:13:25.532Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 2599,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791904403137_3b2e26fe",
+    "call_id": "call_1791904403137_3b2e26fe",
+    "timestamp": "2026-10-13T15:13:23.137Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1484,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791904275368_77187266",
+    "call_id": "call_1791904275368_77187266",
+    "timestamp": "2026-10-13T15:11:15.368Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 3004,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791904226138_99686e89",
+    "call_id": "call_1791904226138_99686e89",
+    "timestamp": "2026-10-13T15:10:26.138Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 4103,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791901634604_d62e1cf3",
+    "call_id": "call_1791901634604_d62e1cf3",
+    "timestamp": "2026-10-13T14:27:14.604Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 5149,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791901626667_b1965374",
+    "call_id": "call_1791901626667_b1965374",
+    "timestamp": "2026-10-13T14:27:06.667Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 12991,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791901005157_96d6a4be",
+    "call_id": "call_1791901005157_96d6a4be",
+    "timestamp": "2026-10-13T14:16:45.157Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1561,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791900947153_eb6b328a",
+    "call_id": "call_1791900947153_eb6b328a",
+    "timestamp": "2026-10-13T14:15:47.153Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 1884,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791900945267_caf2f851",
+    "call_id": "call_1791900945267_caf2f851",
+    "timestamp": "2026-10-13T14:15:45.267Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 6837,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791900850864_3401517b",
+    "call_id": "call_1791900850864_3401517b",
+    "timestamp": "2026-10-13T14:14:10.864Z",
+    "provider": "Google-Gemini",
+    "status": "success",
+    "latencyMs": 3786,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791893673975_bfaaaeb9",
+    "call_id": "call_1791893673975_bfaaaeb9",
+    "timestamp": "2026-10-13T12:14:33.975Z",
+    "provider": "Progga",
+    "status": "success",
+    "latencyMs": 6814,
+    "metadata": {}
+  },
+  {
+    "id": "call_1791893245789_3400f189",
+    "call_id": "call_1791893245789_3400f189",
+    "timestamp": "2026-10-13T12:07:25.789Z",
+    "provider": "Fallback-Simulated",
+    "status": "success",
+    "latencyMs": 0,
+    "metadata": {}
+  }
+]

@@ -21,13 +21,47 @@
       "outputPricePerMillion": 40,
       "cachedInputPricePerMillion": 1,
       "currency": "BDT",
-      "enabled": true,
+      "enabled": false,
       "isDefault": false,
-      "updatedAt": "2026-10-13T11:55:03.568Z",
-      "updatedBy": "TestRunner"
+      "updatedAt": "2026-10-13T12:13:55.560Z",
+      "updatedBy": "Admin"
     }
   ],
   "history": [
+    {
+      "id": "hist_1791893635560_d5fe5cc5",
+      "timestamp": "2026-10-13T12:13:55.560Z",
+      "model": "custom-progga-deepseek-coder",
+      "action": "update",
+      "previousPricing": {
+        "id": "pricing-custom-progga-deepseek-coder",
+        "model": "custom-progga-deepseek-coder",
+        "enabled": true,
+        "currency": "BDT",
+        "isDefault": false,
+        "updatedAt": "2026-10-13T11:55:03.568Z",
+        "updatedBy": "TestRunner",
+        "displayName": "DeepSeek Coder Pro",
+        "inputPricePerMillion": 20,
+        "outputPricePerMillion": 40,
+        "cachedInputPricePerMillion": 1
+      },
+      "newPricing": {
+        "id": "pricing-custom-progga-deepseek-coder",
+        "model": "custom-progga-deepseek-coder",
+        "enabled": false,
+        "currency": "BDT",
+        "isDefault": false,
+        "updatedAt": "2026-10-13T12:13:55.560Z",
+        "updatedBy": "Admin",
+        "displayName": "DeepSeek Coder Pro",
+        "inputPricePerMillion": 20,
+        "outputPricePerMillion": 40,
+        "cachedInputPricePerMillion": 1
+      },
+      "updatedBy": "Admin",
+      "reason": null
+    },
     {
       "id": "hist_1791892503568_2d7ee7b2",
       "timestamp": "2026-10-13T11:55:03.568Z",

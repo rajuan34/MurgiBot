@@ -16,7 +16,8 @@ import { GeminiProvider } from './providers/GeminiProvider';
 import { OpenRouterProvider } from './providers/OpenRouterProvider';
 import { ProggaProvider } from './providers/ProggaProvider';
 import { expenseTracker } from './expenses/ExpenseTracker';
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ override: true });
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
